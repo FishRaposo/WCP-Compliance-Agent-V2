@@ -3,32 +3,22 @@ node_modules/
 package-lock.json
 yarn.lock
 
-# Archive dependencies (archived scaffold code)
-_archive/**/node_modules/
-_archive/**/package-lock.json
-
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*.local
-# Keep .env.example for reference
-!.env.example
 
-# Build output
+# Build and test outputs
 dist/
-build/
+coverage/
 *.tsbuildinfo
+.npm-cache/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
+# Local runtime data
+data/
+*.db
+*.db-shm
+*.db-wal
 
 # Logs
 logs/
@@ -37,27 +27,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Test coverage
-coverage/
-.nyc_output/
+# Editors and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
 
-# Database files (SQLite)
-data/
-*.db
-*.db-shm
-*.db-wal
-
-# Temporary files
-*.tmp
-*.temp
-.cache/
-
-#Templates
-_templates/
-#Archive
+# Private working material
+job.md
+job.new.md
 _archive/
-
-# Private documents (not committed)
-_private/
-
-nul
+_project-standards/

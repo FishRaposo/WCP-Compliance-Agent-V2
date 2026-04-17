@@ -1,72 +1,74 @@
-# WCP AI Agent Prototype - Documentation
+# Documentation - [PROJECT_NAME]
 
-**Purpose**: Central documentation hub for the WCP AI Agent Prototype.
+Welcome to the documentation hub for **[PROJECT_NAME]**.
 
-**Quick Start**: See [INDEX.md](INDEX.md) for complete documentation navigation.
+> [PROJECT_DESCRIPTION]
 
----
+## Documentation Structure
 
-## 🗺️ Documentation Structure
+### [1. Contributing Guide](./01-contributing/)
 
-### Essential Documents (Root Level)
-- [`README.md`](../README.md) - Project overview and getting started
-- [`CHANGELOG.md`](../CHANGELOG.md) - Version history
+For contributors and maintainers.
 
-### Technical Documentation (This Directory)
-- [`INDEX.md`](INDEX.md) - **START HERE** - Complete documentation navigation
-- [`PROJECT-MAPPING.md`](PROJECT-MAPPING.md) - Detailed project mapping
-- [`showcase/`](showcase/) - Showcase and demo materials
-  - [PROJECT-OVERVIEW.md](showcase/PROJECT-OVERVIEW.md) - Comprehensive project overview
-  - [SHOWCASE.md](showcase/SHOWCASE.md) - Demo guide and scenarios
-  - [QUICK-START.md](showcase/QUICK-START.md) - 5-minute setup guide
+- [Installation & Setup](./01-contributing/01-installation.md)
+- [Project Structure](./01-contributing/02-project-structure.md)
+- [How to Contribute](./01-contributing/03-how-to-contribute.md)
 
-### Development Resources
-- [`../AGENTS.md`](../AGENTS.md) - Developer implementation guide
-- [`../CONTEXT.md`](../CONTEXT.md) - Architecture decisions
-- [`../WORKFLOW.md`](../WORKFLOW.md) - User workflows
-- [`../TODO.md`](../TODO.md) - Planned features
+### [2. Architecture](./02-architecture/)
 
-### Validation & Quality
-- [`PROMPT-VALIDATION.md`](PROMPT-VALIDATION.md) - Mandatory validation system
-- [`DOCUMENTATION-MAINTENANCE.md`](DOCUMENTATION-MAINTENANCE.md) - Documentation workflow
-- [`../EVALS.md`](../EVALS.md) - Evaluation criteria
+For technical design, boundaries, and decisions.
 
----
+- [Overview](./02-architecture/01-overview.md)
 
-## 🚀 Quick Links
+### [3. API Reference](./03-api/)
 
-| Purpose | Document | Location |
-|---------|----------|----------|
-| **Get Started** | README.md | `/README.md` |
-| **5-Minute Setup** | QUICK-START.md | `/showcase/QUICK-START.md` |
-| **Full Overview** | PROJECT-OVERVIEW.md | `/showcase/PROJECT-OVERVIEW.md` |
-| **Demo Guide** | SHOWCASE.md | `/showcase/SHOWCASE.md` |
-| **Development** | AGENTS.md | `/AGENTS.md` |
-| **Architecture** | CONTEXT.md | `/CONTEXT.md` |
-| **All Docs** | INDEX.md | `/docs/INDEX.md` |
+For public modules, services, classes, or endpoints.
 
----
+- [Module Template](./03-api/module-template.md)
 
-## 📝 Documentation Guidelines
+### [4. User Guide](./04-user-guide/)
 
-### For Developers
-1. Always complete [PROMPT-VALIDATION.md](PROMPT-VALIDATION.md) before changes
-2. Follow [DOCUMENTATION-MAINTENANCE.md](DOCUMENTATION-MAINTENANCE.md) workflow
-3. Update CHANGELOG.md for all changes
-4. Keep documentation in sync with code
+For end-user flows, features, and tips.
 
-### For Users
-- Start with [README.md](../README.md) for project overview
-- Use [QUICK-START.md](showcase/QUICK-START.md) for quick setup
-- See [SHOWCASE.md](showcase/SHOWCASE.md) for demo scenarios
-- Check [WORKFLOW.md](../WORKFLOW.md) for usage patterns
+- [Getting Started](./04-user-guide/01-getting-started.md)
+- [Features](./04-user-guide/02-features.md)
+- [Tips](./04-user-guide/03-tips.md)
 
-### For Recruiters
-- Read [PROJECT-OVERVIEW.md](showcase/PROJECT-OVERVIEW.md) for comprehensive overview
-- Check [SHOWCASE.md](showcase/SHOWCASE.md) for demo highlights
-- Review [CONTEXT.md](../CONTEXT.md) for architecture understanding
+### [5. Reference](./05-reference/)
 
----
+For glossary, design notes, and supporting reference material.
 
-**Last Updated**: 2025-01-27  
-**Location**: `/docs/README.md`
+- [Design Vision](./05-reference/01-design-vision.md)
+- [Glossary](./05-reference/glossary.md)
+
+### [6. Testing](./06-testing/)
+
+For test strategy, execution, troubleshooting, and CI guidance.
+
+- [Testing Index](./06-testing/README.md)
+- [Test Strategy](./06-testing/01-test-strategy.md)
+- [Writing Tests](./06-testing/02-writing-tests.md)
+- [Running Tests](./06-testing/03-running-tests.md)
+- [Troubleshooting](./06-testing/04-troubleshooting.md)
+- [Coverage Reports](./06-testing/05-coverage-reports.md)
+- [CI/CD](./06-testing/06-ci-cd.md)
+- [Test API](./06-testing/07-test-api.md)
+- [Best Practices](./06-testing/08-best-practices.md)
+
+## Quick Navigation
+
+| I want to | Go to |
+|-----------|-------|
+| Run the project locally | [Installation](./01-contributing/01-installation.md) |
+| Understand the codebase | [Project Structure](./01-contributing/02-project-structure.md) |
+| Contribute safely | [How to Contribute](./01-contributing/03-how-to-contribute.md) |
+| Document user flows | [User Guide](./04-user-guide/) |
+| Document technical decisions | [Architecture](./02-architecture/) |
+| Add or update API docs | [API Reference](./03-api/) |
+| Work on tests | [Testing](./06-testing/) |
+
+## Conventions
+
+- Keep docs in Markdown.
+- Prefer short, focused files over long catch-all docs.
+- Add project-specific depth gradually instead of pre-populating everything.

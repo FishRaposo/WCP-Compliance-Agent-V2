@@ -1,38 +1,27 @@
 {
   "name": "wcp-ai-agent",
   "version": "0.1.0",
-  "description": "WCP AI Agent Prototype using TypeScript with Mastra.ai",
+  "description": "Regulated-domain AI infrastructure case study for trustworthy LLM decision systems",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "setup": "node scripts/setup.js",
+    "clean": "node -e \"const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', { recursive: true, force: true });\"",
+    "build": "npm run clean --silent && tsc",
     "dev": "mastra dev",
-    "clean": "node -e \"const fs = require('fs'); const path = require('path'); if (fs.existsSync('dist')) fs.rmSync('dist', { recursive: true, force: true });\"",
-    "build": "npm run clean --silent && tsc && tsc -p tsconfig.showcase.json && node -e \"require('fs').mkdirSync('build', { recursive: true }); require('fs').writeFileSync('build/build.txt', 'Build complete');\"",
-    "build:frontend": "cd frontend && npm install && npm run build && cd ..",
-    "build:src": "tsc",
-    "build:showcase": "tsc -p tsconfig.showcase.json",
     "start": "node dist/index.js",
     "serve": "node dist/server.js",
-    "test": "npm run build && vitest run",
+    "test": "npm run build && vitest run --reporter=dot",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "test:all": "npm run test",
     "test:unit": "vitest run tests/unit",
-    "test:integration": "vitest run tests/integration",
-    "test:system": "vitest run tests/system",
-    "test:workflow": "vitest run tests/workflows",
-    "showcase": "ts-node --esm showcase/scripts/showcase.ts",
-    "validate": "ts-node utils/validate-scaffold.ts",
-    "scaffold": "ts-node utils/scaffold-new-feature.ts",
-    "dev:utils": "npm run test:all -- --watch"
+    "test:integration": "vitest run tests/integration"
   },
   "keywords": [
-    "mastra",
+    "ai-infrastructure",
     "ai-agent",
     "wcp",
-    "compliance"
+    "compliance",
+    "evals",
+    "guardrails"
   ],
   "author": "",
   "license": "MIT",
@@ -44,21 +33,14 @@
     "@mastra/loggers": "^0.10.19",
     "chalk": "^5.3.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "hono": "^4.11.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/supertest": "^6.0.3",
-    "@vitest/coverage-v8": "^1.6.1",
-    "@vitest/ui": "^1.0.0",
-    "supertest": "^7.1.4",
-    "ts-node": "^10.9.0",
     "typescript": "^5.0.0",
     "vitest": "^1.0.0"
-  },
-  "optionalDependencies": {
-    "pdf-parse": "^1.1.1"
   },
   "overrides": {
     "ai": "^4.3.19"
