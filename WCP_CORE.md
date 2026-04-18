@@ -35,6 +35,7 @@ Demonstrate **deterministic AI infrastructure** patterns applicable to revenue i
 | Skill | Purpose | Status |
 |-------|---------|--------|
 | **jobs-ive** | Steve Jobs/Jony Ive presentation coaching for demo storytelling | **Active use** |
+| **mmx-cli** | MiniMax sub-agent for parallel coding, second opinions, media generation (M2.7 model) | **Active use** |
 | **md-to-pdf** | Export ROLE_FIT.md, architecture docs to PDF handouts | Available |
 | **process-doc** | Document three-layer pipeline as formal SOPs with flowcharts | Available |
 
@@ -47,7 +48,7 @@ Demonstrate **deterministic AI infrastructure** patterns applicable to revenue i
 | **ad-creative** | Generate ad copy for construction/payroll marketing |
 | **content-research-writer** | Technical blog posts about Trust-Score architecture |
 
-**Current priority:** jobs-ive skill for demo storytelling and presentation polish.
+**Current priority:** jobs-ive skill for demo storytelling; mmx-cli for parallel development work.
 
 ---
 
