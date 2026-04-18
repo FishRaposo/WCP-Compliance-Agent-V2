@@ -1,8 +1,12 @@
 # WCP Compliance Agent
 
-Status Label: Implemented
+Status Label: Implemented | **[View Role Fit for AI Infrastructure →](./ROLE_FIT.md)**
 
-WCP Compliance Agent is a recruiter-facing documentation showcase for a trustworthy compliance agent platform. The current repository is intentionally a compact proof artifact, but the documentation now expands it into the full system it is meant to become: a regulated-domain AI infrastructure platform for document ingestion, deterministic validation, retrieval-grounded decisions, audit traces, evaluation gates, and production observability.
+A regulated-domain AI infrastructure showcase demonstrating how deterministic scaffolding, trust scoring, and CI-based evaluation create reliable LLM systems. Built as a compliance agent for Davis-Bacon Act payroll validation—applicable to revenue intelligence, healthcare, finance, or any high-stakes AI workflow.
+
+> **For hiring managers:** See [ROLE_FIT.md](./ROLE_FIT.md) for explicit mapping to founding AI infrastructure roles (retrieval layers, RAG systems, evaluation pipelines, cost/observability controls).
+
+---
 
 ## What this repository proves today
 
@@ -31,6 +35,20 @@ Payroll compliance is a strong proving ground for AI infrastructure because it f
 
 That makes this repository a useful showcase for founding AI infrastructure work far beyond payroll.
 
+## Infrastructure patterns demonstrated
+
+The architecture patterns here transfer directly to revenue intelligence, healthcare, finance, or any domain requiring reliable, auditable AI:
+
+| Pattern | Implementation | Transferable To |
+|---------|---------------|-----------------|
+| **Three-layer decision** | `src/pipeline/` — deterministic → LLM → trust score | Deal coaching, medical diagnosis, risk assessment |
+| **Retrieval grounding** | Hybrid search spec + vector store design | CRM context assembly, knowledge bases |
+| **CI-based evaluation** | `npm run lint:pipeline` — AST architectural enforcement | Regression gates for prompt/RAG changes |
+| **Entity abstractions** | Typed `CheckResult`, `LLMVerdict`, `TrustScoredDecision` | Rep, Call, Opportunity, Moment models |
+| **Cost/observability** | Token tracking, cycle time, health metrics per decision | Production cost controls, Phoenix tracing |
+
+**[See full role fit analysis →](./ROLE_FIT.md)**
+
 ## Current vs target at a glance
 
 **Implemented now**
@@ -51,9 +69,10 @@ That makes this repository a useful showcase for founding AI infrastructure work
 
 See [`docs/foundation/implemented-vs-target.md`](./docs/foundation/implemented-vs-target.md) for the detailed split.
 
-## Read this repository in three paths
+## Read this repository in four paths
 
-- **2 minutes**: [`docs/showcase/founding-ai-infra-fit.md`](./docs/showcase/founding-ai-infra-fit.md) - Skills mapping
+- **1 minute**: [`ROLE_FIT.md`](./ROLE_FIT.md) — Quick mapping to AI infrastructure roles
+- **2 minutes**: [`docs/showcase/founding-ai-infra-fit.md`](./docs/showcase/founding-ai-infra-fit.md) — Skills mapping
 - **10 minutes**: [`docs/INDEX.md`](./docs/INDEX.md) -> system overview -> implemented vs target
 - **20 minutes**: architecture + evaluation + tech stack + case study + FAQ
 - **Quick start**: [`docs/quick-start.md`](./docs/quick-start.md) - Run locally in 5 minutes
