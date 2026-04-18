@@ -2,9 +2,27 @@
 
 Status Label: Implemented | **[View Role Fit for AI Infrastructure →](./ROLE_FIT.md)**
 
-A regulated-domain AI infrastructure showcase demonstrating how deterministic scaffolding, trust scoring, and CI-based evaluation create reliable LLM systems. Built as a compliance agent for Davis-Bacon Act payroll validation—applicable to revenue intelligence, healthcare, finance, or any high-stakes AI workflow.
+> **For hiring managers:** See [ROLE_FIT.md](./ROLE_FIT.md) for explicit mapping to founding AI infrastructure roles.
 
-> **For hiring managers:** See [ROLE_FIT.md](./ROLE_FIT.md) for explicit mapping to founding AI infrastructure roles (retrieval layers, RAG systems, evaluation pipelines, cost/observability controls).
+---
+
+## The Problem
+
+Current AI compliance tools are **black boxes**. You feed in a payroll document. You get back "violation detected." And if a federal auditor asks *"how did you reach this decision?"* — you can't answer.
+
+No traceability. No audit trail. No evidence chain.
+
+That's not compliance. That's gambling with federal contracts.
+
+## The Solution
+
+**WCP Compliance Agent** treats every decision like a court case:
+
+- **Three layers of evidence** — every finding cites specific regulation
+- **Traceable by design** — every decision has a replayable audit trail  
+- **Human when it matters** — low confidence automatically routes to expert review
+
+This isn't just payroll validation. This is how you build AI systems that *provably* make correct decisions—applicable to revenue intelligence, healthcare, finance, or any domain where errors have consequences.
 
 ---
 
@@ -97,133 +115,25 @@ See [`docs/foundation/implemented-vs-target.md`](./docs/foundation/implemented-v
 - Architecture Decisions (ADRs):
   - [`docs/adrs/README.md`](./docs/adrs/README.md) - ADR index
   - [`docs/adrs/ADR-005-decision-architecture.md`](./docs/adrs/ADR-005-decision-architecture.md) - Three-layer pipeline
-  - [`docs/adrs/ADR-001-mastra-over-langchain.md`](./docs/adrs/ADR-001-mastra-over-langchain.md) - Framework choice
-  - [`docs/adrs/ADR-002-hybrid-retrieval.md`](./docs/adrs/ADR-002-hybrid-retrieval.md) - Search architecture
-  - [`docs/adrs/ADR-003-deterministic-validation.md`](./docs/adrs/ADR-003-deterministic-validation.md) - Validation strategy
 
-- Decision Architecture:
-  - [`docs/architecture/decision-architecture.md`](./docs/architecture/decision-architecture.md) - Full doctrine and code examples
-  - [`docs/architecture/trust-scoring.md`](./docs/architecture/trust-scoring.md) - Trust score formula and calibration
-  - [`docs/architecture/human-review-workflow.md`](./docs/architecture/human-review-workflow.md) - Human review queue and workflow
-- Implementation (Target Stack):
-  - [`docs/implementation/INDEX.md`](./docs/implementation/INDEX.md) - Implementation guides overview
-  - [`docs/implementation/01-warehouse-redshift.md`](./docs/implementation/01-warehouse-redshift.md) - Analytics warehouse
-  - [`docs/implementation/02-search-elasticsearch.md`](./docs/implementation/02-search-elasticsearch.md) - Document search
-  - [`docs/implementation/03-cache-redis.md`](./docs/implementation/03-cache-redis.md) - State caching
-  - [`docs/implementation/04-vector-pgvector.md`](./docs/implementation/04-vector-pgvector.md) - Vector storage
-  - [`docs/implementation/05-retrieval-hybrid-rerank.md`](./docs/implementation/05-retrieval-hybrid-rerank.md) - Hybrid retrieval
-  - [`docs/implementation/06-observability-otel-phoenix.md`](./docs/implementation/06-observability-otel-phoenix.md) - Observability
-  - [`docs/implementation/07-prompt-infrastructure.md`](./docs/implementation/07-prompt-infrastructure.md) - Prompt infrastructure
-  - [`docs/implementation/08-cost-tracking.md`](./docs/implementation/08-cost-tracking.md) - Cost tracking
-  - [`docs/implementation/09-evaluation-ci.md`](./docs/implementation/09-evaluation-ci.md) - CI evaluation
-  - [`docs/implementation/10-entity-data-model.md`](./docs/implementation/10-entity-data-model.md) - Entity model
-- Evaluation:
-  - [`docs/evaluation/evaluation-strategy.md`](./docs/evaluation/evaluation-strategy.md)
-  - [`docs/evaluation/quality-bar.md`](./docs/evaluation/quality-bar.md)
-  - [`docs/evaluation/release-gates.md`](./docs/evaluation/release-gates.md)
-  - [`docs/evaluation/adversarial-cases.md`](./docs/evaluation/adversarial-cases.md)
-- Showcase:
-  - [`docs/showcase/showcase-overview.md`](./docs/showcase/showcase-overview.md)
-  - [`docs/showcase/case-study.md`](./docs/showcase/case-study.md)
-  - [`docs/showcase/founding-ai-infra-fit.md`](./docs/showcase/founding-ai-infra-fit.md)
-  - [`docs/showcase/scenario-catalog.md`](./docs/showcase/scenario-catalog.md)
-  - [`docs/showcase/demo-walkthrough.md`](./docs/showcase/demo-walkthrough.md)
-- Development:
-  - [`docs/development/README.md`](./docs/development/README.md) - Development guides index
-  - [`docs/development/contributor-guide.md`](./docs/development/contributor-guide.md) - Workflow and conventions
-  - [`docs/development/dev-environment.md`](./docs/development/dev-environment.md) - Local setup and debugging
-  - [`docs/development/how-to-add-check.md`](./docs/development/how-to-add-check.md) - Adding validation checks
-  - [`docs/development/how-to-add-adr.md`](./docs/development/how-to-add-adr.md) - Documenting decisions
-- Getting Started:
-  - [`docs/quick-start.md`](./docs/quick-start.md) - 5-minute setup
-  - [`docs/FAQ.md`](./docs/FAQ.md) - Common questions answered
-- Architecture Decisions:
-  - [`docs/adrs/README.md`](./docs/adrs/README.md) - ADR index
-  - [`docs/adrs/ADR-001-mastra-over-langchain.md`](./docs/adrs/ADR-001-mastra-over-langchain.md) - Framework choice
-  - [`docs/adrs/ADR-002-hybrid-retrieval.md`](./docs/adrs/ADR-002-hybrid-retrieval.md) - Search architecture
-  - [`docs/adrs/ADR-003-deterministic-validation.md`](./docs/adrs/ADR-003-deterministic-validation.md) - Validation strategy
-  - [`docs/adrs/ADR-005-decision-architecture.md`](./docs/adrs/ADR-005-decision-architecture.md) - Three-layer pipeline
-- Roadmap:
-  - [`docs/roadmap/README.md`](./docs/roadmap/README.md) - Roadmap index with next actions
-  - [`docs/roadmap/executive-summary.md`](./docs/roadmap/executive-summary.md) - Strategic overview
-  - [`docs/roadmap/platform-roadmap.md`](./docs/roadmap/platform-roadmap.md) - Capability roadmap
-  - [`docs/roadmap/milestones.md`](./docs/roadmap/milestones.md) - 90-day milestones
-  - [`docs/roadmap/phase-01-scaffolding.md`](./docs/roadmap/phase-01-scaffolding.md) - Phase 01
-  - [`docs/roadmap/phase-02-mvp.md`](./docs/roadmap/phase-02-mvp.md) - Phase 02
-  - [`docs/roadmap/phase-03-showcase.md`](./docs/roadmap/phase-03-showcase.md) - Phase 03
-  - [`docs/roadmap/phase-05-post-launch.md`](./docs/roadmap/phase-05-post-launch.md) - Phase 05
-- Project Tracking:
-  - [`CHANGELOG.md`](./CHANGELOG.md) - Change history
-  - [`todo.md`](./todo.md) - Prioritized task list
-
-## Current repo-backed evidence
-
-| Capability | Evidence |
-| --- | --- |
-| Bounded orchestration entrypoint | [`src/entrypoints/wcp-entrypoint.ts`](./src/entrypoints/wcp-entrypoint.ts) |
-| Deterministic extraction and validation | [`src/mastra/tools/wcp-tools.ts`](./src/mastra/tools/wcp-tools.ts) |
-| Structured decision contract | [`src/mastra/agents/wcp-agent.ts`](./src/mastra/agents/wcp-agent.ts), [`src/types/index.ts`](./src/types/index.ts) |
-| API analysis and health surface | [`src/app.ts`](./src/app.ts), [`src/server.ts`](./src/server.ts) |
-| Typed error taxonomy | [`src/utils/errors.ts`](./src/utils/errors.ts) |
-| Deterministic local mode | [`src/utils/mock-responses.ts`](./src/utils/mock-responses.ts) |
-| Proof tests | [`tests/unit/test_wcp_tools.test.ts`](./tests/unit/test_wcp_tools.test.ts), [`tests/integration/test_wcp_integration.test.ts`](./tests/integration/test_wcp_integration.test.ts) |
-
-## Role-fit angle
-
-This documentation explicitly translates the repo into the language of founding AI infrastructure:
-
-- retrieval and context assembly as infrastructure,
-- deterministic vs probabilistic boundaries,
-- evaluation as a deployment gate,
-- observability and cost tracking as operational concerns,
-- data-system grounding as a design requirement.
-
-See [`docs/showcase/founding-ai-infra-fit.md`](./docs/showcase/founding-ai-infra-fit.md) and [`docs/foundation/tech-stack-map.md`](./docs/foundation/tech-stack-map.md).
-
-## Quick demo
+## Getting Started
 
 ```bash
-# Setup (one time)
+# Clone and install
 git clone https://github.com/FishRaposo/WCP-Compliance-Agent.git
 cd WCP-Compliance-Agent
 npm install
 
-# Test the validation
-npm test
-
-# Start the API
-npm run dev
-
-# In another terminal, try an analysis
-curl -X POST http://localhost:3000/api/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"payload": "Role: Electrician, Hours: 45, Wage: 35.50"}'
-```
-
-**Expected response:**
-```json
-{
-  "status": "VIOLATION",
-  "explanation": "Wage below prevailing rate for Electrician...",
-  "findings": [
-    {"check": "base_wage", "expected": 38.50, "actual": 35.50}
-  ],
-  "confidence": 0.98
-}
-```
-
-See [`docs/quick-start.md`](./docs/quick-start.md) for full setup instructions.
-
-## Local verification
-
-```bash
-npm install
-npm run test
-```
-
-Then start the API surface if needed:
-
-```bash
+# Build (must pass)
 npm run build
-npm run serve
+
+# Run with your OpenAI API key
+export OPENAI_API_KEY=sk-your-key
+npm run dev
 ```
+
+See [`WCP_CORE.md`](./WCP_CORE.md) for complete demo instructions and interview prep.
+
+---
+
+*Built as an architecture showcase for high-stakes AI systems. The patterns demonstrated—deterministic scaffolding, trust scoring, audit trails—transfer to revenue intelligence, healthcare, finance, and any domain requiring provably correct AI decisions.*
