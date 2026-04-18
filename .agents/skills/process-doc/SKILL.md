@@ -47,9 +47,6 @@ Walk me through the process — describe it, paste existing docs, or just tell m
 - **How**: [Detailed instructions]
 - **Output**: [What this step produces]
 
-#### Step 2: [Name]
-[Same format]
-
 ### Exceptions and Edge Cases
 | Scenario | What to Do |
 |----------|-----------|
@@ -66,6 +63,6 @@ Walk me through the process — describe it, paste existing docs, or just tell m
 
 ## Tips
 
-1. **Start messy** — You don't need a perfect description. Tell me how it works today and I'll structure it.
-2. **Include the exceptions** — "Usually we do X, but sometimes Y" is the most valuable part to document.
-3. **Name the people** — Even if roles change, knowing who does what today helps get the process right.
+1. **Start messy** — Tell me how it works today and I'll structure it.
+2. **Include the exceptions** — "Usually we do X, but sometimes Y" is the most valuable part.
+3. **Name the people** — Knowing who does what today helps get the process right.

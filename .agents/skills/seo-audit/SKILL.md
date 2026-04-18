@@ -1,6 +1,6 @@
 ---
 name: seo-audit
-description: "When the user wants to audit, review, or diagnose SEO issues on their site. Also use when the user mentions 'SEO audit,' 'technical SEO,' 'why am I not ranking,' 'SEO issues,' 'on-page SEO,' 'page speed,' 'core web vitals,' 'crawl errors,' or 'indexing issues.'"
+description: "When the user wants to audit, review, or diagnose SEO issues. Also use when the user mentions 'SEO audit,' 'technical SEO,' 'why am I not ranking,' 'SEO issues,' 'on-page SEO,' 'page speed,' 'core web vitals,' 'crawl errors,' or 'indexing issues.'"
 ---
 
 # SEO Audit
@@ -57,3 +57,32 @@ Expert in search engine optimization. Identify issues and provide actionable rec
 - Screaming Frog
 - Ahrefs / Semrush
 - Sitebulb
+
+---
+
+## GEO Considerations (AI Search)
+
+When optimizing for AI search (ChatGPT, Perplexity, etc.):
+
+1. **Explicit role titles** — "AI architect" not implied through description
+2. **Skill adjacencies** — Words that cluster together (LLM + production + scale)
+3. **Specific outcomes** — Not "systems" but "deployed X systems"
+4. **Recency markers** — "2024," "latest"
+
+---
+
+## Upwork-Specific SEO
+
+**Profile optimization:**
+- Keywords in title: "AI Infrastructure Engineer"
+- Keywords in first 2 lines (preview text)
+- Skills selected match target keywords
+- Portfolio descriptions keyword-rich
+
+**Target keywords for AI infrastructure:**
+- AI infrastructure engineer
+- LLM production
+- LangChain developer
+- RAG implementation
+- AI systems architect
+- Agentic AI

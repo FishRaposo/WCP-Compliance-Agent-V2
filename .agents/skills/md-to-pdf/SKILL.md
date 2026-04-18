@@ -49,18 +49,6 @@ python scripts/md2pdf.py input.md output.pdf
 - Basic markdown support
 - Faster for simple documents
 
-### Method 3: Playwright/Chromium (Best Rendering)
-
-For pixel-perfect control:
-
-```bash
-# Convert to HTML first
-pandoc input.md -o temp.html --standalone
-
-# Print to PDF with Chromium
-npx playwright-core chromium --headless --print-to-pdf=output.pdf temp.html
-```
-
 ## Method Selection Guide
 
 | Need | Method | Why |
@@ -71,34 +59,6 @@ npx playwright-core chromium --headless --print-to-pdf=output.pdf temp.html
 | Quick & simple | Python script | Fast, no deps |
 | Custom styling | Playwright | Full CSS control |
 | Batch processing | Python script | Easy to automate |
-
-## Common Options
-
-### Pandoc Options
-
-```bash
-# Table of contents
-pandoc input.md -o output.pdf --toc
-
-# Page size
-pandoc input.md -o output.pdf -V geometry:margin=1in
-
-# Template
-pandoc input.md -o output.pdf --template=eisvogel
-
-# Syntax highlighting
-pandoc input.md -o output.pdf --highlight-style=tango
-```
-
-### Python Script Usage
-
-```bash
-# Basic
-python scripts/md2pdf.py document.md
-
-# Custom output
-python scripts/md2pdf.py document.md reports/weekly.pdf
-```
 
 ## Troubleshooting
 
@@ -112,26 +72,3 @@ python scripts/md2pdf.py document.md reports/weekly.pdf
 **Images not appearing?**
 - Use absolute paths or ensure images are in working directory
 - Check image format (PNG/JPG work best)
-
-**Code blocks formatting issues?**
-- Use fenced code blocks with language tags
-- Add `--listings` flag for LaTeX-style code
-
-## Advanced: Custom Templates
-
-Create a custom LaTeX template for consistent branding:
-
-```yaml
-# frontmatter.md
----
-title: "My Report"
-author: "Your Name"
-date: "\today"
-geometry: margin=2cm
-fontsize: 11pt
----
-```
-
-```bash
-pandoc frontmatter.md input.md -o output.pdf --template=custom.tex
-```

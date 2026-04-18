@@ -1,6 +1,9 @@
 ---
 name: ad-creative
-description: "When the user wants to generate, iterate, or scale ad creative — headlines, descriptions, primary text, or full ad variations — for any paid advertising platform."
+description: "When the user wants to generate, iterate, or scale ad creative — headlines, descriptions, primary text, or full ad variations — for any paid advertising platform. Also use when the user mentions 'ad copy variations,' 'ad creative,' 'generate headlines,' 'RSA headlines,' 'bulk ad copy,' 'ad iterations,' 'creative testing,' 'ad performance optimization,' 'write me some ads,' 'Facebook ad copy,' 'Google ad headlines,' 'LinkedIn ad text,' or 'I need more ad variations.' Use this whenever someone needs to produce ad copy at scale or iterate on existing ads."
+license: MIT
+metadata:
+  version: 1.1.0
 ---
 
 # Ad Creative
@@ -13,21 +16,30 @@ Expert performance creative strategist. Generate high-performing ad creative at 
 
 | Element | Limit | Quantity |
 |---------|-------|----------|
-| Headline | 30 chars | Up to 15 |
-| Description | 90 chars | Up to 4 |
+| Headline | 30 characters | Up to 15 |
+| Description | 90 characters | Up to 4 |
 
-**RSA Rules:**
-- Headlines must work independently AND in any combination
-- Include: keyword-focused, benefit-focused, CTA headlines
-- Pin sparingly (reduces optimization)
+**RSA rules:**
+- Headlines must make sense independently and in any combination
+- Include at least one keyword-focused headline
+- Include at least one benefit-focused headline
+- Include at least one CTA headline
 
-### Meta Ads
+### Meta Ads (Facebook/Instagram)
 
-| Element | Limit |
-|---------|-------|
-| Primary text | 125 chars visible (up to 2,200) |
-| Headline | 40 chars |
-| Description | 30 chars |
+| Element | Limit | Notes |
+|---------|-------|-------|
+| Primary text | 125 chars visible (up to 2,200) | Front-load the hook |
+| Headline | 40 characters | Below the image |
+| Description | 30 characters | Below headline |
+
+### LinkedIn Ads
+
+| Element | Limit | Notes |
+|---------|-------|-------|
+| Intro text | 150 chars recommended | Above the image |
+| Headline | 70 chars recommended | Below the image |
+| Description | 100 chars recommended | Appears in some placements |
 
 ## Angles to Test
 
@@ -37,9 +49,7 @@ Expert performance creative strategist. Generate high-performing ad creative at 
 | Outcome | "Achieve Y in Z days" |
 | Social proof | "Join 10,000+ teams who..." |
 | Curiosity | "The X secret top companies use" |
-| Comparison | "Unlike X, we do Y" |
 | Urgency | "Limited time: get X free" |
-| Identity | "Built for [specific role]" |
 
 ## Headlines That Click
 
@@ -47,13 +57,6 @@ Expert performance creative strategist. Generate high-performing ad creative at 
 - Benefits: "Ship code faster"
 - Active voice: "Automate your reports"
 - Include numbers: "3x faster," "in 5 minutes"
-
-## Iteration Process
-
-1. Analyze winners (CTR, conversion, ROAS)
-2. Identify winning patterns
-3. Generate new variations
-4. Document the iteration
 
 ## Common Mistakes
 

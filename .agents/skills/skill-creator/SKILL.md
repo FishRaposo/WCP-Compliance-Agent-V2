@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Create, edit, improve, or audit AgentSkills. Use when creating a new skill from scratch or when asked to improve, review, audit, tidy up, or clean up an existing skill or SKILL.md file.
+description: Create, edit, improve, or audit AgentSkills. Use when creating a new skill from scratch or when asked to improve, review, audit, tidy up, or clean up an existing skill or SKILL.md file. Also use when editing or restructuring a skill directory (moving files to references/ or scripts/, removing stale content, validating against the AgentSkills spec). Triggers on phrases like "create a skill", "author a skill", "tidy up a skill", "improve this skill", "review the skill", "clean up the skill", "audit the skill".
 ---
 
 # Skill Creator
@@ -30,7 +30,7 @@ skill-name/
 ## Core Principles
 
 ### Concise is Key
-Context window is a public. Only add what Codex doesn't already know.
+Context window is a public good. Only add what Codex doesn't already know.
 
 ### Progressive Disclosure
 1. **Metadata** (name + description) — Always in context
@@ -41,15 +41,6 @@ Context window is a public. Only add what Codex doesn't already know.
 - Lowercase letters, digits, hyphens only
 - Under 64 characters
 - Verb-led: `gh-address-comments`, `linear-create-issue`
-
-## Creating a Skill
-
-1. **Understand** — Concrete examples of usage
-2. **Plan** — Scripts, references, assets needed
-3. **Initialize** — Run `init_skill.py`
-4. **Edit** — Write SKILL.md, add resources
-5. **Package** — Run `package_skill.py`
-6. **Iterate** — Test and refine
 
 ## SKILL.md Structure
 
