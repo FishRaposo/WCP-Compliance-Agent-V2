@@ -36,47 +36,81 @@ validateEnvironmentOrExit();
 (async () => {
   try {
     // Test WCP input: Electrician with 45 hours (overtime) and $50 wage
-    // Expected: Revise status due to overtime (>40 hours)
-    // Note: Would also trigger underpayment if wage < $51.69 base rate
+    // Expected: Revise/Reject status due to overtime (>40 hours) and underpayment (<$51.69)
     const fakeWCP = "Role: Electrician, Hours: 45, Wage: $50";
 
     console.log("Processing WCP:", fakeWCP);
     console.log("...\n");
 
-    // Generate compliance decision using the agent
-    // The agent will:
-    // 1. Extract data using extractWCPTool
-    // 2. Validate against DBWD rates using validateWCPTool
-    // 3. Make decision (Approved/Revise/Reject) with explanation
-    const response = await generateWcpDecision({
+    // Generate compliance decision using the three-layer pipeline
+    // Layer 1: Deterministic extraction and validation
+    // Layer 2: LLM verdict with reasoning
+    // Layer 3: Trust score and human review flag
+    const decision = await generateWcpDecision({
       content: fakeWCP,
-      maxSteps: 3,
-      onStepFinish: ({ text, toolCalls, toolResults, finishReason }) => {
-        console.log("Step:", { text, toolCalls, toolResults, finishReason });
-      },
     });
 
-    // Validate response.object before using it
-    if (!response.object) {
-      const formattedError = formatApiError(new Error('LLM returned invalid response: missing object'));
-      
-      console.error("\n❌ Invalid Response Error:");
-      console.error(`Error Code: ${formattedError.error.code}`);
-      console.error(`Message: ${formattedError.error.message}`);
-      console.error("Response:", response);
-      
-      // Exit with error code for CI/CD
-      process.exit(1);
-    }
-
     // Display structured decision output
-    console.log("\nDecision:", JSON.stringify(response.object, null, 2));
+    console.log("\n=== DECISION OUTPUT ===\n");
+    console.log("Trace ID:", decision.traceId);
+    console.log("Final Status:", decision.finalStatus);
+    console.log("Trust Score:", decision.trust.score.toFixed(2), `(${decision.trust.band})`);
+    console.log("Human Review Required:", decision.humanReview.required ? "YES" : "No");
     
-    // Display raw text response (for debugging)
-    console.log("\nRaw Text:", response.text);
+    console.log("\n--- Layer 1: Deterministic Report ---");
+    console.log("Role:", decision.deterministic.extracted.role);
+    console.log("Hours:", decision.deterministic.extracted.hours);
+    console.log("Wage:", decision.deterministic.extracted.wage);
+    console.log("DBWD Rate:", decision.deterministic.dbwdRate.baseRate, "+", decision.deterministic.dbwdRate.fringeRate, "fringe");
+    console.log("Checks Performed:", decision.deterministic.checks.length);
     
-    // Display tool execution results (for audit trail)
-    console.log("\nTool Results:", JSON.stringify(response.toolResults, null, 2));
+    const failedChecks = decision.deterministic.checks.filter(c => !c.passed);
+    if (failedChecks.length > 0) {
+      console.log("\nFailed Checks:");
+      for (const check of failedChecks) {
+        console.log(`  - [${check.id}] ${check.type}: ${check.message}`);
+        console.log(`    Regulation: ${check.regulation}`);
+        if (check.expected !== undefined && check.actual !== undefined) {
+          console.log(`    Expected: ${check.expected}, Actual: ${check.actual}`);
+        }
+      }
+    }
+    
+    console.log("\n--- Layer 2: LLM Verdict ---");
+    console.log("Status:", decision.verdict.status);
+    console.log("Rationale:", decision.verdict.rationale);
+    console.log("Self-Confidence:", (decision.verdict.selfConfidence * 100).toFixed(0) + "%");
+    console.log("Referenced Checks:", decision.verdict.referencedCheckIds.join(", "));
+    
+    console.log("\n--- Layer 3: Trust Score ---");
+    console.log("Score Components:");
+    console.log("  - Deterministic:", decision.trust.components.deterministic.toFixed(2));
+    console.log("  - Classification:", decision.trust.components.classification.toFixed(2));
+    console.log("  - LLM Self:", decision.trust.components.llmSelf.toFixed(2));
+    console.log("  - Agreement:", decision.trust.components.agreement.toFixed(2));
+    
+    if (decision.humanReview.required) {
+      console.log("\n--- Human Review Queue ---");
+      console.log("Status:", decision.humanReview.status);
+      console.log("Queued At:", decision.humanReview.queuedAt);
+    }
+    
+    console.log("\n--- Audit Trail ---");
+    for (const event of decision.auditTrail) {
+      console.log(`  [${event.timestamp}] ${event.stage}: ${event.event}`);
+    }
+    
+    // Health metrics (backward compatible)
+    console.log("\n--- Health Metrics ---");
+    console.log("Cycle Time:", decision.health?.cycleTime, "ms");
+    console.log("Token Usage:", decision.health?.tokenUsage);
+    console.log("Validation Score:", decision.health?.validationScore?.toFixed(2));
+    console.log("Confidence:", decision.health?.confidence?.toFixed(2));
+
+    console.log("\n=== END OF DECISION ===\n");
+    
+    // Exit with success code for CI/CD
+    process.exit(0);
   } catch (error: any) {
     // Structured error handling with proper error formatting
     const formattedError = formatApiError(error);

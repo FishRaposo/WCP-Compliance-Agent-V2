@@ -27,7 +27,7 @@ async function handleAnalyzeRequest(c: any) {
     const requestId = c.req.header("x-request-id") || crypto.randomUUID();
 
     return c.json({
-      ...result.object,
+      ...result,
       requestId,
       timestamp: new Date().toISOString(),
     });

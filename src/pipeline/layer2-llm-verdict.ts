@@ -222,8 +222,8 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
     // Convert mock decision to LLMVerdict format
     const verdict: LLMVerdict = {
       traceId: report.traceId,
-      status: mockDecision.object.status as "Approved" | "Revise" | "Reject",
-      rationale: mockDecision.object.explanation,
+      status: mockDecision.status as "Approved" | "Revise" | "Reject",
+      rationale: mockDecision.explanation,
       referencedCheckIds: report.checks.map((c) => c.id), // Reference all checks in mock mode
       citations: [
         {
@@ -231,9 +231,9 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
           description: "Prevailing wage requirements",
         },
       ],
-      selfConfidence: mockDecision.object.health.confidence,
+      selfConfidence: 0.95, // Mock is deterministic, high confidence
       reasoningTrace: "Mock mode - deterministic reasoning based on findings",
-      tokenUsage: mockDecision.object.health.tokenUsage,
+      tokenUsage: 0, // No tokens used in mock mode
       model: "mock",
       timestamp: new Date().toISOString(),
     };
