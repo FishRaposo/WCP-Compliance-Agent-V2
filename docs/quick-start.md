@@ -1,190 +1,124 @@
 # Quick Start
 
-Status Label: Implemented
+**Get WCP Compliance Agent running in 5 minutes.**
 
-Get the WCP Compliance Agent running locally in under 5 minutes.
+This is a three-layer AI decision system that proves every compliance call with evidence. Think of it as a court case for every payroll decision — three layers of proof, every finding cites a regulation, every decision has a paper trail.
 
-## Prerequisites
+---
+
+## What You Need
 
 - Node.js 18+ ([download](https://nodejs.org/))
-- Git
-- OpenAI API key ([get one here](https://platform.openai.com/api-keys))
+- An OpenAI API key ([get one here](https://platform.openai.com/api-keys))
 
-## 1. Clone and Install
+---
+
+## Run It
 
 ```bash
+# 1. Clone
 git clone https://github.com/FishRaposo/WCP-Compliance-Agent.git
 cd WCP-Compliance-Agent
 npm install
-```
 
-## 2. Configure Environment
+# 2. Add your API key
+echo "OPENAI_API_KEY=sk-your-key-here" > .env
 
-```bash
-# Copy the example environment file
-copy .env.example .env
-
-# Edit .env and add your OpenAI API key
-OPENAI_API_KEY=sk-your-key-here
-```
-
-## 3. Verify Setup
-
-```bash
-# Run the test suite
-npm test
-
-# Expected output:
-# ✓ pipeline-contracts > should validate check results
-# ✓ trust-score > should compute trust components correctly
-# ✓ decision-pipeline > should return TrustScoredDecision type
-# ✓ decision-pipeline > should catch underpayment violations
-```
-
-## 4. Start the Server
-
-```bash
-# Development mode with hot reload
+# 3. Start the server
 npm run dev
-
-# Or production build
-npm run build
-npm start
 ```
 
-Server starts on `http://localhost:3000`
+Server runs at `http://localhost:3000`
 
-## 5. Make Your First API Call
+---
 
+## Try It
+
+**Clean case — should approve:**
 ```bash
 curl -X POST http://localhost:3000/api/analyze \
   -H "Content-Type: application/json" \
-  -d '{
-    "payload": "Role: Electrician, Hours: 45, Wage: 35.50"
-  }'
+  -d '{"content": "Role: Electrician, Hours: 40, Wage: $52"}'
 ```
 
-**Expected Response:**
-
-```json
-{
-  "traceId": "wcp-20240115-AB12",
-  "finalStatus": "Reject",
-  "deterministic": {
-    "extracted": {
-      "role": "Electrician",
-      "hours": 45,
-      "wage": 35.50
-    },
-    "checks": [
-      {
-        "id": "base_wage_001",
-        "type": "wage",
-        "passed": false,
-        "regulation": "40 U.S.C. § 3142(a)",
-        "severity": "critical",
-        "message": "UNDERPAYMENT: $3.00/hr shortfall"
-      }
-    ],
-    "deterministicScore": 0.5
-  },
-  "verdict": {
-    "status": "Reject",
-    "rationale": "Worker underpaid by $3.00/hr",
-    "referencedCheckIds": ["base_wage_001"],
-    "selfConfidence": 0.95,
-    "tokenUsage": 150
-  },
-  "trust": {
-    "score": 0.45,
-    "band": "require_human",
-    "components": {
-      "deterministic": 0.5,
-      "classification": 1.0,
-      "llmSelf": 0.95,
-      "agreement": 1.0
-    }
-  },
-  "humanReview": {
-    "required": true,
-    "status": "pending"
-  },
-  "health": {
-    "cycleTime": 245,
-    "tokenUsage": 150,
-    "validationScore": 0.5,
-    "confidence": 0.45
-  },
-  "requestId": "req-abc123",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
+**Violation case — should reject + flag for review:**
+```bash
+curl -X POST http://localhost:3000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Role: Electrician, Hours: 45, Wage: $35"}'
 ```
 
-## Common Issues
+---
 
-### "OPENAI_API_KEY not set"
+## What You'll See
 
-**Fix:** Ensure `.env` file exists and contains your API key:
+Every response includes:
+
+| Field | What It Means |
+|-------|---------------|
+| `finalStatus` | Approved, Reject, or Needs Review |
+| `trust.score` | 0.0 to 1.0 — confidence in the decision |
+| `deterministic.checks` | Hard rules that passed or failed |
+| `verdict.rationale` | LLM explanation citing those checks |
+| `humanReview.required` | true if trust is too low for auto-approval |
+| `auditTrail` | Complete evidence chain, timestamped |
+
+**The point:** Every decision is traceable. If someone asks "why did the AI decide this?" — you can show them the exact evidence.
+
+---
+
+## Run Tests
 
 ```bash
-echo OPENAI_API_KEY=sk-your-key > .env
+npm test
 ```
 
-### "Port 3000 already in use"
+Tests verify the three-layer pipeline works correctly — deterministic rules, LLM reasoning, and trust scoring.
 
-**Fix:** Kill existing process or use different port:
+---
 
-```bash
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
-
-# Or set custom port in .env
-PORT=3001
-```
-
-### Tests failing with "Module not found"
-
-**Fix:** Reinstall dependencies:
+## No API Key? Use Mock Mode
 
 ```bash
-rm -rf node_modules
-npm install
-```
-
-### Model timeout errors
-
-**Fix:** The system has built-in mock mode for offline testing:
-
-```bash
-# Run with mock responses (no API calls)
 MOCK_MODE=true npm run dev
 ```
 
-## Next Steps
+Returns deterministic responses without calling OpenAI. Good for offline development.
 
-- Read the [full documentation](./INDEX.md)
-- Explore the [case study](./showcase/case-study.md) for real examples
-- Review the [architecture overview](./architecture/system-overview.md)
-- Check the [API documentation](./architecture/api-and-integrations.md)
+---
+
+## Common Issues
+
+**"OPENAI_API_KEY not set"**
+```bash
+echo "OPENAI_API_KEY=sk-your-key" > .env
+```
+
+**"Port 3000 in use"**
+```bash
+# Use a different port
+PORT=3001 npm run dev
+```
+
+---
+
+## What's Next
+
+- **[DEMO_SCRIPT.md](../DEMO_SCRIPT.md)** — 5-minute presentation script
+- **[ROLE_FIT.md](../ROLE_FIT.md)** — Why this matters for AI infrastructure hiring
+- **[docs/INDEX.md](./INDEX.md)** — Full documentation navigation
+
+---
 
 ## Development Commands
 
-| Command | Purpose |
-|---------|---------|
+| Command | What It Does |
+|---------|--------------|
 | `npm run dev` | Start with hot reload |
 | `npm run build` | Compile TypeScript |
 | `npm test` | Run all tests |
-| `npm run test:unit` | Unit tests only |
-| `npm run test:integration` | Integration tests only |
-| `npm run test:pipeline` | Pipeline-specific tests |
-| `npm run test:calibration` | Trust calibration golden set |
-| `npm run lint:pipeline` | Check pipeline architecture |
-| `npm run lint` | Check code style |
-| `npm run typecheck` | Verify TypeScript types |
+| `npm run lint:pipeline` | Verify three-layer architecture is intact |
 
-## Getting Help
+---
 
-- Check [FAQ](./FAQ.md) for common questions
-- Review [troubleshooting](./implementation/12-troubleshooting.md) for detailed debugging
-- Open an issue on GitHub for bugs or feature requests
+*This isn't just payroll compliance. This is how you build AI systems that provably make correct decisions.*
