@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { secureHeaders } from "hono/secure-headers";
 
 import { generateWcpDecision } from "./entrypoints/wcp-entrypoint.js";
 import { formatApiError, ValidationError } from "./utils/errors.js";
@@ -54,6 +55,9 @@ async function handleAnalyzeRequest(c: any) {
 
 export function createApp() {
   const app = new Hono();
+
+  // Add security headers (X-XSS-Protection, X-Frame-Options, X-Content-Type-Options, etc.)
+  app.use("*", secureHeaders());
 
   app.use(
     "/*",
