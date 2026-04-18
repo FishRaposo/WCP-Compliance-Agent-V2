@@ -2,6 +2,50 @@
 
 Agent ramp-up notes for the WCP Compliance Agent repository.
 
+## OpenClaw Skills
+
+This repo includes a `.agents/skills/` directory with OpenClaw skills for the project. Any AI agent working on this codebase should reference these skills.
+
+### Active Skills (Immediate Use)
+
+| Skill | Purpose | When to Use |
+|-------|---------|-------------|
+| **jobs-ive** | Jobs/Ive presentation coaching | Demo prep, copy simplification, keynote structure |
+| **mmx-cli** | MiniMax sub-agent | Parallel coding, second opinions, media generation |
+| **md-to-pdf** | PDF export | Interview materials, report generation |
+| **process-doc** | SOP documentation | Compliance docs, runbooks, process flows |
+
+### Available Skills (Post-Interview/Productizing)
+
+| Skill | Purpose | When to Use |
+|-------|---------|-------------|
+| **skill-creator** | Build custom skills | Creating WCP-specific automation |
+| **pricing-strategy** | SaaS pricing design | Productizing WCP as a service |
+| **seo-audit** | SEO optimization | Marketing website optimization |
+| **ad-creative** | Ad copy generation | Paid acquisition campaigns |
+| **content-research-writer** | Content writing | Technical blog posts, documentation |
+
+### Using Skills
+
+1. Read the skill's SKILL.md in `.agents/skills/<skill-name>/`
+2. Follow the protocols and guidelines defined there
+3. Use any bundled scripts or references as needed
+
+### MiniMax Quick Reference
+
+```bash
+# Chat with M2.7 for coding help
+mmx text chat --message "Review this TypeScript" --file src/pipeline/layer2-llm-verdict.ts --output json
+
+# Generate music (unlimited free tier)
+mmx music generate --prompt "Upbeat background" --instrumental --out bgm.mp3
+
+# Check quota
+mmx quota show
+```
+
+---
+
 ## Architecture: Three-Layer Decision Pipeline
 
 Every compliance decision flows through exactly three layers. Bypassing any layer is a CI failure.
