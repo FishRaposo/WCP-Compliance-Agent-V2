@@ -6,6 +6,7 @@ WCP Compliance Agent is a recruiter-facing documentation showcase for a trustwor
 
 ## What this repository proves today
 
+- **Three-layer decision architecture**: deterministic scaffold → LLM verdict → trust score + human review, enforced by typed contracts and CI gates.
 - Deterministic scaffolding can constrain LLM behavior in a regulated workflow.
 - Structured response contracts can make decisions traceable and integration-ready.
 - A small codebase can still show strong infrastructure judgment when boundaries are explicit.
@@ -52,9 +53,10 @@ See [`docs/foundation/implemented-vs-target.md`](./docs/foundation/implemented-v
 
 ## Read this repository in three paths
 
-- **2 minutes**: [`docs/showcase/recruiter-walkthrough.md`](./docs/showcase/recruiter-walkthrough.md)
+- **2 minutes**: [`docs/showcase/founding-ai-infra-fit.md`](./docs/showcase/founding-ai-infra-fit.md) - Skills mapping
 - **10 minutes**: [`docs/INDEX.md`](./docs/INDEX.md) -> system overview -> implemented vs target
-- **20 minutes**: architecture + evaluation + tech stack + public role-fit documentation
+- **20 minutes**: architecture + evaluation + tech stack + case study + FAQ
+- **Quick start**: [`docs/quick-start.md`](./docs/quick-start.md) - Run locally in 5 minutes
 
 ## Documentation map
 
@@ -63,11 +65,27 @@ See [`docs/foundation/implemented-vs-target.md`](./docs/foundation/implemented-v
   - [`docs/foundation/implemented-vs-target.md`](./docs/foundation/implemented-vs-target.md)
   - [`docs/foundation/glossary.md`](./docs/foundation/glossary.md)
   - [`docs/foundation/tech-stack-map.md`](./docs/foundation/tech-stack-map.md)
+  - [`docs/foundation/wcp-and-dbwd-reference.md`](./docs/foundation/wcp-and-dbwd-reference.md) - WCP and DBWD compliance reference
+- Compliance (Davis-Bacon Act):
+  - [`docs/compliance/regulatory-compliance-report.md`](./docs/compliance/regulatory-compliance-report.md) - System compliance overview
+  - [`docs/compliance/traceability-matrix.md`](./docs/compliance/traceability-matrix.md) - Regulation-to-code mapping
+  - [`docs/compliance/implementation-guide.md`](./docs/compliance/implementation-guide.md) - How regulations become code
 - Architecture:
   - [`docs/architecture/system-overview.md`](./docs/architecture/system-overview.md)
   - [`docs/architecture/retrieval-and-context.md`](./docs/architecture/retrieval-and-context.md)
   - [`docs/architecture/decision-engine.md`](./docs/architecture/decision-engine.md)
   - [`docs/architecture/api-and-integrations.md`](./docs/architecture/api-and-integrations.md)
+- Architecture Decisions (ADRs):
+  - [`docs/adrs/README.md`](./docs/adrs/README.md) - ADR index
+  - [`docs/adrs/ADR-005-decision-architecture.md`](./docs/adrs/ADR-005-decision-architecture.md) - Three-layer pipeline
+  - [`docs/adrs/ADR-001-mastra-over-langchain.md`](./docs/adrs/ADR-001-mastra-over-langchain.md) - Framework choice
+  - [`docs/adrs/ADR-002-hybrid-retrieval.md`](./docs/adrs/ADR-002-hybrid-retrieval.md) - Search architecture
+  - [`docs/adrs/ADR-003-deterministic-validation.md`](./docs/adrs/ADR-003-deterministic-validation.md) - Validation strategy
+
+- Decision Architecture:
+  - [`docs/architecture/decision-architecture.md`](./docs/architecture/decision-architecture.md) - Full doctrine and code examples
+  - [`docs/architecture/trust-scoring.md`](./docs/architecture/trust-scoring.md) - Trust score formula and calibration
+  - [`docs/architecture/human-review-workflow.md`](./docs/architecture/human-review-workflow.md) - Human review queue and workflow
 - Implementation (Target Stack):
   - [`docs/implementation/INDEX.md`](./docs/implementation/INDEX.md) - Implementation guides overview
   - [`docs/implementation/01-warehouse-redshift.md`](./docs/implementation/01-warehouse-redshift.md) - Analytics warehouse
@@ -84,13 +102,40 @@ See [`docs/foundation/implemented-vs-target.md`](./docs/foundation/implemented-v
   - [`docs/evaluation/evaluation-strategy.md`](./docs/evaluation/evaluation-strategy.md)
   - [`docs/evaluation/quality-bar.md`](./docs/evaluation/quality-bar.md)
   - [`docs/evaluation/release-gates.md`](./docs/evaluation/release-gates.md)
+  - [`docs/evaluation/adversarial-cases.md`](./docs/evaluation/adversarial-cases.md)
 - Showcase:
   - [`docs/showcase/showcase-overview.md`](./docs/showcase/showcase-overview.md)
   - [`docs/showcase/case-study.md`](./docs/showcase/case-study.md)
   - [`docs/showcase/founding-ai-infra-fit.md`](./docs/showcase/founding-ai-infra-fit.md)
+  - [`docs/showcase/scenario-catalog.md`](./docs/showcase/scenario-catalog.md)
+  - [`docs/showcase/demo-walkthrough.md`](./docs/showcase/demo-walkthrough.md)
+- Development:
+  - [`docs/development/README.md`](./docs/development/README.md) - Development guides index
+  - [`docs/development/contributor-guide.md`](./docs/development/contributor-guide.md) - Workflow and conventions
+  - [`docs/development/dev-environment.md`](./docs/development/dev-environment.md) - Local setup and debugging
+  - [`docs/development/how-to-add-check.md`](./docs/development/how-to-add-check.md) - Adding validation checks
+  - [`docs/development/how-to-add-adr.md`](./docs/development/how-to-add-adr.md) - Documenting decisions
+- Getting Started:
+  - [`docs/quick-start.md`](./docs/quick-start.md) - 5-minute setup
+  - [`docs/FAQ.md`](./docs/FAQ.md) - Common questions answered
+- Architecture Decisions:
+  - [`docs/adrs/README.md`](./docs/adrs/README.md) - ADR index
+  - [`docs/adrs/ADR-001-mastra-over-langchain.md`](./docs/adrs/ADR-001-mastra-over-langchain.md) - Framework choice
+  - [`docs/adrs/ADR-002-hybrid-retrieval.md`](./docs/adrs/ADR-002-hybrid-retrieval.md) - Search architecture
+  - [`docs/adrs/ADR-003-deterministic-validation.md`](./docs/adrs/ADR-003-deterministic-validation.md) - Validation strategy
+  - [`docs/adrs/ADR-005-decision-architecture.md`](./docs/adrs/ADR-005-decision-architecture.md) - Three-layer pipeline
 - Roadmap:
-  - [`docs/roadmap/platform-roadmap.md`](./docs/roadmap/platform-roadmap.md)
-  - [`docs/roadmap/milestones.md`](./docs/roadmap/milestones.md)
+  - [`docs/roadmap/README.md`](./docs/roadmap/README.md) - Roadmap index with next actions
+  - [`docs/roadmap/executive-summary.md`](./docs/roadmap/executive-summary.md) - Strategic overview
+  - [`docs/roadmap/platform-roadmap.md`](./docs/roadmap/platform-roadmap.md) - Capability roadmap
+  - [`docs/roadmap/milestones.md`](./docs/roadmap/milestones.md) - 90-day milestones
+  - [`docs/roadmap/phase-01-scaffolding.md`](./docs/roadmap/phase-01-scaffolding.md) - Phase 01
+  - [`docs/roadmap/phase-02-mvp.md`](./docs/roadmap/phase-02-mvp.md) - Phase 02
+  - [`docs/roadmap/phase-03-showcase.md`](./docs/roadmap/phase-03-showcase.md) - Phase 03
+  - [`docs/roadmap/phase-05-post-launch.md`](./docs/roadmap/phase-05-post-launch.md) - Phase 05
+- Project Tracking:
+  - [`CHANGELOG.md`](./CHANGELOG.md) - Change history
+  - [`todo.md`](./todo.md) - Prioritized task list
 
 ## Current repo-backed evidence
 
@@ -115,6 +160,40 @@ This documentation explicitly translates the repo into the language of founding 
 - data-system grounding as a design requirement.
 
 See [`docs/showcase/founding-ai-infra-fit.md`](./docs/showcase/founding-ai-infra-fit.md) and [`docs/foundation/tech-stack-map.md`](./docs/foundation/tech-stack-map.md).
+
+## Quick demo
+
+```bash
+# Setup (one time)
+git clone https://github.com/FishRaposo/WCP-Compliance-Agent.git
+cd WCP-Compliance-Agent
+npm install
+
+# Test the validation
+npm test
+
+# Start the API
+npm run dev
+
+# In another terminal, try an analysis
+curl -X POST http://localhost:3000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"payload": "Role: Electrician, Hours: 45, Wage: 35.50"}'
+```
+
+**Expected response:**
+```json
+{
+  "status": "VIOLATION",
+  "explanation": "Wage below prevailing rate for Electrician...",
+  "findings": [
+    {"check": "base_wage", "expected": 38.50, "actual": 35.50}
+  ],
+  "confidence": 0.98
+}
+```
+
+See [`docs/quick-start.md`](./docs/quick-start.md) for full setup instructions.
 
 ## Local verification
 

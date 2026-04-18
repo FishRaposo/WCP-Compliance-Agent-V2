@@ -1,8 +1,46 @@
-// Internal dependencies
-import { mastra } from "../mastra/index.js";
-import { WCPDecisionSchema } from "../mastra/agents/wcp-agent.js";
+/**
+ * WCP Compliance Agent - Decision Orchestrator
+ *
+ * This module orchestrates the Weekly Certified Payroll (WCP) compliance validation
+ * workflow using a three-layer decision architecture:
+ * 1. Deterministic Scaffold (Layer 1) - extraction, validation, rule checks
+ * 2. LLM Verdict (Layer 2) - reasoning over pre-computed findings
+ * 3. Trust Score + Human Review (Layer 3) - governance and audit trail
+ *
+ * Regulatory Basis:
+ * - 29 CFR 5.5(a)(3)(ii): "Contractors shall submit weekly a copy of all payrolls..."
+ * - Copeland Act (40 U.S.C. § 3145): "Furnish a statement on the wages paid each employee..."
+ * - 29 CFR Part 3: Record keeping requirements
+ *
+ * Orchestration Flow:
+ * 1. Execute deterministic scaffold (Layer 1)
+ * 2. Generate LLM verdict over findings (Layer 2)
+ * 3. Compute trust score and flag for human review if needed (Layer 3)
+ * 4. Return TrustScoredDecision with full audit trail (Copeland Act compliance)
+ *
+ * Audit Trail Requirements:
+ * - Every decision gets unique traceId
+ * - All three layers logged with timestamps
+ * - LLM reasoning trace captured verbatim
+ * - Human review queue for low-trust cases
+ * - 7-year retention (federal contract requirement)
+ *
+ * Deterministic Guarantees:
+ * - Layer 1 uses regex patterns (no LLM hallucination)
+ * - Layer 1 uses exact arithmetic (no estimation)
+ * - Layer 2 CANNOT recompute (must reference Layer 1 findings)
+ * - Layer 3 is pure function (replay-safe)
+ *
+ * @file src/entrypoints/wcp-entrypoint.ts
+ * @see docs/architecture/decision-architecture.md - Three-layer doctrine
+ * @see docs/adrs/ADR-005-decision-architecture.md - Architectural decision
+ * @see docs/compliance/traceability-matrix.md - Regulation-to-code mapping
+ */
+
+// Pipeline orchestrator
+import { executeDecisionPipeline, type DecisionPipelineInput } from "../pipeline/orchestrator.js";
+import type { TrustScoredDecision } from "../types/decision-pipeline.js";
 import { ExternalApiError, RateLimitError } from "../utils/errors.js";
-import { generateMockWcpDecision, isMockMode } from "../utils/mock-responses.js";
 
 type StepFinishCallback = (args: {
   text?: string;
@@ -11,117 +49,107 @@ type StepFinishCallback = (args: {
   finishReason?: string;
 }) => void;
 
+/**
+ * Generate WCP Compliance Decision
+ *
+ * Main orchestration function for Davis-Bacon Act compliance validation.
+ * Uses the three-layer decision pipeline for auditability and trust.
+ *
+ * Three-Layer Architecture:
+ * Layer 1: Deterministic scaffold (extraction, DBWD lookup, rule checks)
+ * Layer 2: LLM verdict (reasoning over pre-computed findings)
+ * Layer 3: Trust score + human review flag
+ *
+ * Regulatory Context:
+ * This function implements the "weekly certified payroll" validation workflow
+ * required by 29 CFR 5.5(a)(3). For each payroll submission:
+ * - Validates prevailing wage compliance (40 U.S.C. § 3142)
+ * - Validates overtime calculation (40 U.S.C. § 3702)
+ * - Validates worker classification (29 CFR 5.5(a)(3)(i))
+ * - Generates traceable decision record (Copeland Act)
+ * - Computes trust score for human review gating
+ *
+ * Mock Mode:
+ * When MOCK_MODE=true, returns deterministic mock responses without API calls.
+ * Useful for:
+ * - Testing without OpenAI API costs
+ * - Offline development
+ * - Deterministic regression tests
+ *
+ * @param args.content - Raw WCP input text (e.g., "Role: Electrician, Hours: 45, Wage: $35.50")
+ * @param args.traceId - Optional trace ID (generated if not provided)
+ * @param args.mastraInstance - DEPRECATED: kept for compatibility, not used
+ * @param args.maxSteps - DEPRECATED: kept for compatibility, not used
+ * @param args.onStepFinish - DEPRECATED: kept for compatibility, not used
+ *
+ * @returns Promise<TrustScoredDecision> - Compliance decision with findings, trust score, audit trail, and health metrics
+ *
+ * @throws {RateLimitError} - OpenAI API rate limit exceeded
+ * @throws {ExternalApiError} - API quota exhausted or network failure
+ *
+ * @example
+ * const decision = await generateWcpDecision({
+ *   content: "Role: Electrician, Hours: 45, Wage: 35.50"
+ * });
+ *
+ * // decision.finalStatus: "Reject"
+ * // decision.trust.score: 0.45
+ * // decision.trust.band: "require_human"
+ * // decision.deterministic.checks: [{id: "base_wage_001", passed: false, ...}]
+ * // decision.verdict.referencedCheckIds: ["base_wage_001"]
+ *
+ * // Original health metrics (backward compatible):
+ * // decision.health.cycleTime: 245      // Processing time in ms
+ * // decision.health.tokenUsage: 150     // LLM tokens consumed
+ * // decision.health.validationScore: 0.8 // Deterministic check score
+ * // decision.health.confidence: 0.45    // Overall confidence (from trust.score)
+ *
+ * @see docs/architecture/decision-architecture.md - "Three-Layer Pipeline"
+ */
 export async function generateWcpDecision(args: {
   content: string;
+  traceId?: string;
   mastraInstance?: { getAgent: (name: string) => Promise<{ generate: Function }> };
   maxSteps?: number;
   onStepFinish?: StepFinishCallback;
-}) {
-  const { content, mastraInstance = mastra, maxSteps = 3, onStepFinish } = args;
+}): Promise<TrustScoredDecision> {
+  const { content, traceId } = args;
 
-  // Check if we're in mock mode
-  if (isMockMode()) {
-    console.log('🔧 Using mock mode - generating deterministic response');
-    const mockDecision = generateMockWcpDecision(content);
-    
-    // Return in the same format as the real API
-    return {
-      object: {
-        ...mockDecision,
-        health: {
-          cycleTime: 50, // Mock fast response
-          tokenUsage: 0,
-          validationScore: mockDecision.findings?.length === 0 ? 1.0 : 0.8,
-          confidence: mockDecision.status === "Approved" ? 0.95 : 
-                     mockDecision.status === "Revise" ? 0.85 : 0.90,
-        },
-      },
-      usage: { totalTokens: 0 }
-    };
-  }
-
-  // Track timing
-  const startTime = Date.now();
-  let totalTokenUsage = 0;
-
-  // Wrap step callback to track tokens
-  const wrappedOnStepFinish: StepFinishCallback = (stepData) => {
-    // Extract token usage if available
-    if (stepData.toolResults && Array.isArray(stepData.toolResults)) {
-      // Try to extract token usage from tool results
-      stepData.toolResults.forEach((result: any) => {
-        if (result?.usage?.totalTokens) {
-          totalTokenUsage += result.usage.totalTokens;
-        }
-      });
-    }
-    
-    if (onStepFinish) {
-      onStepFinish(stepData);
-    }
+  // Build pipeline input
+  const pipelineInput: DecisionPipelineInput = {
+    content,
+    traceId,
   };
 
-  let response;
   try {
-    const agent = await mastraInstance.getAgent("wcpAgent");
+    // Execute the three-layer pipeline
+    // This is the ONLY valid path to produce a TrustScoredDecision
+    const decision = await executeDecisionPipeline(pipelineInput);
 
-    response = await agent.generate(
-      [{ role: "user", content }],
-      {
-        structuredOutput: { schema: WCPDecisionSchema },
-        maxSteps,
-        onStepFinish: wrappedOnStepFinish,
-      },
-    );
+    return decision;
   } catch (error: any) {
-    // Handle specific API errors
+    // Handle specific API errors from Layer 2
     if (error.status === 429) {
-      throw new RateLimitError('OpenAI API rate limit exceeded', {
-        retryAfter: error.headers?.['retry-after']
+      throw new RateLimitError("OpenAI API rate limit exceeded", {
+        retryAfter: error.headers?.["retry-after"],
       });
     }
-    if (error.code === 'insufficient_quota') {
-      throw new ExternalApiError('OpenAI API quota exceeded', {
+    if (error.code === "insufficient_quota") {
+      throw new ExternalApiError("OpenAI API quota exceeded", {
         code: error.code,
-        type: 'quota_error'
+        type: "quota_error",
       });
     }
-    if (error.name === 'FetchError' || error.code === 'ENOTFOUND') {
-      throw new ExternalApiError('Network connection failed', {
-        originalError: error.message
+    if (error.name === "FetchError" || error.code === "ENOTFOUND") {
+      throw new ExternalApiError("Network connection failed", {
+        originalError: error.message,
       });
     }
-    throw new ExternalApiError('OpenAI API error', {
-      code: error.code || 'UNKNOWN_API_ERROR',
-      message: error.message
+
+    // Re-throw pipeline errors
+    throw new ExternalApiError("Decision pipeline error", {
+      code: error.code || "PIPELINE_ERROR",
+      message: error.message,
     });
   }
-
-  // Validate response.object after API call
-  if (!response.object || typeof response.object !== 'object') {
-    throw new ExternalApiError('Invalid agent response structure', {
-      response,
-      expected: 'WCPDecision object with status, explanation, findings, trace'
-    });
-  }
-
-  // Calculate final metrics
-  const endTime = Date.now();
-  const cycleTime = endTime - startTime;
-
-  // If response doesn't include health metrics, add them
-  if (response.object && !response.object.health) {
-    response.object = {
-      ...response.object,
-      health: {
-        cycleTime,
-        tokenUsage: totalTokenUsage || response.usage?.totalTokens || 0,
-        validationScore: response.object.findings?.length === 0 ? 1.0 : 0.8,
-        confidence: response.object.status === "Approved" ? 0.95 : 
-                   response.object.status === "Revise" ? 0.85 : 0.90,
-      },
-    };
-  }
-
-  return response;
 }

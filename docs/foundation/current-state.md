@@ -6,40 +6,56 @@ This document is the source of truth for what the repository actually implements
 
 ## Repository-backed capabilities
 
-### Runtime flow
+### Runtime flow (Three-Layer Decision Pipeline)
 
-- `generateWcpDecision(...)` orchestrates the current decision path.
-- The path is bounded through `maxSteps`.
-- The entrypoint adds health metadata and normalizes API failures.
+- `generateWcpDecision(...)` orchestrates the compliance decision via three-layer pipeline.
+- **Layer 1** (Deterministic): Extracts WCP data, looks up DBWD rates, runs rule checks.
+- **Layer 2** (LLM Verdict): Generates reasoning over pre-computed findings.
+- **Layer 3** (Trust Score): Computes trust, applies thresholds, routes to human review if needed.
+- Returns `TrustScoredDecision` with full audit trail and health metrics.
 
 Primary evidence:
 
 - [`src/entrypoints/wcp-entrypoint.ts`](../../src/entrypoints/wcp-entrypoint.ts)
+- [`src/pipeline/orchestrator.ts`](../../src/pipeline/orchestrator.ts)
 
-### Deterministic modules
+### Layer 1: Deterministic Scaffold
 
-- `extractWCPTool` extracts `role`, `hours`, and `wage` from text input.
-- `validateWCPTool` checks the extracted payload against current hardcoded rate logic.
-- Findings are deterministic and used as the factual substrate for the agent.
+- `extractWCPDataTool` extracts `role`, `hours`, `wage` from text input.
+- `resolveClassification` maps roles to DBWD classifications (exact/alias/semantic).
+- `lookupDBWDRate` retrieves prevailing wage rates from hardcoded local data.
+- `checkPrevailingWage`, `checkOvertime`, `checkFringeBenefits` run compliance rules.
+- Produces `DeterministicReport` with citations for every check.
 
 Primary evidence:
 
+- [`src/pipeline/layer1-deterministic.ts`](../../src/pipeline/layer1-deterministic.ts)
 - [`src/mastra/tools/wcp-tools.ts`](../../src/mastra/tools/wcp-tools.ts)
 
-### Decision layer
+### Layer 2: LLM Verdict
 
-- `wcpAgent` uses a schema-bound structured response.
-- Current response shape includes:
-  - `status`
-  - `explanation`
-  - `findings`
-  - `trace`
-  - `health`
+- `wcpAgent` generates structured verdicts over Layer 1 findings.
+- Must reference check IDs from DeterministicReport (forbidden from recomputing).
+- Output: `LLMVerdict` with `status`, `rationale`, `referencedCheckIds[]`, `citations`.
+- Captures reasoning trace for audit.
 
 Primary evidence:
 
+- [`src/pipeline/layer2-llm-verdict.ts`](../../src/pipeline/layer2-llm-verdict.ts)
 - [`src/mastra/agents/wcp-agent.ts`](../../src/mastra/agents/wcp-agent.ts)
-- [`src/types/index.ts`](../../src/types/index.ts)
+
+### Layer 3: Trust Score + Human Review
+
+- `computeTrustScore` calculates weighted trust (0.35 det + 0.25 class + 0.20 llm + 0.20 agree).
+- Thresholds: ≥0.85 auto-decide, 0.60-0.84 flag, <0.60 require human.
+- `humanReviewQueue` manages low-trust cases for manual review.
+- Output: `TrustScoredDecision` with full audit trail.
+
+Primary evidence:
+
+- [`src/pipeline/layer3-trust-score.ts`](../../src/pipeline/layer3-trust-score.ts)
+- [`src/services/human-review-queue.ts`](../../src/services/human-review-queue.ts)
+- [`src/types/decision-pipeline.ts`](../../src/types/decision-pipeline.ts)
 
 ### API surface
 
@@ -67,15 +83,20 @@ Primary evidence:
 
 ### Tests
 
-Current proof tests:
+Current test coverage:
 
-- unit tests for deterministic extraction and validation,
-- one integration test for orchestration seam correctness.
+- **Unit tests**: Pipeline contract validation, trust score computation.
+- **Integration tests**: End-to-end three-layer pipeline scenarios.
+- **Calibration tests**: Golden set evaluation for trust score accuracy.
+- **Lint rules**: AST-based architecture enforcement.
 
 Primary evidence:
 
-- [`tests/unit/test_wcp_tools.test.ts`](../../tests/unit/test_wcp_tools.test.ts)
-- [`tests/integration/test_wcp_integration.test.ts`](../../tests/integration/test_wcp_integration.test.ts)
+- [`tests/unit/pipeline-contracts.test.ts`](../../tests/unit/pipeline-contracts.test.ts)
+- [`tests/unit/trust-score.test.ts`](../../tests/unit/trust-score.test.ts)
+- [`tests/integration/decision-pipeline.test.ts`](../../tests/integration/decision-pipeline.test.ts)
+- [`tests/eval/trust-calibration.test.ts`](../../tests/eval/trust-calibration.test.ts)
+- [`scripts/lint-pipeline-discipline.ts`](../../scripts/lint-pipeline-discipline.ts)
 
 ## What is not implemented yet
 
@@ -83,10 +104,21 @@ The current repo does **not** implement:
 
 - PDF, CSV, or OCR ingestion,
 - normalized employee-level WCP reports,
-- DBWD retrieval with vector search or reranking,
-- persistence of decisions or traces,
-- submit/status/decision/trace workflow APIs,
+- DBWD retrieval with vector search or reranking (uses hardcoded rates),
+- persistence of decisions or traces (human review queue is in-memory stub),
+- submit/status/decision/trace workflow APIs (only `/analyze` endpoint),
 - Redshift, Elasticsearch, Redis, or CRM integrations,
-- CI-based eval gates or production observability pipelines.
+- production observability pipelines (basic health checks only).
 
 Those systems are documented as target architecture elsewhere in this documentation set.
+
+## Three-Layer Pipeline Status
+
+| Layer | Status | Key Files |
+|-------|--------|-----------|
+| Layer 1 (Deterministic) | ✅ Implemented | `layer1-deterministic.ts` |
+| Layer 2 (LLM Verdict) | ✅ Implemented | `layer2-llm-verdict.ts` |
+| Layer 3 (Trust Score) | ✅ Implemented | `layer3-trust-score.ts` |
+| Orchestrator | ✅ Implemented | `orchestrator.ts` |
+| Human Review Queue | ✅ Stub | `human-review-queue.ts` |
+| CI Enforcement | ✅ Implemented | `lint-pipeline-discipline.ts` |
