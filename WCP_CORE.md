@@ -34,20 +34,20 @@ Demonstrate **deterministic AI infrastructure** patterns applicable to revenue i
 ### Immediate Use (Interview Prep)
 | Skill | Purpose | Status |
 |-------|---------|--------|
-| **steve-jobs** | Presentation/storytelling coaching for demo delivery | Active use |
-| **md-to-pdf** | Export ROLE_FIT.md, architecture docs to PDF handouts | Install if needed |
+| **jobs-ive** | Steve Jobs/Jony Ive presentation coaching for demo storytelling | **Active use** |
+| **md-to-pdf** | Export ROLE_FIT.md, architecture docs to PDF handouts | Available |
+| **process-doc** | Document three-layer pipeline as formal SOPs with flowcharts | Available |
 
 ### Post-Interview (If Productizing)
 | Skill | Purpose |
 |-------|---------|
-| **process-doc** | Document three-layer pipeline as formal SOPs with flowcharts |
 | **skill-creator** | Build custom WCP-specific skills (DBWD lookup, compliance checking) |
 | **pricing-strategy** | Design SaaS pricing tiers if launching as product |
 | **seo-audit** | Optimize landing page for "AI compliance infrastructure" |
 | **ad-creative** | Generate ad copy for construction/payroll marketing |
 | **content-research-writer** | Technical blog posts about Trust-Score architecture |
 
-**Current priority:** steve-jobs skill for demo storytelling. Others deferred until post-interview.
+**Current priority:** jobs-ive skill for demo storytelling and presentation polish.
 
 ---
 
