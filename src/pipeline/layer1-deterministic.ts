@@ -14,15 +14,11 @@
  * @see docs/adrs/ADR-005-decision-architecture.md - Architectural decision
  */
 
-import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
 import {
   type DeterministicReport,
   type CheckResult,
   type ExtractedWCP,
   type DBWDRateInfo,
-  ExtractedWCPSchema,
-  DBWDRateInfoSchema,
 } from "../types/decision-pipeline.js";
 import { lookupDBWDRate as hybridLookup } from "../retrieval/hybrid-retriever.js";
 
@@ -46,16 +42,8 @@ import { lookupDBWDRate as hybridLookup } from "../retrieval/hybrid-retriever.js
  * - 29 CFR 5.5(a)(3)(ii): "Contractors shall submit weekly a copy of all payrolls..."
  * - Form WH-347: Standard format for certified payrolls
  */
-export const extractWCPDataTool = createTool({
-  id: "extract-wcp-data",
-  description: "Extract structured WCP data from text input using deterministic patterns",
-  inputSchema: z.object({
-    content: z.string().describe("Raw WCP text input"),
-  }),
-  outputSchema: ExtractedWCPSchema,
-  execute: async ({ context }): Promise<ExtractedWCP> => {
+export async function extractWCPData(content: string): Promise<ExtractedWCP> {
     const startTime = Date.now();
-    const { content } = context;
 
     // Core pattern-based extraction (deterministic, NO LLM)
     const roleMatch = content.match(/(?:Role|Classification|Trade|Position)[\s:]+([A-Za-z\s]+?)(?:,|;|\n|$)/i);
@@ -117,8 +105,7 @@ export const extractWCPDataTool = createTool({
 
     console.log(`[Layer 1] Extraction completed in ${Date.now() - startTime}ms`);
     return result;
-  },
-});
+}
 
 // ============================================================================
 // Classification Resolution
@@ -477,11 +464,7 @@ export async function layer1Deterministic(
 
   // Step 1: Extract structured data
   const extractStart = Date.now();
-  // Call tool execute with proper runtime context
-  const extracted = await extractWCPDataTool.execute({
-    context: { content: input },
-    runtimeContext: undefined as any,
-  });
+  const extracted = await extractWCPData(input);
   timings.push({ stage: "extraction", ms: Date.now() - extractStart });
 
   // Step 2: Resolve classification via hybrid retrieval

@@ -3,12 +3,10 @@
   "version": "0.1.0",
   "description": "Regulated-domain AI infrastructure case study for trustworthy LLM decision systems",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/server.js",
   "scripts": {
     "clean": "node -e \"const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', { recursive: true, force: true });\"",
     "build": "npm run clean --silent && tsc",
-    "dev": "mastra dev",
-    "start": "node dist/index.js",
     "serve": "node dist/server.js",
     "test": "npm run build && vitest run --reporter=dot",
     "test:watch": "vitest",
@@ -18,10 +16,7 @@
     "test:calibration": "vitest run tests/eval/trust-calibration.test.ts --reporter=verbose",
     "test:coverage": "vitest run --coverage --exclude tests/eval",
     "lint:pipeline": "tsx scripts/lint-pipeline-discipline.ts",
-    "test:retrieval": "vitest run tests/unit/hybrid-retriever.test.ts tests/unit/bm25-search.test.ts tests/unit/vector-search.test.ts tests/unit/rrf-fusion.test.ts",
-    "test:ingestion": "vitest run tests/unit/pdf-ingestion.test.ts tests/unit/csv-ingestion.test.ts",
-    "seed:corpus": "tsx scripts/seed-corpus.ts",
-    "generate:golden": "tsx scripts/generate-golden-set.ts"
+    "test:retrieval": "vitest run tests/unit/hybrid-retriever.test.ts tests/unit/rrf-fusion.test.ts"
   },
   "keywords": [
     "ai-infrastructure",
@@ -39,23 +34,17 @@
   "license": "MIT",
   "dependencies": {
     "@ai-sdk/openai": "^2.0.65",
+    "ai": "^5.0.0",
     "@elastic/elasticsearch": "^9.3.4",
     "@hono/node-server": "^1.19.7",
-    "@mastra/core": "^0.24.0",
-    "@mastra/libsql": "^0.16.4",
-    "@mastra/loggers": "^0.10.19",
-    "chalk": "^5.3.0",
     "cors": "^2.8.5",
-    "csv-parse": "^6.2.1",
     "dotenv": "^16.4.7",
     "hono": "^4.11.0",
-    "pdf-parse": "^2.4.5",
     "pg": "^8.20.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/pdf-parse": "^1.1.5",
     "@types/pg": "^8.20.0",
     "@vercel/node": "^5.7.11",
     "@vitest/coverage-v8": "^1.6.1",
@@ -63,8 +52,5 @@
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vitest": "^1.0.0"
-  },
-  "overrides": {
-    "ai": "^4.3.19"
   }
 }

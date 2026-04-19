@@ -6,7 +6,6 @@
  */
 
 import { promptRegistry, registerInMemoryPrompt } from "./registry.js";
-import { WCP_VERDICT_V1 } from "./versions/wcp-verdict-v1.js";
 import { WCP_VERDICT_V2 } from "./versions/wcp-verdict-v2.js";
 
 // ============================================================================
@@ -17,7 +16,6 @@ let _bootstrapped = false;
 
 function bootstrap(): void {
   if (_bootstrapped) return;
-  registerInMemoryPrompt(WCP_VERDICT_V1);
   registerInMemoryPrompt(WCP_VERDICT_V2);
   _bootstrapped = true;
 }
@@ -50,7 +48,6 @@ export async function resolvePrompt(key: string, orgId?: string): Promise<string
  */
 export async function seedPromptRegistry(): Promise<void> {
   bootstrap();
-  await promptRegistry.registerPrompt(WCP_VERDICT_V1);
   await promptRegistry.registerPrompt(WCP_VERDICT_V2);
-  console.log("[PromptRegistry] Seeded v1 (inactive) and v2 (active)");
+  console.log("[PromptRegistry] Seeded v2 (active)");
 }

@@ -15,7 +15,7 @@
  */
 
 import { openai } from "@ai-sdk/openai";
-import { Agent } from "@mastra/core";
+import { generateText } from "ai";
 import { z } from "zod";
 import {
   type DeterministicReport,
@@ -42,12 +42,6 @@ const STATIC_FALLBACK_INSTRUCTIONS = [
   "CRITICAL CONSTRAINT: You MUST NOT recompute values. Review Layer 1 findings only.",
   "Decide: Approved / Revise / Reject. Cite specific check IDs from the report.",
 ].join("\n");
-
-const wcpVerdictAgent = new Agent({
-  name: "wcp-verdict-agent",
-  instructions: STATIC_FALLBACK_INSTRUCTIONS,
-  model: openai("gpt-4o-mini"),
-});
 
 // ============================================================================
 // Input/Output Schemas
@@ -224,20 +218,20 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
     return verdict;
   }
 
-  // Resolve active prompt from registry (falls back to v2 in-memory if DB unavailable)
+  // Resolve active prompt from registry (falls back to static fallback if DB unavailable)
   const resolvedInstructions = await resolvePrompt("wcp_verdict");
-  const agentToUse = resolvedInstructions
-    ? new Agent({ name: "wcp-verdict-agent", instructions: resolvedInstructions, model: openai("gpt-4o-mini") })
-    : wcpVerdictAgent;
+  const systemInstructions = resolvedInstructions ?? STATIC_FALLBACK_INSTRUCTIONS;
 
   // Build prompt
   const prompt = buildLayer2Prompt(report);
 
   try {
-    // Call LLM agent
-    const response = await agentToUse.generate([
-      { role: "user", content: prompt },
-    ]);
+    // Call LLM via generateText
+    const response = await generateText({
+      model: openai("gpt-4o-mini"),
+      system: systemInstructions,
+      messages: [{ role: "user", content: prompt }],
+    });
 
     // Parse and validate output
     let rawOutput: z.infer<typeof RawLLMOutputSchema>;
@@ -385,4 +379,4 @@ function extractVerdictFromText(
 // Exports
 // ============================================================================
 
-export { wcpVerdictAgent, buildLayer2Prompt };
+export { buildLayer2Prompt };

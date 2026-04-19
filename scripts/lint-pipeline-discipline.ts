@@ -29,7 +29,6 @@ const VIOLATIONS: Array<{ file: string; line: number; message: string }> = [];
 // Files allowed to call LLM/Agent.generate
 const ALLOWED_LLM_FILES = [
   "src/pipeline/layer2-llm-verdict.ts",
-  "src/mastra/agents/wcp-agent.ts", // Legacy, but still allowed for now
 ];
 
 // ============================================================================
