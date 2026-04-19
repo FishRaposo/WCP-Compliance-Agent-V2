@@ -94,5 +94,6 @@ export function generateMockWcpDecision(input: string) {
  * Check if mock mode is enabled
  */
 export function isMockMode(): boolean {
-  return process.env.OPENAI_API_KEY === 'mock' || process.env.OPENAI_API_KEY === 'mock-key';
+  const key = process.env.OPENAI_API_KEY;
+  return key === 'mock' || key === 'mock-key' || key === 'test-api-key' || !key || key === '';
 }

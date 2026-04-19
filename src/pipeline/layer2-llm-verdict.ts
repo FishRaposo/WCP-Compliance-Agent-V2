@@ -370,11 +370,12 @@ function extractVerdictFromText(
     : 0.5;
 
   // Find referenced check IDs (look for check IDs in text)
-  const checkIdPattern = /check[_-]?(?:\d{3}|\w+)/gi;
+  // Check IDs follow pattern: {type}_check_{NNN} (e.g., base_wage_check_001, overtime_check_001)
+  const checkIdPattern = /[a-z_]*check_\d{3}/gi;
   const foundIds = text.match(checkIdPattern) ?? [];
-  const validIds = report.checks.map((c) => c.id);
+  const validIds = report.checks.map((c) => c.id.toLowerCase());
   const referencedCheckIds = foundIds
-    .map((id) => id.toLowerCase().replace(/[_-]/g, "_"))
+    .map((id) => id.toLowerCase())
     .filter((id) => validIds.includes(id));
 
   return {

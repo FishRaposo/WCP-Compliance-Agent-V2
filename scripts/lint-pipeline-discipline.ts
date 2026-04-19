@@ -17,6 +17,7 @@
 
 import { Project, SyntaxKind, CallExpression, SourceFile } from "ts-morph";
 import { join } from "path";
+import { fileURLToPath } from "url";
 
 // ============================================================================
 // Configuration
@@ -250,8 +251,9 @@ function main(): void {
   }
 }
 
-// Run if executed directly
-if (require.main === module) {
+// Run if executed directly (ESM-compatible)
+const isMain = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMain) {
   main();
 }
 

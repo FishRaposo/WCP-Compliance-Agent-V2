@@ -16,7 +16,6 @@
 
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { v4 as uuidv4 } from "uuid";
 import {
   type DeterministicReport,
   type CheckResult,
@@ -335,10 +334,11 @@ export async function layer1Deterministic(
 
   // Step 1: Extract structured data
   const extractStart = Date.now();
-  // Call tool execute with proper runtime context (if available in Mastra)
+  // Call tool execute with proper runtime context
   const extracted = await extractWCPDataTool.execute({
     context: { content: input },
-  } as any); // Type assertion for Mastra tool compatibility
+    runtimeContext: undefined as any,
+  });
   timings.push({ stage: "extraction", ms: Date.now() - extractStart });
 
   // Step 2: Resolve classification
@@ -379,9 +379,11 @@ export async function layer1Deterministic(
   timings.push({ stage: "compliance_checks", ms: Date.now() - checkStart });
 
   // Step 5: Compute deterministic score
-  const cleanChecks = checks.filter((c) => c.severity !== "critical" || c.passed).length;
+  // Critical failures tank the score (deterministic layer must be clean)
+  const hasCriticalFailure = checks.some((c) => c.severity === "critical" && !c.passed);
+  const passedChecks = checks.filter((c) => c.passed).length;
   const totalChecks = checks.length;
-  const deterministicScore = cleanChecks / totalChecks;
+  const deterministicScore = hasCriticalFailure ? 0 : passedChecks / totalChecks;
 
   // Build the report
   const report: DeterministicReport = {

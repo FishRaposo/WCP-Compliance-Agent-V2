@@ -110,6 +110,11 @@ export function computeAgreement(
     return 0.5;
   }
 
+  // Revise → Reject (overly strict, but acknowledges issue exists)
+  if (expectedStatus === "Revise" && verdict.status === "Reject") {
+    return 0.5;
+  }
+
   // Major disagreement (e.g., Approved when critical failure exists)
   return 0.0;
 }
