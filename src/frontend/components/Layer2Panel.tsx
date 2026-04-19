@@ -9,8 +9,8 @@ interface Props {
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     Approved: 'bg-emerald-900/50 text-emerald-300 border-emerald-700',
-    Revise: 'bg-amber-900/50 text-amber-300 border-amber-700',
-    Reject: 'bg-red-900/50 text-red-300 border-red-700',
+    Revise:   'bg-amber-900/50 text-amber-300 border-amber-700',
+    Reject:   'bg-red-900/50 text-red-300 border-red-700',
     'Pending Human Review': 'bg-violet-900/50 text-violet-300 border-violet-700',
   }
   return (
@@ -21,8 +21,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function Layer2Panel({ data, isMockMode }: Props) {
-  const confidence = data.selfReportedConfidence ?? data.confidence
-  const confPct = confidence != null ? Math.round(confidence * 100) : null
+  const confPct = data.selfConfidence != null ? Math.round(data.selfConfidence * 100) : null
 
   return (
     <div className="space-y-4">
@@ -93,16 +92,20 @@ export function Layer2Panel({ data, isMockMode }: Props) {
           </div>
         )}
 
-        {(data.citations?.length ?? 0) > 0 && (
+        {data.citations?.length > 0 && (
           <div>
             <div className="flex items-center gap-1.5 mb-2">
               <FileText className="w-3 h-3 text-slate-500" />
               <span className="text-[11px] text-slate-500 uppercase tracking-wider">Citations</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(data.citations ?? []).map(c => (
-                <span key={c} className="text-[11px] font-mono bg-violet-950/30 text-violet-400 border border-violet-900 px-1.5 py-0.5 rounded">
-                  {c}
+              {data.citations.map((c, i) => (
+                <span
+                  key={i}
+                  title={c.description}
+                  className="text-[11px] font-mono bg-violet-950/30 text-violet-400 border border-violet-900 px-1.5 py-0.5 rounded cursor-default"
+                >
+                  {c.statute}
                 </span>
               ))}
             </div>
@@ -111,13 +114,16 @@ export function Layer2Panel({ data, isMockMode }: Props) {
       </div>
 
       {/* Token usage */}
-      {data.tokenUsage && (
+      {data.tokenUsage > 0 && (
         <div className="flex items-center gap-2 text-[11px] text-slate-600">
           <Cpu className="w-3 h-3" />
-          <span>
-            {data.model ?? 'gpt-4o-mini'} · {data.tokenUsage.total} tokens
-            ({data.tokenUsage.prompt} prompt + {data.tokenUsage.completion} completion)
-          </span>
+          <span>{data.model ?? 'gpt-4o-mini'} · {data.tokenUsage} tokens</span>
+        </div>
+      )}
+      {data.tokenUsage === 0 && data.model === 'mock' && (
+        <div className="flex items-center gap-2 text-[11px] text-slate-700">
+          <Cpu className="w-3 h-3" />
+          <span>mock mode · 0 tokens</span>
         </div>
       )}
     </div>

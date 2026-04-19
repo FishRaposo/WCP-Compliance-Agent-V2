@@ -1,51 +1,5 @@
 # AGENTS.md
 
-Agent ramp-up notes for the WCP Compliance Agent repository.
-
-## OpenClaw Skills
-
-This repo includes a `.agents/skills/` directory with OpenClaw skills for the project. Any AI agent working on this codebase should reference these skills.
-
-### Active Skills (Immediate Use)
-
-| Skill | Purpose | When to Use |
-|-------|---------|-------------|
-| **jobs-ive** | Jobs/Ive presentation coaching | Demo prep, copy simplification, keynote structure |
-| **mmx-cli** | MiniMax sub-agent | Parallel coding, second opinions, media generation |
-| **md-to-pdf** | PDF export | Interview materials, report generation |
-| **process-doc** | SOP documentation | Compliance docs, runbooks, process flows |
-
-### Available Skills (Post-Interview/Productizing)
-
-| Skill | Purpose | When to Use |
-|-------|---------|-------------|
-| **skill-creator** | Build custom skills | Creating WCP-specific automation |
-| **pricing-strategy** | SaaS pricing design | Productizing WCP as a service |
-| **seo-audit** | SEO optimization | Marketing website optimization |
-| **ad-creative** | Ad copy generation | Paid acquisition campaigns |
-| **content-research-writer** | Content writing | Technical blog posts, documentation |
-
-### Using Skills
-
-1. Read the skill's SKILL.md in `.agents/skills/<skill-name>/`
-2. Follow the protocols and guidelines defined there
-3. Use any bundled scripts or references as needed
-
-### MiniMax Quick Reference
-
-```bash
-# Chat with M2.7 for coding help
-mmx text chat --message "Review this TypeScript" --file src/pipeline/layer2-llm-verdict.ts --output json
-
-# Generate music (unlimited free tier)
-mmx music generate --prompt "Upbeat background" --instrumental --out bgm.mp3
-
-# Check quota
-mmx quota show
-```
-
----
-
 ## Architecture: Three-Layer Decision Pipeline
 
 Every compliance decision flows through exactly three layers. Bypassing any layer is a CI failure.
@@ -68,8 +22,10 @@ The pipeline discipline lint (`npm run lint:pipeline`) uses ts-morph AST analysi
 ## Commands
 
 ```bash
-npm install              # Install dependencies
-npm run build            # Clean + tsc compile
+npm install              # Install dependencies (root only — no sub-packages)
+npm run build            # build:backend (tsc) + build:frontend (vite) → dist/
+npm run build:backend    # tsc -p tsconfig.backend.json → dist/*.js
+npm run build:frontend   # vite build → dist/showcase/
 npm run serve            # Start built server (dist/server.js)
 
 npm test                 # Build first, then vitest run (slow: includes build)
@@ -79,8 +35,10 @@ npm run test:pipeline    # Pipeline-specific tests (unit + integration for pipel
 npm run test:calibration # Trust calibration golden set — 100 examples (verbose output)
 npm run test:coverage    # Coverage report
 npm run test:retrieval   # Retrieval module tests (hybrid-retriever, RRF — no infra required)
+npm run test:frontend    # Frontend component tests (jsdom, vitest.config.frontend.ts)
 
 npm run lint:pipeline    # AST-based architectural lint (runs in CI)
+npm run lint:frontend    # ESLint for src/frontend/
 ```
 
 **Key quirk**: `npm test` runs `npm run build` before vitest. If you only changed tests (not src), you can run `vitest run` directly to skip the build.
@@ -91,35 +49,12 @@ npm run lint:pipeline    # AST-based architectural lint (runs in CI)
 
 ## Environment
 
-- `OPENAI_API_KEY` is required. Set to `"mock"`, `"mock-key"`, `"test-api-key"`, or empty for offline development/testing (triggers mock mode via `isMockMode()`).
+- `OPENAI_API_KEY` is required. Set to `"mock"`, `"mock-key"`, `"test-api-key"`, or empty for offline development/testing (triggers mock mode via `isMockMode()` in `src/utils/mock-responses.ts`).
 - Optional: `OPENAI_MODEL` (default: `gpt-4o-mini`), `AGENT_MAX_STEPS` (default: `3`).
 - Phase 02: `ELASTICSEARCH_URL` (default: `http://localhost:9200`), `ELASTICSEARCH_INDEX` (default: `dbwd_corpus`), `POSTGRES_URL`, `EMBEDDING_MODEL` (default: `text-embedding-3-small`), `PGVECTOR_DIMENSIONS` (default: `1536`).
-- Mock mode is detected via `isMockMode()` in `src/utils/mock-responses.ts` — no separate MOCK_MODE env var.
 - `src/utils/env-validator.ts` loads `.env` via dotenv and fails fast if `OPENAI_API_KEY` is missing.
 - `tests/setup.ts` sets `OPENAI_API_KEY=test-api-key` and `NODE_ENV=test` for all tests.
 - All retrieval infrastructure is optional: hybrid-retriever falls back to in-memory corpus when ES/DB are unavailable.
-
-## Key Directories
-
-| Path | Purpose |
-|------|---------||
-| `src/pipeline/` | Three-layer decision pipeline (layer1, layer2, layer3, orchestrator) |
-| `src/entrypoints/` | `wcp-entrypoint.ts` — public entry point calling the orchestrator |
-| `src/retrieval/` | Hybrid retrieval pipeline (BM25, vector, RRF, cross-encoder) — falls back to in-memory corpus |
-| `src/prompts/` | Prompt registry (PostgreSQL-backed, versioned) + v2 prompt template |
-| `src/services/` | `db-client.ts` (PostgreSQL pool), `human-review-queue.ts` |
-| `src/types/` | Typed contracts: `TrustScoredDecision`, `LLMVerdict`, `DeterministicReport` |
-| `src/utils/` | Error taxonomy, mock responses, env validation |
-| `src/config/` | Agent, app, and DB configuration |
-| `api/` | Vercel serverless functions (`analyze.ts`, `health.ts`) |
-| `showcase/` | React SPA demo UI (Vite + TailwindCSS) |
-| `data/` | `dbwd-corpus.json` — 20-trade DBWD synthetic corpus fixture |
-| `tests/unit/` | Unit tests for pipeline contracts, trust scoring, retrieval, prompts |
-| `tests/integration/` | Integration tests for decision pipeline |
-| `tests/eval/` | `golden-set.ts` (100 labeled examples) + `trust-calibration.test.ts` |
-| `tests/data/` | Test fixtures (`wcp-examples.ts`) |
-| `scripts/` | `lint-pipeline-discipline.ts` (AST lint) |
-| `docs/` | Architecture, ADRs, compliance docs, quick-start |
 
 ## Testing Quirks
 
@@ -127,19 +62,20 @@ npm run lint:pipeline    # AST-based architectural lint (runs in CI)
 - Layer 2 tests use mock mode automatically when key is `"test-api-key"` or `"mock"`.
 - Pipeline tests (`npm run test:pipeline`) are the critical subset that must always pass before merge.
 - Trust calibration tests (`tests/eval/trust-calibration.test.ts`) run against a golden set and may need real API keys in CI (set `OPENAI_API_KEY` to a real key, not a mock value).
+- Coverage thresholds: 80% lines, 70% branches, 80% functions, 80% statements. `src/retrieval/vector-search.ts` and `src/services/db-client.ts` are excluded from coverage (tested separately).
 
 ## CI (GitHub Actions)
 
-Workflow: `.github/workflows/pipeline-discipline.yml`
+Workflow: `.github/workflows/pipeline-discipline.yml`. Runs on push/PR to main/develop. Node 20.
 
-Sequential stages on push/PR to main/develop:
-1. **Build** — `npm run build` (TypeScript compilation)
-2. **Pipeline lint** — `npm run lint:pipeline` (AST architectural checks) — parallel with unit/retrieval tests
-3. **Unit tests** — `npm run test:unit` (mock mode, no infra)
-4. **Retrieval tests** — `npm run test:retrieval` (hybrid-retriever, RRF in mock mode)
-5. **Pipeline tests** — `npm run test:pipeline` (101 tests — must pass before coverage/calibration)
+Sequential stages:
+1. **Build** — `npm run build`
+2. **Pipeline lint** — `npm run lint:pipeline` (parallel with unit/retrieval)
+3. **Unit tests** — `npm run test:unit` (mock mode)
+4. **Retrieval tests** — `npm run test:retrieval` (mock mode)
+5. **Pipeline tests** — `npm run test:pipeline` (must pass before coverage/calibration)
 6. **Coverage** — `npm run test:coverage` (≥80% gate)
-7. **Trust calibration** — `npm run test:calibration` (100-example golden set, needs real `OPENAI_API_KEY`)
+7. **Trust calibration** — `npm run test:calibration` (100-example golden set, needs real `OPENAI_API_KEY`, only on main or when `ENABLE_CALIBRATION=true`)
 
 ## Conventions
 
@@ -149,12 +85,12 @@ Sequential stages on push/PR to main/develop:
 - Commit messages: `<type>: <subject>` (feat, fix, docs, test, refactor, ci).
 - Branches: `feature/*`, `fix/*`, `docs/*` — see `.github/CONTRIBUTING.md` for full checklist.
 - `require.main === module` in `scripts/lint-pipeline-discipline.ts` will not work with ESM — this is a known issue, the script works via `npx tsx` invocation.
-- DBWD rates: Layer 1 delegates lookups to `src/retrieval/hybrid-retriever.ts`. Falls back to 20-trade in-memory corpus when ES/DB unavailable (default for showcase).
+- DBWD rates: Layer 1 delegates lookups to `src/retrieval/hybrid-retriever.ts`. Falls back to 20-trade in-memory corpus when ES/DB unavailable (default for demo).
 - `ExtractedWCP` has 11 fields (workerName, socialSecurityLast4, tradeCode, localityCode, hoursByDay, grossPay — per WH-347 form).
 - Prompt registry in `src/prompts/` — v2 is the only active template. Override per org via `orgId`.
 - Golden set: 100 labeled examples in `tests/eval/golden-set.ts`.
 
-## Decision Contracts (src/types/)
+## Decision Contracts (`src/types/`)
 
 The central type is `TrustScoredDecision` in `src/types/decision-pipeline.ts`. Key fields:
 - `deterministic`: Layer 1 report (extracted data, checks, DBWD rate, score)
@@ -165,3 +101,37 @@ The central type is `TrustScoredDecision` in `src/types/decision-pipeline.ts`. K
 - `finalStatus`: "Approved" | "Revise" | "Reject" | "Pending Human Review"
 
 `validateReferencedCheckIds()` ensures every check ID cited by the LLM actually exists in the Layer 1 report.
+
+## Repository Layout
+
+```
+src/
+  pipeline/         # Three-layer decision pipeline (backend)
+  retrieval/        # Hybrid BM25+vector retriever
+  prompts/          # Prompt registry + v2 template
+  services/         # DB client, human-review queue
+  utils/            # Env validation, mock responses, errors
+  config/           # App, agent, DB config
+  entrypoints/      # wcp-entrypoint.ts (public API)
+  frontend/         # React SPA (Vite + TailwindCSS)
+api/                # Vercel serverless functions (analyze.ts, health.ts)
+tests/              # Backend unit + integration + eval tests
+dist/               # Build output
+  *.js              # Backend (tsc output)
+  showcase/         # Frontend (vite output → dist/showcase/)
+public/             # Static assets (favicon.svg, icons.svg)
+index.html          # Vite entry point
+```
+
+**Local dev:**
+```bash
+# Backend
+OPENAI_API_KEY=mock node dist/server.js
+
+# Frontend (proxies /api to localhost:3000)
+npx vite
+```
+
+## OpenClaw Skills
+
+This repo includes a `.agents/skills/` directory. Load skills via the `skill` tool when a task matches. Key active skills: `jobs-ive` (presentation coaching), `mmx-cli` (MiniMax sub-agent), `md-to-pdf` (PDF export), `process-doc` (SOP documentation). See `.agents/skills/<name>/SKILL.md` for each skill's protocol.

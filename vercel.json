@@ -10,7 +10,7 @@
   "rewrites": [
     { "source": "/api/health", "destination": "/api/health" },
     { "source": "/api/analyze", "destination": "/api/analyze" },
-    { "source": "/(.*)", "destination": "/showcase/dist/index.html" }
+    { "source": "/(.*)", "destination": "/showcase/index.html" }
   ],
   "headers": [
     {

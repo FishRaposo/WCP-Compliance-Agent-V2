@@ -21,7 +21,7 @@ export default defineConfig({
         'coverage/',
         'scripts/',
         'utils/',
-        'showcase/',
+        'src/frontend/',
         '_archive/',
         // Live-infra adapters — tested in test:calibration (real API key required)
         // and test:retrieval (real ES/DB required). Mock paths are covered.

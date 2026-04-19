@@ -1,6 +1,13 @@
 import { Shield, UserCheck, AlertTriangle, CheckCircle } from 'lucide-react'
 import type { TrustScore, HumanReview } from '../types'
 
+const HUMAN_REVIEW_STATUS_LABELS: Record<string, string> = {
+  not_required: 'Not required',
+  pending:      'Pending review',
+  approved:     'Approved by reviewer',
+  rejected:     'Rejected by reviewer',
+}
+
 interface Props {
   trust: TrustScore
   humanReview?: HumanReview
@@ -119,9 +126,9 @@ export function Layer3Panel({ trust, humanReview }: Props) {
             <div className="font-medium text-slate-200">
               {humanReview.required ? 'Human review required' : 'No human review needed'}
             </div>
-            {humanReview.status && (
+            {humanReview.status && humanReview.status !== 'not_required' && (
               <div className="text-slate-400">
-                Status: <span className="font-mono text-slate-300">{humanReview.status}</span>
+                Status: <span className="font-mono text-slate-300">{HUMAN_REVIEW_STATUS_LABELS[humanReview.status] ?? humanReview.status}</span>
               </div>
             )}
             {humanReview.queuedAt && (

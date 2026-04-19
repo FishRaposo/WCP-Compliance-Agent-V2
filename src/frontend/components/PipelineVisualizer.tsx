@@ -100,7 +100,7 @@ export function PipelineVisualizer({ result, isMockMode }: Props) {
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
   }, [result])
 
-  const failCount = result.deterministic.checks.filter(c => c.status === 'fail').length
+  const failCount = result.deterministic.checks.filter(c => !c.passed).length
   const trustPct = Math.round(result.trust.score * 100)
   const trustColor =
     result.trust.band === 'auto'
@@ -176,7 +176,7 @@ export function PipelineVisualizer({ result, isMockMode }: Props) {
           <div className="mt-2 space-y-1 pl-4 border-l border-slate-800">
             {result.auditTrail.map((entry, i) => (
               <div key={i} className="text-[11px] font-mono text-slate-600">
-                <span className="text-slate-500">[{entry.layer}]</span> {entry.event}
+                <span className="text-slate-500">[{entry.stage}]</span> {entry.event}
                 {entry.timestamp && (
                   <span className="text-slate-700 ml-2">{new Date(entry.timestamp).toLocaleTimeString()}</span>
                 )}
