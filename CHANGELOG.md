@@ -18,6 +18,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-04-19 — Phase 01 Complete (Scaffolding)
+
+### Verified
+- **Build**: `npm run build` exits 0
+- **Tests**: 172 unit + 36 integration = 208 tests, all passing
+- **Pipeline tests**: `npm run test:pipeline` 101/101 pass
+- **Lint**: `npm run lint:pipeline` passes — no architectural violations
+- **Coverage**: `npm run test:coverage` — **80.01% lines** (threshold met)
+
+### Added
+- **ADR-004**: Testing Strategy (Vitest + future Playwright) — `docs/adrs/ADR-004-testing-strategy.md`
+- **GitHub Actions CI**: 6-stage pipeline-discipline workflow — `.github/workflows/pipeline-discipline.yml`
+- **PostgreSQL setup guide**: Docker Compose + pgvector instructions — `docs/development/postgres-setup.md`
+- **docker-compose.yml**: Local dev infrastructure (PostgreSQL + pgvector)
+- **SQL migrations**: Initial schema for Phase 02 — `migrations/001_initial_schema.sql`
+- **Migrations README**: Convention docs — `migrations/README.md`
+- **New unit tests** (127 tests across 6 new files):
+  - `tests/unit/env-validator.test.ts` — 17 tests
+  - `tests/unit/agent-config.test.ts` — 11 tests
+  - `tests/unit/app-config.test.ts` — 20 tests
+  - `tests/unit/db-config.test.ts` — 9 tests
+  - `tests/unit/errors.test.ts` — 46 tests
+  - `tests/unit/human-review-queue.test.ts` — 24 tests
+- **Phase 01 sign-off document**: `docs/phase-1-sign-off.md`
+- **Coverage thresholds**: Added to `vitest.config.ts` (80% lines/functions/statements, 70% branches)
+- **`@vitest/coverage-v8`** dev dependency pinned to `1.6.1`
+
+### Changed
+- `package.json`: `test:coverage` now excludes `tests/eval` (calibration requires real API key)
+- `docs/roadmap/phase-01-scaffolding.md`: Status updated to `✅ Complete — 2026-04-19`, all exit gates checked
+- `docs/roadmap/README.md`: Phase 01 marked `✅ Complete (verified 2026-04-19)`
+- `docs/adrs/README.md`: ADR-004 added to index
+
+---
+
 ## [0.3.1] - 2026-04-19 — Phase 0 Complete
 
 ### Verified

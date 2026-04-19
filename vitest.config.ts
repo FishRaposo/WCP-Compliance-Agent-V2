@@ -23,7 +23,13 @@ export default defineConfig({
         'utils/',
         'showcase/',
         '_archive/'
-      ]
+      ],
+      thresholds: {
+        lines: 80,
+        branches: 70,
+        functions: 80,
+        statements: 80
+      }
     }
   },
   resolve: {

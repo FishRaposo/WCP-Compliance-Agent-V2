@@ -16,7 +16,7 @@
     "test:integration": "vitest run tests/integration",
     "test:pipeline": "vitest run tests/unit/pipeline-contracts.test.ts tests/unit/trust-score.test.ts tests/integration/decision-pipeline.test.ts",
     "test:calibration": "vitest run tests/eval/trust-calibration.test.ts --reporter=verbose",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --exclude tests/eval",
     "lint:pipeline": "tsx scripts/lint-pipeline-discipline.ts"
   },
   "keywords": [
@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^1.6.1",
     "ts-morph": "^21.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",

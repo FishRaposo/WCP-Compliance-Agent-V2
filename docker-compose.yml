@@ -1,0 +1,43 @@
+version: '3.8'
+
+# WCP Compliance Agent — Local Development Infrastructure
+# Provides PostgreSQL + pgvector for Phase 02 vector storage and hybrid retrieval.
+#
+# Usage:
+#   docker compose up -d        # Start all services
+#   docker compose down         # Stop (keep data)
+#   docker compose down -v      # Stop and delete data volumes
+#   docker compose logs -f      # Follow logs
+#
+# See: docs/development/postgres-setup.md
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL + pgvector
+  # Primary database for: decisions, human review queue, prompt registry,
+  # and wage determination vectors (Phase 02 retrieval).
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: wcp_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-wcp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wcp_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-wcp_compliance}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/migrations:ro        # Mount migrations as read-only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wcp_user} -d ${POSTGRES_DB:-wcp_compliance}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:
+    name: wcp_postgres_data

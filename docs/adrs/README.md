@@ -13,6 +13,7 @@ This directory contains Architecture Decision Records (ADRs) for the WCP Complia
 | [ADR-001](ADR-001-mastra-over-langchain.md) | Mastra over LangChain | ✅ Accepted | Jan 2024 |
 | [ADR-002](ADR-002-hybrid-retrieval.md) | Hybrid Retrieval (BM25 + Vector + Rerank) | ✅ Accepted | Jan 2024 |
 | [ADR-003](ADR-003-deterministic-validation.md) | Deterministic Validation Layer | ✅ Accepted | Jan 2024 |
+| [ADR-004](ADR-004-testing-strategy.md) | Testing Strategy (Vitest + Future Playwright) | ✅ Accepted | Apr 2026 |
 | [ADR-005](ADR-005-decision-architecture.md) | Three-Layer Decision Architecture | ✅ Accepted | Apr 2026 |
 
 ---
@@ -23,6 +24,7 @@ This directory contains Architecture Decision Records (ADRs) for the WCP Complia
 
 **Implemented (with real data)**
 - ADR-001: Mastra framework (in use in `src/`)
+- ADR-004: Testing strategy (Vitest + calibration tests, ≥80% coverage enforced)
 - ADR-005: Three-layer pipeline structure (in use in `src/pipeline/`)
 
 **Structurally Implemented, Data Stubbed**

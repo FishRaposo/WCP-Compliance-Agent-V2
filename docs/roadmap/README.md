@@ -44,11 +44,11 @@ This directory contains the comprehensive product roadmap for the WCP Compliance
 
 ---
 
-## Current Status (as of 2026-04-17)
+## Current Status (as of 2026-04-19)
 
 | Phase | Status | Key Deliverables |
 |-------|--------|------------------|
-| **01 - Scaffolding** | ✅ Complete | Three-layer pipeline, compliance docs, CI lint |
+| **01 - Scaffolding** | ✅ Complete (verified 2026-04-19) | Three-layer pipeline, compliance docs, CI workflow, ADR-004, coverage ≥80%, postgres schema |
 | **02 - MVP** | 🔄 In Progress | Hybrid retrieval stubbed, 3-layer pipeline complete |
 | **03 - Showcase** | 🔲 Not Started | Public demo, landing page |
 | **05 - Post-Launch** | 🔲 Planned | Optimization, expansion |

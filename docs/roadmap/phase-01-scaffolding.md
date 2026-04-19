@@ -1,6 +1,6 @@
 # Phase 01: Scaffolding
 
-Status Label: Structurally Implemented, Data Stubbed
+Status Label: ✅ Complete — 2026-04-19
 
 **Duration**: Weeks 1-4  
 **Effort**: 10-15 hrs/week  
@@ -24,16 +24,18 @@ Status Label: Structurally Implemented, Data Stubbed
 All must be true to proceed to Phase 02:
 
 - [x] `todo.md` updated with current state (all 40 items categorized)
-- [x] Architecture Decision Records (ADRs) created for key decisions
+- [x] Architecture Decision Records (ADRs) created for key decisions (ADR-001 through ADR-005)
 - [x] **Compliance documentation foundation complete**:
   - [x] Traceability matrix created (regulation ↔ code mapping)
   - [x] Regulatory compliance report complete
   - [x] Implementation guide for developers
   - [x] JSDoc standards for regulatory citations established
 - [x] Testing framework operational:
-  - [x] Unit tests passing (Vitest)
+  - [x] Unit tests passing (Vitest) — 172 tests
   - [x] Integration test scaffold ready
   - [x] Pipeline discipline tests operational
+  - [x] GitHub Actions CI workflow (`.github/workflows/pipeline-discipline.yml`)
+  - [x] Coverage gate enforced (≥80% lines — verified 80.01%)
 - [x] Development workflow documented:
   - [x] Git branching strategy
   - [x] Commit message conventions
@@ -71,6 +73,7 @@ All must be true to proceed to Phase 02:
 - [x] **ADR-001**: Mastra over LangChain (already exists)
 - [x] **ADR-002**: Hybrid retrieval architecture (BM25 + vector + cross-encoder)
 - [x] **ADR-003**: Deterministic validation strategy (already exists)
+- [x] **ADR-004**: Testing strategy (Vitest + future Playwright)
 - [x] **ADR-005**: Three-layer decision architecture (deterministic → LLM → trust score)
 
 **ADR Template** (per decision):
@@ -140,7 +143,7 @@ Accepted / Proposed / Deprecated
 - ✅ Integration tests - End-to-end pipeline scenarios
 - ✅ Calibration tests - Golden set evaluation
 - ✅ Pipeline lint - AST-based architecture enforcement
-- 🔲 GitHub Actions workflow (planned)
+- ✅ GitHub Actions workflow (`.github/workflows/pipeline-discipline.yml`)
 
 **Test Commands**:
 ```bash
@@ -187,8 +190,8 @@ npm run lint:pipeline      # Architecture linting
 | Metric | Target | Measurement |
 |--------|--------|-------------|
 | Documentation accuracy | 100% | `current-state.md` matches `src/` |
-| Test coverage | >80% | Vitest coverage report |
-| ADR completeness | 5 ADRs | All major decisions documented |
+| Test coverage | >80% | Vitest coverage report — **80.01% verified** |
+| ADR completeness | 5 ADRs | All major decisions documented — **ADR-001 through ADR-005 complete** |
 | Compliance docs | 100% | Traceability matrix complete |
 
 ---
@@ -203,5 +206,6 @@ npm run lint:pipeline      # Architecture linting
 
 ---
 
-**Last Updated**: 2026-04-17  
-**Next Review**: End of Phase 02 planning
+**Last Updated**: 2026-04-19  
+**Phase 01 Closed**: 2026-04-19  
+**Next Review**: End of Phase 02

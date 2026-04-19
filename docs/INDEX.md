@@ -85,6 +85,7 @@ Architecture Decision Records (ADRs):
 | [ADR-001-mastra-over-langchain.md](./adrs/ADR-001-mastra-over-langchain.md) | Agent framework |
 | [ADR-002-hybrid-retrieval.md](./adrs/ADR-002-hybrid-retrieval.md) | Search architecture |
 | [ADR-003-deterministic-validation.md](./adrs/ADR-003-deterministic-validation.md) | Validation strategy |
+| [ADR-004-testing-strategy.md](./adrs/ADR-004-testing-strategy.md) | Testing strategy (Vitest + Playwright) |
 
 ---
 
@@ -112,6 +113,10 @@ Architecture Decision Records (ADRs):
 - [architecture/decision-architecture.md](./architecture/decision-architecture.md)
 - [architecture/trust-scoring.md](./architecture/trust-scoring.md)
 - [architecture/human-review-workflow.md](./architecture/human-review-workflow.md)
+
+### Phase Sign-Off Documents
+- [phase-1-sign-off.md](./phase-1-sign-off.md) — Phase 01 verified completion record
+- [phase-0-out-of-scope.md](./phase-0-out-of-scope.md) — Phase 0 completion record
 
 ### Showcase (For Hiring)
 - [showcase/case-study.md](./showcase/case-study.md)
