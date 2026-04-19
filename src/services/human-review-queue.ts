@@ -217,7 +217,11 @@ class HumanReviewQueueService {
     items.sort((a, b) => {
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
       if (priorityDiff !== 0) return priorityDiff;
-      return new Date(a.queuedAt).getTime() - new Date(b.queuedAt).getTime();
+
+      // ISO 8601 strings are lexicographically sortable
+      if (a.queuedAt < b.queuedAt) return -1;
+      if (a.queuedAt > b.queuedAt) return 1;
+      return 0;
     });
 
     // Apply pagination

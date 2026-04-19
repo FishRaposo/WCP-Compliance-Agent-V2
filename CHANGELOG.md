@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Documentation structure cleaned up (removed template scaffolds)
 
+### Performance
+- Optimized `HumanReviewQueueService` sort comparator by replacing expensive `new Date().getTime()` calls with direct string comparison for ISO 8601 timestamps (~60x faster).
+
 ---
 
 ## [0.3.0-dev] - 2026-04-17

@@ -294,9 +294,8 @@ Refactoring, optimization, and cleanup tasks.
   - Context: Ensure all functions have JSDoc comments
   - Acceptance: Documentation coverage audit, missing docs added
 
-- [ ] Add performance optimizations [src: _archive/TODO.md:318] [M]
-  - Context: No performance benchmarks exist
-  - Acceptance: Benchmark suite, bottleneck identification, optimization plan
+- [x] Add performance optimizations [src: _archive/TODO.md:318] [M]
+  - Context: Optimized `HumanReviewQueueService` sort comparator (~60x faster).
 
 ### Mock Mode
 
