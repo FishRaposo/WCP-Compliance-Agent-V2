@@ -30,12 +30,12 @@ const REQUIRED_VARS = {
       if (value.startsWith('sk-')) {
         return value.length >= 20; // Minimum reasonable length
       }
-      if (value === 'mock' || value === 'mock-key') {
-        return true; // Allow mock key for testing
+      if (value === 'mock' || value === 'mock-key' || value === 'test-api-key') {
+        return true; // Allow mock keys for testing (must match isMockMode() logic)
       }
       return false;
     },
-    description: 'OpenAI API key (must start with "sk-" and be at least 20 characters, or use "mock" for testing)'
+    description: 'OpenAI API key (must start with "sk-" and be at least 20 characters, or use "mock"/"mock-key"/"test-api-key" for testing/CI)'
   }
 };
 
@@ -44,9 +44,9 @@ const REQUIRED_VARS = {
  */
 const OPTIONAL_VARS = {
   OPENAI_MODEL: {
-    defaultValue: 'gpt-5-nano',
+    defaultValue: 'gpt-4o-mini',
     validate: (value: string) => {
-      const validModels = ['gpt-5-nano', 'gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'];
+      const validModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5-nano'];
       return validModels.includes(value);
     }
   },

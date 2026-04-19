@@ -4,11 +4,14 @@ This document tracks features and improvements that were **intentionally deferre
 
 ## Phase 0 Completed
 
-- ✅ Clean state verification (npm install, build, test, lint)
-- ✅ Mock mode detection unification across codebase
-- ✅ Dead code cleanup (removed unused uuid dependencies)
-- ✅ API endpoint smoke test
-- ✅ Environment configuration template (.env.example)
+**Verified: 2026-04-19** — All items confirmed passing. See CHANGELOG.md §0.3.1 for full record.
+
+- ✅ Clean state verification — `npm run build` exits 0 (zero TS errors); `npm run test:pipeline` 101/101 pass; `npm run lint:pipeline` passes
+- ✅ Mock mode detection unification — `isMockMode()` is the single detection point; production warning added; `/health` exposes `mockMode` field
+- ✅ Dead code cleanup — no unused imports or removed-package references; `package.json` author/repository fields populated
+- ✅ API endpoint smoke test — `OPENAI_API_KEY=mock node dist/index.js` produces valid `TrustScoredDecision` end-to-end
+- ✅ Environment configuration template — `.env.example` exists and covers all `process.env.*` usages in `src/`
+- ✅ Documentation accuracy audit — stale commands (`npm run lint`, `npm run typecheck`), broken type names (`WCPDecision`), and model defaults (`gpt-5-nano`) fixed across all docs; all `INDEX.md` links verified resolving
 
 ## Deferred to Phase 1: Core Pipeline Hardening
 

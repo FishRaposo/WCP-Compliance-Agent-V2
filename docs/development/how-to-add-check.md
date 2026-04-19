@@ -312,11 +312,11 @@ If your check reveals a gap in ADR-003, add a note:
 ### Step 7: Run Full Verification
 
 ```bash
-# 1. TypeScript
-npm run typecheck
+# 1. TypeScript (build also type-checks)
+npm run build
 
-# 2. Lint
-npm run lint
+# 2. Pipeline lint
+npm run lint:pipeline
 
 # 3. Unit tests
 npm run test:unit

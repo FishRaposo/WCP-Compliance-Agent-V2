@@ -18,6 +18,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.1] - 2026-04-19 — Phase 0 Complete
+
+### Verified
+- **Build**: `npm run build` exits 0, zero TypeScript errors
+- **Tests**: `npm run test:pipeline` 101/101 pass (75 unit + 36 integration, including pipeline-discipline suite)
+- **Lint**: `npm run lint:pipeline` passes — no architectural violations
+- **Mock mode**: `OPENAI_API_KEY=mock node dist/index.js` produces valid `TrustScoredDecision` end-to-end
+
+### Added
+- `mockMode` field in `/health` API response for visibility into mock vs. live state
+- Production warning in orchestrator when `NODE_ENV=production` and `isMockMode()` is true
+- `repository` and `author` fields in `package.json`
+
+### Fixed
+- `src/utils/env-validator.ts`: Added `test-api-key` as valid mock key (aligned with `isMockMode()`); updated `OPENAI_MODEL` default to `gpt-4o-mini`; expanded valid model list to include `gpt-5.4`
+- `src/config/agent-config.ts`: Aligned default model from `gpt-5-nano` to `gpt-4o-mini`
+- `src/pipeline/orchestrator.ts`: Aligned logged default model to `gpt-4o-mini`
+- `src/app.ts`: Aligned health endpoint default model; imported `isMockMode` for health field
+- `.env.example`: Updated `OPENAI_MODEL` default comment from `gpt-5.4` to `gpt-4o-mini`
+- `AGENTS.md`: Updated `OPENAI_MODEL` default from `GPT 5.4` to `gpt-4o-mini`
+- `WCP_CORE.md`: Updated `OPENAI_MODEL` example from `gpt-5.4` to `gpt-4o-mini`
+- `docs/architecture/decision-architecture.md`: Fixed stale type name `WCPDecision` → `TrustScoredDecision`
+- `docs/development/dev-environment.md`: Replaced `npm run lint` and `npm run typecheck` with actual scripts
+- `docs/development/contributor-guide.md`: Same stale command fixes; removed duplicate CI gate row
+- `docs/development/how-to-add-check.md`: Same stale command fixes
+- `docs/evaluation/release-gates.md`: Same stale command fixes in CI workflow example
+
+---
+
 ## [0.3.0-dev] - 2026-04-17
 
 ### Added

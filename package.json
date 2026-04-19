@@ -27,7 +27,11 @@
     "evals",
     "guardrails"
   ],
-  "author": "",
+  "author": "FishRaposo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FishRaposo/WCP-Compliance-Agent.git"
+  },
   "license": "MIT",
   "dependencies": {
     "@ai-sdk/openai": "^2.0.65",

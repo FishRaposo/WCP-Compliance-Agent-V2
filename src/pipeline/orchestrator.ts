@@ -71,8 +71,12 @@ export async function executeDecisionPipeline(
 
   // Log mode on first pipeline execution
   const mockMode = isMockMode();
-  const model = process.env.OPENAI_MODEL || "gpt-5.4";
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   console.log(`[WCP] Mode: ${mockMode ? "MOCK" : `LIVE (model=${model})`}`);
+
+  if (mockMode && process.env.NODE_ENV === "production") {
+    console.warn("[WCP] ⚠️  WARNING: Running in MOCK MODE in a production environment. Real OpenAI API key required for production decisions.");
+  }
 
   console.log(`\n[Pipeline] Starting decision pipeline for trace ${traceId}`);
   console.log(`[Pipeline] Input length: ${input.content.length} chars`);

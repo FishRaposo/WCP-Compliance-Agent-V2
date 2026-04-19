@@ -296,8 +296,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run lint:pipeline
 
   # Phase 2: Unit tests
   unit-tests:

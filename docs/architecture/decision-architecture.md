@@ -39,7 +39,7 @@ Every compliance decision (Approved/Revise/Reject) MUST flow through three seque
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**The only way** to produce a `WCPDecision` is via this pipeline. Bypassing any layer is a bug and will fail CI.
+**The only way** to produce a `TrustScoredDecision` is via this pipeline. Bypassing any layer is a bug and will fail CI.
 
 ### Visual Diagram (Mermaid)
 

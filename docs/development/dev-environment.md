@@ -104,16 +104,15 @@ Mock mode returns deterministic responses for testing. Valid mock values: `mock`
 | Command | Purpose |
 |---------|---------|
 | `npm run dev` | Start dev server with hot reload |
-| `npm run build` | Compile TypeScript |
+| `npm run build` | Compile TypeScript (also type-checks) |
 | `npm start` | Run production build |
-| `npm test` | Run all tests |
-| `npm run test:unit` | Unit tests only |
-| `npm run test:integration` | Integration tests only |
-| `npm run test:pipeline` | Pipeline-specific tests |
+| `npm test` | Build then run all tests |
+| `npm run test:unit` | Unit tests only (no build) |
+| `npm run test:integration` | Integration tests only (no build) |
+| `npm run test:pipeline` | Pipeline-specific tests (no build) |
 | `npm run test:calibration` | Trust calibration tests |
-| `npm run lint:pipeline` | Check pipeline architecture |
-| `npm run lint` | Check code style |
-| `npm run typecheck` | Verify TypeScript types |
+| `npm run test:coverage` | Coverage report |
+| `npm run lint:pipeline` | AST architecture enforcement |
 
 ---
 
@@ -267,17 +266,17 @@ describe('My Function', () => {
 
 ```bash
 # Run tests on every file change
-npm run test:unit -- --watch
+npm run test:watch
 
 # Run specific test file
-npm run test:unit -- pipeline-contracts
+npx vitest run tests/unit/pipeline-contracts.test.ts
 ```
 
 ### Coverage
 
 ```bash
 # Generate coverage report
-npm run test:unit -- --coverage
+npm run test:coverage
 
 # Coverage appears in terminal and ./coverage/
 ```
@@ -301,7 +300,7 @@ npm install
 
 ```bash
 # See detailed errors
-npm run typecheck
+npm run build
 
 # Often caused by outdated @types
 npm update

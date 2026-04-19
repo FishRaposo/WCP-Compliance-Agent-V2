@@ -92,7 +92,7 @@ npm run lint:pipeline    # AST-based architectural lint (runs in CI)
 ## Environment
 
 - `OPENAI_API_KEY` is required. Set to `"mock"`, `"mock-key"`, `"test-api-key"`, or empty for offline development/testing (triggers mock mode via `isMockMode()`).
-- Optional: `OPENAI_MODEL` (default: `GPT 5.4`), `AGENT_MAX_STEPS` (default: `3`).
+- Optional: `OPENAI_MODEL` (default: `gpt-4o-mini`), `AGENT_MAX_STEPS` (default: `3`).
 - Mock mode is detected via `isMockMode()` in `src/utils/mock-responses.ts` — no separate MOCK_MODE env var.
 - `src/utils/env-validator.ts` loads `.env` via dotenv and fails fast if `OPENAI_API_KEY` is missing.
 - `tests/setup.ts` sets `OPENAI_API_KEY=test-api-key` and `NODE_ENV=test` for all tests.

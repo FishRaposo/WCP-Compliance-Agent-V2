@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 
 import { generateWcpDecision } from "./entrypoints/wcp-entrypoint.js";
 import { formatApiError, ValidationError } from "./utils/errors.js";
+import { isMockMode } from "./utils/mock-responses.js";
 
 async function handleAnalyzeRequest(c: any) {
   try {
@@ -63,15 +64,17 @@ export function createApp() {
   );
 
   app.get("/health", (c) => {
+    const mockMode = isMockMode();
     return c.json({
       status: "healthy",
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version || "0.0.0",
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || "development",
+      mockMode,
       openai: {
         apiKeyConfigured: !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'mock',
-        model: process.env.OPENAI_MODEL || 'gpt-5-nano',
+        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       },
     });
   });

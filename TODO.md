@@ -1,7 +1,7 @@
 # Unified TODO - WCP Compliance Agent
 
-**Last Audit**: 2026-04-17  
-**Status**: Comprehensive codebase audit complete  
+**Last Audit**: 2026-04-19 (Phase 0 sign-off)  
+**Status**: Phase 0 complete — build, tests, lint, mock mode, docs all verified  
 **Scope**: Source code, implementation docs, architecture plans, archive TODO
 
 ---
@@ -300,10 +300,9 @@ Refactoring, optimization, and cleanup tasks.
 
 ### Mock Mode
 
-- [ ] Add production-safe mock detection [src: src/entrypoints/wcp-entrypoint.ts:23] [S]
+- [x] ~~Add production-safe mock detection~~ **✅ Done (Phase 0)** [src: src/pipeline/orchestrator.ts] [S]
   - Context: Mock mode fallback exists for development
-  - Acceptance: Clear logging when in mock mode, production warnings, health check indicators
-  - Dependencies: Environment detection, logging enhancement
+  - Resolution: `[WCP] Mode: MOCK` logged on every pipeline call; production warning added when `NODE_ENV=production`; `/health` endpoint exposes `mockMode: true` field
 
 ---
 
@@ -315,7 +314,7 @@ Refactoring, optimization, and cleanup tasks.
 | 🏃 Active Sprint | 6 | 2L, 3M, 1S |
 | 📦 Backlog | 10 | 8M, 2S |
 | 🧊 Icebox | 7 | 5L, 2M |
-| 🔧 Tech Debt | 9 | 2M, 3S, 4XS |
+| 🔧 Tech Debt | 8 (1 done) | 2M, 2S, 4XS |
 | **Total** | **40** | **13L, 15M, 7S, 4XS** |
 
 ---
@@ -332,4 +331,5 @@ Refactoring, optimization, and cleanup tasks.
 
 **Audit Completed By**: AI Agent  
 **Audit Date**: 2026-04-17  
-**Next Review**: When Phase 2 completes or major features land
+**Phase 0 Sign-off**: 2026-04-19  
+**Next Review**: When Phase 1 completes or major features land

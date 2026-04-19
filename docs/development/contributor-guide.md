@@ -92,10 +92,9 @@ Before considering work complete, verify:
 
 ### Code Quality
 
-- [ ] **TypeScript compiles**: `npm run typecheck` passes
-- [ ] **Lint passes**: `npm run lint` passes
-- [ ] **Tests pass**: `npm test` passes
+- [ ] **TypeScript compiles**: `npm run build` passes
 - [ ] **Pipeline lint passes**: `npm run lint:pipeline` passes
+- [ ] **Tests pass**: `npm test` passes
 - [ ] **No secrets**: No API keys, passwords in code
 - [ ] **Error handling**: Errors caught and handled gracefully
 
@@ -157,13 +156,12 @@ These checks run automatically (or should, once GitHub Actions is set up):
 
 | Gate | Command | Block? |
 |------|---------|--------|
-| TypeScript | `npm run typecheck` | Yes |
-| Lint | `npm run lint` | Yes |
+| TypeScript | `npm run build` | Yes |
+| Pipeline lint | `npm run lint:pipeline` | Yes |
 | Unit tests | `npm run test:unit` | Yes |
 | Integration tests | `npm run test:integration` | Yes |
 | Pipeline tests | `npm run test:pipeline` | Yes |
 | Calibration | `npm run test:calibration` | Yes |
-| Pipeline discipline | `npm run lint:pipeline` | Yes |
 
 ---
 
