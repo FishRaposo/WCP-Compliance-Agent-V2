@@ -160,3 +160,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production-ready showcase
 - Complete feature set documented
 - Optimized for recruiter/hiring manager review
+
+### Fixed
+- Performance issue in `human-review-queue.ts` where sorting and getting stats had large Date object instantiation overhead
