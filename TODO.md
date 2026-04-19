@@ -193,6 +193,12 @@ Validated features ready for scheduling after Phase 2 completion.
   - Acceptance: Plumber, Carpenter, Mason, Equipment Operator, etc. (10+ roles)
   - Dependencies: Rate research, config file format, validation tests
 
+### Security
+
+- [x] Implement input length validation for `/analyze` endpoint [S]
+  - Context: Prevent potential DoS attacks from oversized payloads.
+  - Done: Added `maxContentLength` (10,000 chars) to `ApiConfig`.
+
 ---
 
 ## 🧊 Icebox

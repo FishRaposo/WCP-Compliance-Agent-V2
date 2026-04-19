@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Product roadmap with 5 phases (scaffolding → MVP → showcase → post-launch)
 - CHANGELOG.md for tracking changes
 
+### Security
+- Added input length validation to `/analyze` endpoint to prevent potential DoS attacks.
+- Added configurable `maxContentLength` (default 10,000 chars) to `ApiConfig`.
+
 ### Changed
 - Documentation structure cleaned up (removed template scaffolds)
 

@@ -3,8 +3,10 @@ import { cors } from "hono/cors";
 
 import { generateWcpDecision } from "./entrypoints/wcp-entrypoint.js";
 import { formatApiError, ValidationError } from "./utils/errors.js";
+import { getAppConfig } from "./config/app-config.js";
 
 async function handleAnalyzeRequest(c: any) {
+  const config = getAppConfig();
   try {
     const body = await c.req.json();
     const { content } = body ?? {};
@@ -16,6 +18,13 @@ async function handleAnalyzeRequest(c: any) {
 
     if (typeof content !== "string") {
       const error = new ValidationError("Content must be a string");
+      return c.json(formatApiError(error), 400);
+    }
+
+    if (content.length > config.api.maxContentLength) {
+      const error = new ValidationError(
+        `Content is too long. Maximum allowed length is ${config.api.maxContentLength} characters.`
+      );
       return c.json(formatApiError(error), 400);
     }
 
