@@ -1,5 +1,7 @@
 # Executive Summary - WCP Compliance Agent Product Roadmap
 
+> ⚠️ **DEPRECATED** — See [`docs/roadmap/RELEASE_PLAN.md`](../docs/roadmap/RELEASE_PLAN.md) for the current unified release plan.
+
 ## Vision
 
 Build a technical showcase demonstrating **regulated-domain AI infrastructure** expertise through a trustworthy compliance agent for Weekly Certified Payroll (WCP) review. This project proves the ability to architect and execute production-grade AI systems—not just experiment with LLM prompts.

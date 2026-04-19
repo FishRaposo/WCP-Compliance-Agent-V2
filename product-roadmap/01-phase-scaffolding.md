@@ -1,5 +1,7 @@
 # Phase 01: Scaffolding
 
+> ⚠️ **DEPRECATED** — See [`docs/roadmap/RELEASE_PLAN.md`](../docs/roadmap/RELEASE_PLAN.md) for the current unified release plan.
+
 **Duration**: Weeks 1-4  
 **Effort**: 10-15 hrs/week  
 **Dependencies**: Current codebase state (todo.md baseline)  

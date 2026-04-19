@@ -1,4 +1,8 @@
-# Platform Roadmap
+# Platform Roadmap — Capability Layers
+
+> **Superseded by [RELEASE_PLAN.md](./RELEASE_PLAN.md).**
+> The dependency graph and phase status are maintained there.
+> This file is kept for its per-capability-layer breakdown.
 
 Status Label: Planned / Future
 

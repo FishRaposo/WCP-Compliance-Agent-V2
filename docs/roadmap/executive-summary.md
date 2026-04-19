@@ -1,5 +1,9 @@
 # Executive Summary - WCP Compliance Agent Product Roadmap
 
+> **Superseded by [RELEASE_PLAN.md](./RELEASE_PLAN.md).**
+> The unified release plan is the single source of truth for vision, timeline, and phase status.
+> This file is kept for its regulatory context and risk matrix sections.
+
 Status Label: Implemented / Portfolio Showcase
 
 ## Vision
@@ -201,6 +205,6 @@ This project operates within the framework of **Davis-Bacon Act and Related Acts
 
 ---
 
-**Status**: Planning complete, ready for Phase 01 execution  
-**Last Updated**: 2026-04-17  
-**Next Review**: End of Phase 01
+**Status**: Phase 01 complete — Phase 02 in progress (see [RELEASE_PLAN.md](./RELEASE_PLAN.md))  
+**Last Updated**: 2026-04-19  
+**Next Review**: End of Phase 02

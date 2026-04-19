@@ -1,5 +1,9 @@
 # Phase 05: Post-Launch Roadmap
 
+> **This file is preserved for reference detail.**
+> The single authoritative release plan is **[RELEASE_PLAN.md](./RELEASE_PLAN.md)**.
+> Phase 05 plans are in the [Phase 05 section](./RELEASE_PLAN.md#phase-05-post-launch--planned) of that document.
+
 Status Label: Planned / Future
 
 **Duration**: Weeks 19+ (ongoing, part-time)  

@@ -116,6 +116,61 @@ jobs:
         run: npm run test:unit
 
   # ---------------------------------------------------------------------------
+  # Stage 3b: Retrieval Module Tests (Phase 02)
+  # Tests hybrid-retriever, BM25, vector, and RRF fusion in mock mode.
+  # No ES or DB required — in-memory fallback covers all paths.
+  # ---------------------------------------------------------------------------
+  retrieval-tests:
+    name: Retrieval Module Tests
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      OPENAI_API_KEY: mock
+      NODE_ENV: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run retrieval tests
+        run: npm run test:retrieval
+
+  # ---------------------------------------------------------------------------
+  # Stage 3c: Ingestion Module Tests (Phase 02)
+  # Tests PDF and CSV ingestion parsers.
+  # ---------------------------------------------------------------------------
+  ingestion-tests:
+    name: Ingestion Module Tests
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      OPENAI_API_KEY: mock
+      NODE_ENV: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ingestion tests
+        run: npm run test:ingestion
+
+  # ---------------------------------------------------------------------------
   # Stage 4: Pipeline Tests (Integration)
   # Runs the full three-layer decision pipeline end-to-end in mock mode.
   # This is the critical gate — must pass before coverage and calibration.
@@ -125,6 +180,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - unit-tests
+      - retrieval-tests
+      - ingestion-tests
       - pipeline-lint
     env:
       OPENAI_API_KEY: mock

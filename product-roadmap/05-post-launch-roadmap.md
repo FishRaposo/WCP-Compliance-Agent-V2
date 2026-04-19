@@ -1,5 +1,7 @@
 # Phase 05: Post-Launch Roadmap
 
+> ⚠️ **DEPRECATED** — See [`docs/roadmap/RELEASE_PLAN.md`](../docs/roadmap/RELEASE_PLAN.md) for the current unified release plan.
+
 **Duration**: Weeks 19+ (ongoing, part-time)  
 **Effort**: 5-10 hrs/week  
 **Dependencies**: Phase 03 complete (public demo deployed)  

@@ -17,7 +17,11 @@
     "test:pipeline": "vitest run tests/unit/pipeline-contracts.test.ts tests/unit/trust-score.test.ts tests/integration/decision-pipeline.test.ts",
     "test:calibration": "vitest run tests/eval/trust-calibration.test.ts --reporter=verbose",
     "test:coverage": "vitest run --coverage --exclude tests/eval",
-    "lint:pipeline": "tsx scripts/lint-pipeline-discipline.ts"
+    "lint:pipeline": "tsx scripts/lint-pipeline-discipline.ts",
+    "test:retrieval": "vitest run tests/unit/hybrid-retriever.test.ts tests/unit/bm25-search.test.ts tests/unit/vector-search.test.ts tests/unit/rrf-fusion.test.ts",
+    "test:ingestion": "vitest run tests/unit/pdf-ingestion.test.ts tests/unit/csv-ingestion.test.ts",
+    "seed:corpus": "tsx scripts/seed-corpus.ts",
+    "generate:golden": "tsx scripts/generate-golden-set.ts"
   },
   "keywords": [
     "ai-infrastructure",
@@ -35,18 +39,25 @@
   "license": "MIT",
   "dependencies": {
     "@ai-sdk/openai": "^2.0.65",
+    "@elastic/elasticsearch": "^9.3.4",
     "@hono/node-server": "^1.19.7",
     "@mastra/core": "^0.24.0",
     "@mastra/libsql": "^0.16.4",
     "@mastra/loggers": "^0.10.19",
     "chalk": "^5.3.0",
     "cors": "^2.8.5",
+    "csv-parse": "^6.2.1",
     "dotenv": "^16.4.7",
     "hono": "^4.11.0",
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.20.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/pdf-parse": "^1.1.5",
+    "@types/pg": "^8.20.0",
+    "@vercel/node": "^5.7.11",
     "@vitest/coverage-v8": "^1.6.1",
     "ts-morph": "^21.0.0",
     "tsx": "^4.0.0",

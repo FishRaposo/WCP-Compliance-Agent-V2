@@ -1,5 +1,9 @@
 # Phase 02: MVP
 
+> **This file is preserved for reference detail.**
+> The single authoritative release plan is **[RELEASE_PLAN.md](./RELEASE_PLAN.md)**.
+> Phase 02 plans are in the [Phase 02 section](./RELEASE_PLAN.md#phase-02-mvp--in-progress) of that document.
+
 Status Label: Designed / Target
 
 **Duration**: Weeks 5-12 (8 weeks)  

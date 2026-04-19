@@ -1,5 +1,9 @@
 # Phase 01: Scaffolding
 
+> **This file is preserved for historical reference.**
+> The single authoritative release plan is **[RELEASE_PLAN.md](./RELEASE_PLAN.md)**.
+> Phase 01 details are in the [Phase 01 section](./RELEASE_PLAN.md#phase-01-scaffolding--complete) of that document.
+
 Status Label: ✅ Complete — 2026-04-19
 
 **Duration**: Weeks 1-4  

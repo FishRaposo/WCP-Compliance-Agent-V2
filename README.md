@@ -1,139 +1,196 @@
 # WCP Compliance Agent
 
-Status Label: Implemented | **[View Role Fit for AI Infrastructure →](./ROLE_FIT.md)**
+[![CI](https://github.com/FishRaposo/WCP-Compliance-Agent/actions/workflows/pipeline-discipline.yml/badge.svg)](https://github.com/FishRaposo/WCP-Compliance-Agent/actions/workflows/pipeline-discipline.yml)
+[![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen)](#running-tests)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-green)](https://nodejs.org/)
 
-> **For hiring managers:** See [ROLE_FIT.md](./ROLE_FIT.md) for explicit mapping to founding AI infrastructure roles.
+> **Three-layer AI decision pipeline for regulated-domain compliance.**  
+> Every finding cites a regulation. Every decision has a replayable audit trail.
 
----
-
-## The Problem
-
-Current AI compliance tools are **black boxes**. You feed in a payroll document. You get back "violation detected." And if a federal auditor asks *"how did you reach this decision?"* — you can't answer.
-
-No traceability. No audit trail. No evidence chain.
-
-That's not compliance. That's gambling with federal contracts.
-
-## The Solution
-
-**WCP Compliance Agent** treats every decision like a court case:
-
-- **Three layers of evidence** — every finding cites specific regulation
-- **Traceable by design** — every decision has a replayable audit trail  
-- **Human when it matters** — low confidence automatically routes to expert review
-
-This isn't just payroll validation. This is how you build AI systems that *provably* make correct decisions—applicable to revenue intelligence, healthcare, finance, or any domain where errors have consequences.
+**[→ Live Demo](https://wcp-compliance-agent.vercel.app)** · **[→ Quick Start](./docs/quick-start.md)** · **[→ Architecture](./docs/architecture/system-overview.md)**
 
 ---
 
-## What this repository proves today
+## What This Is
 
-- **Three-layer decision architecture**: deterministic scaffold → LLM verdict → trust score + human review, enforced by typed contracts and CI gates.
-- Deterministic scaffolding can constrain LLM behavior in a regulated workflow.
-- Structured response contracts can make decisions traceable and integration-ready.
-- A small codebase can still show strong infrastructure judgment when boundaries are explicit.
-- Evaluation, observability, and retrieval are treated as architecture concerns, not add-ons.
+WCP Compliance Agent validates Weekly Certified Payroll (WCP) submissions against Davis-Bacon Act prevailing wage requirements. It's built as a reference implementation of a **trustworthy AI decision system**: one where every output is explainable, traceable, and defensible.
 
-## What the full platform is designed to become
+The core pattern — deterministic scaffolding → constrained LLM reasoning → trust-scored routing — transfers directly to any domain where AI errors have consequences: healthcare, finance, legal, revenue intelligence.
 
-- A document-driven compliance agent for Weekly Certified Payroll review.
-- A retrieval-grounded decision system using DBWD corpora, metadata filters, and citations.
-- A production AI platform with audit trails, replayable traces, regression gates, and role-aware integrations.
-- A reusable reference architecture for other regulated or high-trust LLM systems.
+---
 
-## Why this domain matters
+## Architecture
 
-Payroll compliance is a strong proving ground for AI infrastructure because it forces the right engineering instincts:
+```
+Input (payroll text)
+       │
+       ▼
+┌─────────────────────────────────┐
+│  Layer 1: Deterministic         │  Extraction + DBWD rate lookup + rule checks
+│  src/pipeline/layer1-*.ts       │  No LLM. Pure arithmetic and policy rules.
+└──────────────┬──────────────────┘
+               │ CheckResult[]
+               ▼
+┌─────────────────────────────────┐
+│  Layer 2: LLM Verdict           │  Constrained reasoning over Layer 1 findings
+│  src/pipeline/layer2-*.ts       │  FORBIDDEN from recomputing arithmetic.
+└──────────────┬──────────────────┘  Must cite Layer 1 check IDs.
+               │ LLMVerdict
+               ▼
+┌─────────────────────────────────┐
+│  Layer 3: Trust Score           │  Weighted confidence → routing decision
+│  src/pipeline/layer3-*.ts       │  score < 0.60 → human review queue
+└──────────────┬──────────────────┘
+               │ TrustScoredDecision
+               ▼
+         Final output + audit trail
+```
 
-- arithmetic and policy checks must be deterministic,
-- evidence must be attributable,
-- failure modes must be explicit,
-- context selection matters as much as model quality,
-- false approvals are more dangerous than graceful deferrals.
+The architecture is enforced at CI time via AST-based lint (`npm run lint:pipeline`). Bypassing any layer is a build failure.
 
-That makes this repository a useful showcase for founding AI infrastructure work far beyond payroll.
+---
 
-## Infrastructure patterns demonstrated
-
-The architecture patterns here transfer directly to revenue intelligence, healthcare, finance, or any domain requiring reliable, auditable AI:
-
-| Pattern | Implementation | Transferable To |
-|---------|---------------|-----------------|
-| **Three-layer decision** | `src/pipeline/` — deterministic → LLM → trust score | Deal coaching, medical diagnosis, risk assessment |
-| **Retrieval grounding** | Hybrid search spec + vector store design | CRM context assembly, knowledge bases |
-| **CI-based evaluation** | `npm run lint:pipeline` — AST architectural enforcement | Regression gates for prompt/RAG changes |
-| **Entity abstractions** | Typed `CheckResult`, `LLMVerdict`, `TrustScoredDecision` | Rep, Call, Opportunity, Moment models |
-| **Cost/observability** | Token tracking, cycle time, health metrics per decision | Production cost controls, Phoenix tracing |
-
-**[See full role fit analysis →](./ROLE_FIT.md)**
-
-## Current vs target at a glance
-
-**Implemented now**
-
-- bounded decision orchestration via `generateWcpDecision(...)`,
-- deterministic extraction and validation tools,
-- structured decision payloads with findings, trace, and health metadata,
-- public analysis and health endpoints,
-- proof-oriented unit and integration tests.
-
-**Designed / target**
-
-- PDF, CSV, and OCR ingestion,
-- normalized WCP report schema with employee-level evidence,
-- DBWD retrieval with hybrid search, reranking, and citations,
-- full audit persistence, replay, and confidence routing,
-- CI-backed eval gates and production observability.
-
-See [`docs/foundation/implemented-vs-target.md`](./docs/foundation/implemented-vs-target.md) for the detailed split.
-
-## Read this repository in four paths
-
-- **1 minute**: [`ROLE_FIT.md`](./ROLE_FIT.md) — Quick mapping to AI infrastructure roles
-- **2 minutes**: [`docs/showcase/founding-ai-infra-fit.md`](./docs/showcase/founding-ai-infra-fit.md) — Skills mapping
-- **10 minutes**: [`docs/INDEX.md`](./docs/INDEX.md) -> system overview -> implemented vs target
-- **20 minutes**: architecture + evaluation + tech stack + case study + FAQ
-- **Quick start**: [`docs/quick-start.md`](./docs/quick-start.md) - Run locally in 5 minutes
-
-## Documentation map
-
-- Foundation:
-  - [`docs/foundation/current-state.md`](./docs/foundation/current-state.md)
-  - [`docs/foundation/implemented-vs-target.md`](./docs/foundation/implemented-vs-target.md)
-  - [`docs/foundation/glossary.md`](./docs/foundation/glossary.md)
-  - [`docs/foundation/tech-stack-map.md`](./docs/foundation/tech-stack-map.md)
-  - [`docs/foundation/wcp-and-dbwd-reference.md`](./docs/foundation/wcp-and-dbwd-reference.md) - WCP and DBWD compliance reference
-- Compliance (Davis-Bacon Act):
-  - [`docs/compliance/regulatory-compliance-report.md`](./docs/compliance/regulatory-compliance-report.md) - System compliance overview
-  - [`docs/compliance/traceability-matrix.md`](./docs/compliance/traceability-matrix.md) - Regulation-to-code mapping
-  - [`docs/compliance/implementation-guide.md`](./docs/compliance/implementation-guide.md) - How regulations become code
-- Architecture:
-  - [`docs/architecture/system-overview.md`](./docs/architecture/system-overview.md)
-  - [`docs/architecture/retrieval-and-context.md`](./docs/architecture/retrieval-and-context.md)
-  - [`docs/architecture/decision-engine.md`](./docs/architecture/decision-engine.md)
-  - [`docs/architecture/api-and-integrations.md`](./docs/architecture/api-and-integrations.md)
-- Architecture Decisions (ADRs):
-  - [`docs/adrs/README.md`](./docs/adrs/README.md) - ADR index
-  - [`docs/adrs/ADR-005-decision-architecture.md`](./docs/adrs/ADR-005-decision-architecture.md) - Three-layer pipeline
-
-## Getting Started
+## Quick Start
 
 ```bash
-# Clone and install
 git clone https://github.com/FishRaposo/WCP-Compliance-Agent.git
 cd WCP-Compliance-Agent
 npm install
-
-# Build (must pass)
 npm run build
 
-# Run with your OpenAI API key
-export OPENAI_API_KEY=sk-your-key
-npm run dev
+# Start server (mock mode — no API key needed)
+OPENAI_API_KEY=mock npm run serve
+
+# Or with a real OpenAI key
+OPENAI_API_KEY=sk-... npm run serve
 ```
 
-See [`WCP_CORE.md`](./WCP_CORE.md) for complete demo instructions and interview prep.
+Server runs at `http://localhost:3000`. See [`docs/quick-start.md`](./docs/quick-start.md) for full setup.
 
 ---
 
-*Built as an architecture showcase for high-stakes AI systems. The patterns demonstrated—deterministic scaffolding, trust scoring, audit trails—transfer to revenue intelligence, healthcare, finance, and any domain requiring provably correct AI decisions.*
+## API Reference
+
+### `POST /api/analyze`
+
+Analyze a payroll submission through the three-layer pipeline.
+
+**Request**
+```json
+{ "content": "Role: Electrician, Hours: 40, Wage: 51.69, Fringe: 34.63" }
+```
+
+**Response** (abbreviated)
+```json
+{
+  "finalStatus": "Approved",
+  "deterministic": {
+    "role": "Electrician",
+    "hours": 40,
+    "wage": 51.69,
+    "checks": [
+      { "id": "wage_check_001", "type": "base_wage", "status": "pass",
+        "regulation": "40 U.S.C. § 3142", "message": "Wage meets DBWD rate" }
+    ],
+    "score": 1.0
+  },
+  "verdict": {
+    "status": "Approved",
+    "rationale": "All checks pass. Wage meets prevailing rate.",
+    "referencedCheckIds": ["wage_check_001"],
+    "citations": ["40 U.S.C. § 3142", "29 CFR 5.5(a)(1)"]
+  },
+  "trust": {
+    "score": 0.92,
+    "band": "auto"
+  },
+  "humanReview": { "required": false },
+  "auditTrail": [...],
+  "traceId": "abc-123"
+}
+```
+
+### `GET /health`
+
+Returns server status, mock mode flag, and OpenAI model config.
+
+---
+
+## Running Tests
+
+```bash
+npm run test:pipeline    # 101 pipeline tests — must always pass
+npm run test:unit        # all unit tests
+npm run test:coverage    # coverage report (≥80% gate)
+npm run lint:pipeline    # AST architectural lint
+npm run build            # TypeScript compilation
+```
+
+**Mock mode** (no API key required): set `OPENAI_API_KEY=mock` — all tests pass without calling OpenAI.
+
+---
+
+## Configuration
+
+Copy `.env.example` to `.env` and set:
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | Yes* | — | Set to `mock` for offline mode |
+| `OPENAI_MODEL` | No | `gpt-4o-mini` | Model for Layer 2 |
+| `PORT` | No | `3000` | Server port |
+| `ELASTICSEARCH_URL` | No | — | Phase 02 hybrid retrieval |
+| `POSTGRES_URL` | No | — | Phase 02 vector search |
+
+*Required for live decisions. Use `mock` or `test-api-key` for development.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Node.js 18+, TypeScript (ESM) |
+| API server | [Hono](https://hono.dev/) |
+| LLM | OpenAI via [Vercel AI SDK](https://sdk.vercel.ai/) |
+| Schema validation | [Zod](https://zod.dev/) |
+| Agent framework | [Mastra](https://mastra.ai/) (legacy layer) |
+| Retrieval (Phase 02) | Elasticsearch (BM25) + pgvector (dense) + cross-encoder reranking |
+| Testing | [Vitest](https://vitest.dev/) + AST lint via [ts-morph](https://ts-morph.com/) |
+| Deployment | Vercel (serverless functions + SPA) |
+
+---
+
+## Project Structure
+
+```
+src/pipeline/          # Three-layer decision pipeline (core)
+src/entrypoints/       # Public API entry point
+src/retrieval/         # Phase 02: hybrid BM25 + vector retrieval
+src/prompts/           # Versioned prompt registry
+src/types/             # Typed decision contracts
+tests/unit/            # 280+ unit tests
+tests/integration/     # Decision pipeline integration tests
+tests/eval/            # 100-example golden set (trust calibration)
+showcase/              # React demo UI (Vite + Tailwind)
+api/                   # Vercel serverless functions
+docs/                  # Architecture, compliance, ADRs
+```
+
+---
+
+## Documentation
+
+- [`docs/quick-start.md`](./docs/quick-start.md) — Run locally in 5 minutes
+- [`docs/architecture/system-overview.md`](./docs/architecture/system-overview.md) — System design
+- [`docs/compliance/regulatory-compliance-report.md`](./docs/compliance/regulatory-compliance-report.md) — Davis-Bacon Act implementation
+- [`docs/compliance/traceability-matrix.md`](./docs/compliance/traceability-matrix.md) — Regulation-to-code mapping
+- [`docs/adrs/`](./docs/adrs/) — Architecture Decision Records
+- [`CHANGELOG.md`](./CHANGELOG.md) — Release history
+
+---
+
+## License
+
+[MIT](./LICENSE) © 2026 Vinícius Raposo

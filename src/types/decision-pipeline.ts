@@ -54,16 +54,28 @@ export interface CheckResult {
 }
 
 /**
- * Extracted WCP data (structured fields)
+ * Extracted WCP data (11 structured fields per WH-347)
  */
 export interface ExtractedWCP {
   /** Raw input text (for audit trail) */
   rawInput: string;
 
-  /** Worker classification/role */
+  /** Worker name (if available) */
+  workerName?: string;
+
+  /** Last 4 digits of SSN — masked for privacy */
+  socialSecurityLast4?: string;
+
+  /** Worker classification/trade role */
   role: string;
 
-  /** Hours worked */
+  /** DBWD trade code resolved by retrieval (e.g. "ELEC0490") */
+  tradeCode?: string;
+
+  /** Locality code for wage determination */
+  localityCode?: string;
+
+  /** Total hours worked this week */
   hours: number;
 
   /** Regular hours (≤ 40) */
@@ -72,22 +84,30 @@ export interface ExtractedWCP {
   /** Overtime hours (> 40) */
   overtimeHours?: number;
 
-  /** Hourly wage rate */
+  /** Hours by day of week */
+  hoursByDay?: {
+    mon?: number;
+    tue?: number;
+    wed?: number;
+    thu?: number;
+    fri?: number;
+    sat?: number;
+    sun?: number;
+  };
+
+  /** Hourly wage rate (base) */
   wage: number;
 
   /** Fringe benefit rate */
   fringe?: number;
 
-  /** Total gross pay (if extracted) */
+  /** Total gross pay (if extracted or computed) */
   grossPay?: number;
 
-  /** Worker name (if available) */
-  workerName?: string;
-
-  /** Week ending date (if available) */
+  /** Week ending date (YYYY-MM-DD if available) */
   weekEnding?: string;
 
-  /** Project/contract ID (if available) */
+  /** Project or contract ID */
   projectId?: string;
 }
 
@@ -118,6 +138,9 @@ export interface DBWDRateInfo {
 
   /** Trade/classification name */
   trade: string;
+
+  /** DBWD trade code (e.g. "ELEC0490") */
+  tradeCode?: string;
 }
 
 /**
@@ -383,14 +406,26 @@ export const CheckResultSchema = z.object({
 
 export const ExtractedWCPSchema = z.object({
   rawInput: z.string(),
+  workerName: z.string().optional(),
+  socialSecurityLast4: z.string().optional(),
   role: z.string(),
+  tradeCode: z.string().optional(),
+  localityCode: z.string().optional(),
   hours: z.number(),
   regularHours: z.number().optional(),
   overtimeHours: z.number().optional(),
+  hoursByDay: z.object({
+    mon: z.number().optional(),
+    tue: z.number().optional(),
+    wed: z.number().optional(),
+    thu: z.number().optional(),
+    fri: z.number().optional(),
+    sat: z.number().optional(),
+    sun: z.number().optional(),
+  }).optional(),
   wage: z.number(),
   fringe: z.number().optional(),
   grossPay: z.number().optional(),
-  workerName: z.string().optional(),
   weekEnding: z.string().optional(),
   projectId: z.string().optional(),
 });
@@ -404,6 +439,7 @@ export const DBWDRateInfoSchema = z.object({
   effectiveDate: z.string(),
   locality: z.string().optional(),
   trade: z.string(),
+  tradeCode: z.string().optional(),
 });
 
 export const DeterministicReportSchema = z.object({

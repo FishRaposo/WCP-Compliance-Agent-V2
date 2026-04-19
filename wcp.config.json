@@ -29,7 +29,7 @@
         "overtime": {
           "enabled": true,
           "severity": "high",
-          "regulation": "40 U.S.C. § 3702",
+          "regulation": "29 CFR 5.32 / CWHSSA",
           "thresholdHours": 40,
           "multiplier": 1.5
         },

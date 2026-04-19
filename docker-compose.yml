@@ -38,6 +38,31 @@ services:
       retries: 5
       start_period: 30s
 
+  # ---------------------------------------------------------------------------
+  # Elasticsearch — BM25 keyword search for DBWD corpus
+  # Used by hybrid retrieval Layer 1 (Phase 02).
+  # ---------------------------------------------------------------------------
+  elasticsearch:
+    image: elasticsearch:8.13.4
+    container_name: wcp_elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "${ELASTICSEARCH_PORT:-9200}:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
 volumes:
   postgres_data:
     name: wcp_postgres_data
+  es_data:
+    name: wcp_elasticsearch_data

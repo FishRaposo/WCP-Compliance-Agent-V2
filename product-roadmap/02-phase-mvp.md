@@ -1,5 +1,7 @@
 # Phase 02: MVP
 
+> ⚠️ **DEPRECATED** — See [`docs/roadmap/RELEASE_PLAN.md`](../docs/roadmap/RELEASE_PLAN.md) for the current unified release plan.
+
 **Duration**: Weeks 5-12 (8 weeks)  
 **Effort**: 15-20 hrs/week  
 **Dependencies**: Phase 01 complete (architecture aligned, testing operational)  

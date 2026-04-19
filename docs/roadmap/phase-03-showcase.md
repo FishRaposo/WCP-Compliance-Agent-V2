@@ -1,5 +1,9 @@
 # Phase 03: Showcase
 
+> **This file is preserved for reference detail.**
+> The single authoritative release plan is **[RELEASE_PLAN.md](./RELEASE_PLAN.md)**.
+> Phase 03 plans are in the [Phase 03 section](./RELEASE_PLAN.md#phase-03-showcase--not-started) of that document.
+
 Status Label: Designed / Target
 
 **Duration**: Weeks 13-18 (6 weeks)  

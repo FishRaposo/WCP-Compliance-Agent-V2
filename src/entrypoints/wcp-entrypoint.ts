@@ -57,7 +57,7 @@ import { ExternalApiError, RateLimitError } from "../utils/errors.js";
  * This function implements the "weekly certified payroll" validation workflow
  * required by 29 CFR 5.5(a)(3). For each payroll submission:
  * - Validates prevailing wage compliance (40 U.S.C. § 3142)
- * - Validates overtime calculation (40 U.S.C. § 3702)
+ * - Validates overtime calculation (29 CFR 5.32 / CWHSSA)
  * - Validates worker classification (29 CFR 5.5(a)(3)(i))
  * - Generates traceable decision record (Copeland Act)
  * - Computes trust score for human review gating

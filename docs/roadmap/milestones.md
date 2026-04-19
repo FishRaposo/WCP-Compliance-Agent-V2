@@ -1,5 +1,9 @@
 # Milestones
 
+> **Superseded by [RELEASE_PLAN.md](./RELEASE_PLAN.md).**
+> The unified release plan consolidates milestones, phase exits, and next actions.
+> This file is kept for its detailed week-by-week breakdown.
+
 Status Label: Implemented / In Progress
 
 Detailed 90-day milestone plan for the WCP Compliance Agent development. Updated April 2026.

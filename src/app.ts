@@ -58,7 +58,16 @@ export function createApp() {
   app.use(
     "/*",
     cors({
-      origin: process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000"],
+      origin: (origin) => {
+      if (process.env.ALLOWED_ORIGINS) {
+        return process.env.ALLOWED_ORIGINS.split(",").includes(origin) ? origin : null;
+      }
+      const allowed = ["http://localhost:3000", "http://localhost:5173"];
+      if (allowed.includes(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
+        return origin;
+      }
+      return null;
+    },
       credentials: true,
     }),
   );

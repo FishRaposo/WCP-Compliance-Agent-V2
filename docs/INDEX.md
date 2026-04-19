@@ -33,7 +33,7 @@ Understand the system:
 
 1. **[foundation/current-state.md](./foundation/current-state.md)** — What's actually implemented
 2. **[foundation/implemented-vs-target.md](./foundation/implemented-vs-target.md)** — Current vs. future architecture
-3. **[architecture/system-overview.md](./architecture/system-overview.md)** — How the pieces fit together
+3. **[roadmap/RELEASE_PLAN.md](./roadmap/RELEASE_PLAN.md)** — Unified release plan (all phases, next actions)
 4. **[foundation/tech-stack-map.md](./foundation/tech-stack-map.md)** — Technology choices
 
 ---
@@ -114,9 +114,12 @@ Architecture Decision Records (ADRs):
 - [architecture/trust-scoring.md](./architecture/trust-scoring.md)
 - [architecture/human-review-workflow.md](./architecture/human-review-workflow.md)
 
+### Roadmap
+- [roadmap/RELEASE_PLAN.md](./roadmap/RELEASE_PLAN.md) — **Unified release plan (authoritative)**
+- [roadmap/README.md](./roadmap/README.md) — Roadmap directory index
+
 ### Phase Sign-Off Documents
 - [phase-1-sign-off.md](./phase-1-sign-off.md) — Phase 01 verified completion record
-- [phase-0-out-of-scope.md](./phase-0-out-of-scope.md) — Phase 0 completion record
 
 ### Showcase (For Hiring)
 - [showcase/case-study.md](./showcase/case-study.md)

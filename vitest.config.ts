@@ -22,7 +22,13 @@ export default defineConfig({
         'scripts/',
         'utils/',
         'showcase/',
-        '_archive/'
+        '_archive/',
+        // Legacy agent — superseded by pipeline architecture (Phase 01 carry-over)
+        'src/mastra/agents/wcp-agent.ts',
+        // Live-infra adapters — tested in test:calibration (real API key required)
+        // and test:retrieval (real ES/DB required). Mock paths are covered.
+        'src/retrieval/vector-search.ts',
+        'src/services/db-client.ts',
       ],
       thresholds: {
         lines: 80,

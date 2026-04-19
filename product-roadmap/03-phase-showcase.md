@@ -1,5 +1,7 @@
 # Phase 03: Showcase
 
+> ⚠️ **DEPRECATED** — See [`docs/roadmap/RELEASE_PLAN.md`](../docs/roadmap/RELEASE_PLAN.md) for the current unified release plan.
+
 **Duration**: Weeks 13-18 (6 weeks)  
 **Effort**: 10-15 hrs/week  
 **Dependencies**: Phase 02 complete (working retrieval, real processing)  

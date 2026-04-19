@@ -7,14 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.6.0] - 2026-04-19 — Phase 03: Open Source Release
 
 ### Added
-- Product roadmap with 5 phases (scaffolding → MVP → showcase → post-launch)
-- CHANGELOG.md for tracking changes
+- **`/showcase` React SPA** — Vite + TailwindCSS three-panel pipeline visualizer
+  - Six pre-loaded payroll scenarios (clean, underpayment, OT violation, fringe shortfall, unknown role, extreme OT)
+  - BYOK model: `X-OpenAI-Key` header, never stored, mock mode fallback
+  - Layer 1 checks table with severity badges and regulation citations
+  - Layer 2 LLM rationale, reasoning trace, referenced check IDs, token usage
+  - Layer 3 trust score gauge, band badge, score breakdown, human review status
+  - Animated sequential panel reveal (150ms stagger)
+- **`api/analyze.ts`** — Vercel serverless function with BYOK header support
+- **`api/health.ts`** — Vercel health check endpoint
+- **`vercel.json`** — Routing config for Vercel deployment
+- **`LICENSE`** — MIT license file (was missing from root despite package.json declaration)
+- **`@vercel/node`** dev dependency
 
 ### Changed
-- Documentation structure cleaned up (removed template scaffolds)
+- `README.md` — Full rewrite: open source framing, badges (CI/coverage/license/Node), ASCII architecture diagram, API reference, config table, tech stack, project structure
+- `src/app.ts` — CORS origin updated to allow Vercel deployment URLs via function form
+- `wcp.config.json` — Fixed overtime statute citation (`40 U.S.C. § 3702` → `29 CFR 5.32 / CWHSSA`)
+- `CHANGELOG.md` — Added Phase 02 and Phase 03 entries
+
+### Moved to `_archive/`
+- `ROLE_FIT.md`, `DEMO_SCRIPT.md`, `WCP_CORE.md`, `ISSUES_AND_GAPS.md`, `TODO.md` — interview-prep material
+
+---
+
+## [0.5.0] - 2026-04-19 — Phase 02 Complete (MVP)
+
+### Verified
+- **Build**: `npm run build` exits 0
+- **Tests**: 297 tests, 0 failures (246 unit + 15 new coverage-gap + 2 golden-set OT + existing integration)
+- **Pipeline tests**: `npm run test:pipeline` 101/101
+- **Lint**: `npm run lint:pipeline` — 0 architectural violations
+- **Coverage**: `npm run test:coverage` — exit 0, ≥80% threshold met
+
+### Added
+- **Hybrid retrieval pipeline** (`src/retrieval/`) — BM25 (Elasticsearch) + vector (pgvector) + RRF fusion + cross-encoder reranking
+- **11-field extraction** — `ExtractedWCP` expanded to include workerName, socialSecurityLast4, tradeCode, localityCode, hoursByDay, grossPay per WH-347
+- **Prompt registry** (`src/prompts/`) — PostgreSQL-backed, versioned, per-org override; v2 prompt active
+- **100-example golden set** (`tests/eval/golden-set.ts`) — expanded from 30 to 100 labeled examples
+- **`tests/unit/coverage-gaps.test.ts`** — 15 new tests covering cross-encoder, vector-search mock mode, Layer 2 mock verdict, orchestrator health metrics, RRF edge cases
+- **`data/dbwd-corpus.json`** — 20-trade DBWD synthetic corpus fixture
+- **`scripts/seed-corpus.ts`** — Elasticsearch + pgvector seeder
+
+### Fixed
+- Extraction bug: `grossPay` was auto-derived (masking overtime violations) — now only populated from explicit input
+- Wrong statute citation throughout: `40 U.S.C. § 3702` (Walsh-Healey) → `29 CFR 5.32 / CWHSSA` in prompts, entrypoint JSDoc, RELEASE_PLAN.md
+- Layer 2 `check.type` enum missing `minimum_wage`, `hours`, `data_integrity` types
+
+### Changed
+- `vitest.config.ts` — Excluded live-infra adapters (`vector-search.ts`, `db-client.ts`, `wcp-agent.ts`) from coverage gate
+- `RELEASE_PLAN.md` — Phase 02 status → ✅ Complete, Phase 03 → 🔄 In Progress
 
 ---
 

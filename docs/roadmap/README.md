@@ -2,25 +2,18 @@
 
 Status Label: Implemented
 
-This directory contains the comprehensive product roadmap for the WCP Compliance Agent. It provides strategic direction, phase planning, milestones, and next actions.
-
 ---
 
-## Roadmap Structure
+## 📌 Start Here: Unified Release Plan
 
-### Strategic Overview
-- **[Executive Summary](executive-summary.md)** — Vision, strategic goals, timeline, resource summary
-- **[Platform Roadmap](platform-roadmap.md)** — Capability roadmap (infrastructure layers)
-- **[Milestones](milestones.md)** — 90-day detailed milestone plan
-
-### Phased Planning
-- **[Phase 01: Scaffolding](phase-01-scaffolding.md)** — Foundation, documentation, testing, ADRs
-- **[Phase 02: MVP](phase-02-mvp.md)** — Core functionality, hybrid retrieval, three-layer pipeline
-- **[Phase 03: Showcase](phase-03-showcase.md)** — Public demo, feedback collection, portfolio
-- **[Phase 05: Post-Launch](phase-05-post-launch.md)** — Optimization, expansion, ongoing iteration
-
-### Documentation Governance
-- **[Documentation Roadmap](documentation-roadmap.md)** — How to maintain and update docs
+**[RELEASE_PLAN.md](./RELEASE_PLAN.md)** is the single authoritative source for:
+- Phase status (current: Phase 02 MVP 🔄)
+- Exit gate criteria per phase
+- Next actions (sequenced by dependency)
+- Deliverable tracking
+- Risk register
+- Resource plan
+- Dependency graph
 
 ---
 
@@ -29,18 +22,35 @@ This directory contains the comprehensive product roadmap for the WCP Compliance
 ### By Audience
 
 **For Recruiters (2-minute read)**
-1. [Executive Summary](executive-summary.md) — Strategic goals and timeline
-2. [Phase 02: MVP](phase-02-mvp.md) — Technical depth (three-layer pipeline)
+1. [RELEASE_PLAN.md — Vision & Phase Overview](./RELEASE_PLAN.md#vision)
+2. [RELEASE_PLAN.md — Phase 02 Architecture](./RELEASE_PLAN.md#phase-02-mvp--in-progress)
 
 **For Hiring Managers (10-minute read)**
-1. [Executive Summary](executive-summary.md) — Full overview
-2. [Phase 01 → 02 → 03](phase-01-scaffolding.md) — Phased progression
-3. [Platform Roadmap](platform-roadmap.md) — Capability maturity
+1. [RELEASE_PLAN.md](./RELEASE_PLAN.md) — Full plan in one document
+2. [docs/phase-1-sign-off.md](../phase-1-sign-off.md) — Phase 01 verified completion
 
 **For Engineers (20-minute read)**
-1. [Phase 02: MVP](phase-02-mvp.md) — Current architecture
-2. [Platform Roadmap](platform-roadmap.md) — Target architecture
-3. [Milestones](milestones.md) — Detailed deliverables
+1. [RELEASE_PLAN.md — Phase 02 Deliverables](./RELEASE_PLAN.md#deliverables--status)
+2. [RELEASE_PLAN.md — Next Actions](./RELEASE_PLAN.md#next-actions-phase-02-start)
+3. [RELEASE_PLAN.md — Dependency Graph](./RELEASE_PLAN.md#dependency-graph)
+
+---
+
+## Supporting Reference Files
+
+These files are **kept for detail** but the RELEASE_PLAN.md is authoritative for status:
+
+- **[executive-summary.md](executive-summary.md)** — Regulatory context, risk matrix *(superseded)*
+- **[milestones.md](milestones.md)** — Detailed week-by-week breakdown *(superseded)*
+- **[platform-roadmap.md](platform-roadmap.md)** — Capability layer breakdown *(superseded)*
+- **[phase-01-scaffolding.md](phase-01-scaffolding.md)** — Phase 01 historical detail *(complete)*
+- **[phase-02-mvp.md](phase-02-mvp.md)** — Phase 02 extended detail
+- **[phase-03-showcase.md](phase-03-showcase.md)** — Phase 03 extended detail
+- **[phase-05-post-launch.md](phase-05-post-launch.md)** — Phase 05 extended detail
+- **[documentation-roadmap.md](documentation-roadmap.md)** — Docs governance
+
+> ⚠️ The `product-roadmap/` directory at the repo root is **deprecated**.
+> All files there have a deprecation notice pointing here.
 
 ---
 

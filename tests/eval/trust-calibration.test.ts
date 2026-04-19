@@ -10,91 +10,14 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { executeDecisionPipeline } from "../../src/pipeline/orchestrator.js";
 import type { TrustScoredDecision } from "../../src/types/decision-pipeline.js";
+import { GOLDEN_SET } from "./golden-set.js";
 
 describe("Trust Calibration - Golden Set Evaluation", () => {
   // ========================================================================
-  // Golden Set Definition
+  // Golden Set: 100 labeled examples imported from golden-set.ts
   // ========================================================================
 
-  /**
-   * Golden set of 10 WCP cases with known expected outcomes.
-   * These represent the ground truth for calibration.
-   */
-  const GOLDEN_SET = [
-    // Clean cases (should be Approved)
-    {
-      id: "clean-001",
-      input: "Role: Electrician, Hours: 40, Wage: 51.69, Fringe: 34.63",
-      expectedStatus: "Approved",
-      description: "Electrician at exact prevailing wage",
-    },
-    {
-      id: "clean-002",
-      input: "Role: Laborer, Hours: 40, Wage: 26.45, Fringe: 12.50",
-      expectedStatus: "Approved",
-      description: "Laborer at exact prevailing wage",
-    },
-    {
-      id: "clean-003",
-      input: "Role: Plumber, Hours: 35, Wage: 48.20, Fringe: 28.10",
-      expectedStatus: "Approved",
-      description: "Plumber at prevailing wage, partial week",
-    },
-
-    // Violation cases (should be Rejected or Revise)
-    {
-      id: "underpay-001",
-      input: "Role: Electrician, Hours: 40, Wage: 45.00, Fringe: 34.63",
-      expectedStatus: "Reject",
-      description: "Electrician underpaid by $6.69/hr",
-      violationType: "underpayment",
-    },
-    {
-      id: "underpay-002",
-      input: "Role: Laborer, Hours: 40, Wage: 20.00, Fringe: 12.50",
-      expectedStatus: "Reject",
-      description: "Laborer underpaid by $6.45/hr",
-      violationType: "underpayment",
-    },
-    {
-      id: "fringe-001",
-      input: "Role: Electrician, Hours: 40, Wage: 51.69, Fringe: 20.00",
-      expectedStatus: "Revise",
-      description: "Correct wage but fringe shortfall",
-      violationType: "fringe_shortfall",
-    },
-
-    // Edge cases
-    {
-      id: "unknown-001",
-      input: "Role: Wire Technician, Hours: 40, Wage: 40.00",
-      expectedStatus: "Reject", // Unknown classification treated as violation
-      description: "Unknown role classification",
-      violationType: "unknown_classification",
-    },
-    {
-      id: "overtime-001",
-      input: "Role: Electrician, Hours: 50, Wage: 51.69",
-      expectedStatus: "Revise", // Overtime at wrong rate
-      description: "50 hours at regular rate (should be 1.5x for OT)",
-      violationType: "overtime_error",
-    },
-
-    // Borderline cases
-    {
-      id: "borderline-001",
-      input: "Role: Electrician, Hours: 40, Wage: 51.00, Fringe: 34.63",
-      expectedStatus: "Revise", // Slight underpayment
-      description: "Electrician slightly underpaid ($0.69 short)",
-      violationType: "minor_underpayment",
-    },
-    {
-      id: "alias-001",
-      input: "Role: Wireman, Hours: 40, Wage: 51.69, Fringe: 34.63",
-      expectedStatus: "Approved", // Should resolve to Electrician via alias
-      description: "Electrician alias 'Wireman' at correct wage",
-    },
-  ];
+  // GOLDEN_SET imported from ./golden-set.ts — 100 manually reviewed examples
 
   // Results storage
   let results: Array<{
@@ -120,21 +43,21 @@ describe("Trust Calibration - Golden Set Evaluation", () => {
       const actual = decision.finalStatus;
       // Some cases might return "Pending Human Review" which is acceptable for violations
       const correct =
-        actual === testCase.expected ||
-        (testCase.expected === "Reject" && actual === "Pending Human Review") ||
-        (testCase.expected === "Revise" && actual === "Pending Human Review");
+        actual === testCase.expectedStatus ||
+        (testCase.expectedStatus === "Reject" && actual === "Pending Human Review") ||
+        (testCase.expectedStatus === "Revise" && actual === "Pending Human Review");
 
       results.push({
         id: testCase.id,
         decision,
-        expected: testCase.expected,
+        expected: testCase.expectedStatus,
         actual,
         trustScore: decision.trust.score,
         trustBand: decision.trust.band,
         correct,
       });
     }
-  }, 30000); // 30 second timeout for all API calls
+  }, 120_000); // 120s timeout — 100 examples in mock mode
 
   // ========================================================================
   // Metric: Overall Accuracy

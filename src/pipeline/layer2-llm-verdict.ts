@@ -24,6 +24,7 @@ import {
   validateReferencedCheckIds,
 } from "../types/decision-pipeline.js";
 import { generateMockWcpDecision, isMockMode } from "../utils/mock-responses.js";
+import { resolvePrompt } from "../prompts/resolver.js";
 
 // ============================================================================
 // LLM Agent Configuration
@@ -33,38 +34,19 @@ import { generateMockWcpDecision, isMockMode } from "../utils/mock-responses.js"
  * WCP Verdict Agent
  *
  * Specialized agent for Layer 2 reasoning.
- * Uses tight prompt constraints to prevent recomputation.
+ * Instructions are loaded from the prompt registry at call time (see generateWcpVerdict).
+ * A static fallback is provided here in case the registry hasn't bootstrapped.
  */
+const STATIC_FALLBACK_INSTRUCTIONS = [
+  "You are a Davis-Bacon Act compliance auditor reviewing a pre-computed WCP compliance report.",
+  "CRITICAL CONSTRAINT: You MUST NOT recompute values. Review Layer 1 findings only.",
+  "Decide: Approved / Revise / Reject. Cite specific check IDs from the report.",
+].join("\n");
+
 const wcpVerdictAgent = new Agent({
   name: "wcp-verdict-agent",
-  instructions: [
-    "You are a compliance auditor reviewing a pre-computed WCP (Weekly Certified Payroll) compliance report.",
-    "",
-    "CRITICAL CONSTRAINT: You MUST NOT recompute wages, overtime, or fringe benefits.",
-    "You MUST NOT look up DBWD rates yourself.",
-    "You MUST NOT perform any arithmetic calculations.",
-    "",
-    "Your ONLY job is to:",
-    "1. Review the findings in the provided DeterministicReport",
-    "2. Decide: Approved (no violations), Revise (minor violations), or Reject (major violations)",
-    "3. Provide rationale that references SPECIFIC check IDs from the report",
-    "4. Cite the relevant regulations (40 U.S.C. § 3142, 40 U.S.C. § 3702, etc.)",
-    "",
-    "OUTPUT REQUIREMENTS:",
-    "- status: Must be 'Approved', 'Revise', or 'Reject'",
-    "- rationale: Human-readable explanation citing check IDs",
-    "- referencedCheckIds: Array of check IDs you referenced (MUST be non-empty, MUST be valid IDs from report)",
-    "- selfConfidence: Your confidence in this verdict (0.0-1.0)",
-    "- reasoningTrace: Your step-by-step reasoning process",
-    "",
-    "VIOLATION HANDLING:",
-    "- Critical violations (underpayment, unknown classification) → Reject",
-    "- Error-level violations (fringe shortfall) → Revise",
-    "- Warnings only → Revise or Approved depending on severity",
-    "",
-    "Remember: The arithmetic is already done. You are a REVIEWER, not a CALCULATOR.",
-  ],
-  model: openai("gpt-4o-mini"), // Using smaller model for cost efficiency
+  instructions: STATIC_FALLBACK_INSTRUCTIONS,
+  model: openai("gpt-4o-mini"),
 });
 
 // ============================================================================
@@ -100,13 +82,13 @@ const Layer2InputSchema = z.object({
     checks: z.array(
       z.object({
         id: z.string(),
-        type: z.enum(["wage", "overtime", "fringe", "classification", "deduction"]),
+        type: z.enum(["wage", "overtime", "fringe", "classification", "deduction", "minimum_wage", "hours", "data_integrity"]),
         passed: z.boolean(),
         regulation: z.string(),
         expected: z.number().optional(),
         actual: z.number().optional(),
         difference: z.number().optional(),
-        severity: z.enum(["info", "warning", "error", "critical"]),
+        severity: z.enum(["info", "warning", "error", "critical", "high"]),
         message: z.string(),
       })
     ),
@@ -242,12 +224,18 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
     return verdict;
   }
 
+  // Resolve active prompt from registry (falls back to v2 in-memory if DB unavailable)
+  const resolvedInstructions = await resolvePrompt("wcp_verdict");
+  const agentToUse = resolvedInstructions
+    ? new Agent({ name: "wcp-verdict-agent", instructions: resolvedInstructions, model: openai("gpt-4o-mini") })
+    : wcpVerdictAgent;
+
   // Build prompt
   const prompt = buildLayer2Prompt(report);
 
   try {
     // Call LLM agent
-    const response = await wcpVerdictAgent.generate([
+    const response = await agentToUse.generate([
       { role: "user", content: prompt },
     ]);
 

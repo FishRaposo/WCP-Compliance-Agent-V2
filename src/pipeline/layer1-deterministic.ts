@@ -24,39 +24,13 @@ import {
   ExtractedWCPSchema,
   DBWDRateInfoSchema,
 } from "../types/decision-pipeline.js";
+import { lookupDBWDRate as hybridLookup } from "../retrieval/hybrid-retriever.js";
 
 // ============================================================================
-// DBWD Rate Database (Prototype)
+// DBWD Rate Database — Deprecated inline table
+// Kept only as last-resort fallback inside hybrid-retriever.ts.
+// Layer 1 now delegates all lookups to the hybrid retrieval pipeline.
 // ============================================================================
-
-/**
- * DBWD Rates (Prototype)
- *
- * In production, these would be loaded from PostgreSQL + pgvector.
- * For now, hardcoded with 5 common trades.
- *
- * @see docs/compliance/implementation-guide.md - DBWD integration patterns
- */
-const DBWDRates: Record<string, { base: number; fringe: number }> = {
-  Electrician: { base: 51.69, fringe: 34.63 },
-  Laborer: { base: 26.45, fringe: 12.5 },
-  Plumber: { base: 48.2, fringe: 28.1 },
-  Carpenter: { base: 45.0, fringe: 25.0 },
-  Mason: { base: 42.5, fringe: 22.5 },
-};
-
-/**
- * Classification aliases for fuzzy matching
- */
-const ClassificationAliases: Record<string, string> = {
-  Wireman: "Electrician",
-  "Electrical Worker": "Electrician",
-  "General Laborer": "Laborer",
-  "Construction Worker": "Laborer",
-  "Pipe Fitter": "Plumber",
-  "Woodworker": "Carpenter",
-  Bricklayer: "Mason",
-};
 
 // ============================================================================
 // Extraction Tool (Mastra-compatible)
@@ -83,24 +57,62 @@ export const extractWCPDataTool = createTool({
     const startTime = Date.now();
     const { content } = context;
 
-    // Pattern-based extraction (deterministic)
-    const roleMatch = content.match(/(?:Role|Classification|Trade)[\s:]+([A-Za-z\s]+?)(?:,|;|$)/i);
-    const hoursMatch = content.match(/(?:Hours|Hrs)[\s:]+(\d+(?:\.\d+)?)/i);
-    const wageMatch = content.match(/(?:Wage|Rate|Pay)[\s:]+\$?(\d+(?:\.\d+)?)/i);
-    const fringeMatch = content.match(/(?:Fringe|Benefits)[\s:]+\$?(\d+(?:\.\d+)?)/i);
+    // Core pattern-based extraction (deterministic, NO LLM)
+    const roleMatch = content.match(/(?:Role|Classification|Trade|Position)[\s:]+([A-Za-z\s]+?)(?:,|;|\n|$)/i);
+    const hoursMatch = content.match(/(?:Total\s+)?(?:Hours|Hrs)[\s:]+(\d+(?:\.\d+)?)/i);
+    const wageMatch = content.match(/(?:Wage|Rate|Pay|Hourly)[\s:]+\$?(\d+(?:\.\d+)?)/i);
+    const fringeMatch = content.match(/(?:Fringe|Benefits|Ben)[\s:]+\$?(\d+(?:\.\d+)?)/i);
+
+    // Extended field extraction
+    const workerNameMatch = content.match(/(?:Name|Worker|Employee)[\s:]+([A-Za-z,\s]+?)(?:,|;|\n|$)/i);
+    const weekEndingMatch = content.match(/(?:Week\s+Ending|Week-Ending|WE)[\s:]+(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4})/i);
+    const projectIdMatch = content.match(/(?:Project|Contract|Job)[\s#:]+([A-Za-z0-9\-]+)/i);
+    const localityMatch = content.match(/(?:Locality|Location|Area)[\s:]+([A-Za-z\s,]+?)(?:,|;|\n|$)/i);
+    const ssnMatch = content.match(/(?:SSN|SS#|Social)[\s:]+(?:\*+|X+)(\d{4})/i);
+    const grossPayMatch = content.match(/(?:Gross\s+Pay|Gross|Total\s+Pay)[\s:]+\$?(\d+(?:\.\d+)?)/i);
+
+    // Day-by-day hours (e.g. "Mon: 8, Tue: 8, Wed: 8, Thu: 8, Fri: 8")
+    const dayPatterns: Record<string, RegExp> = {
+      mon: /(?:Mon(?:day)?)[\s:]+(\d+(?:\.\d+)?)/i,
+      tue: /(?:Tue(?:sday)?)[\s:]+(\d+(?:\.\d+)?)/i,
+      wed: /(?:Wed(?:nesday)?)[\s:]+(\d+(?:\.\d+)?)/i,
+      thu: /(?:Thu(?:rsday)?)[\s:]+(\d+(?:\.\d+)?)/i,
+      fri: /(?:Fri(?:day)?)[\s:]+(\d+(?:\.\d+)?)/i,
+      sat: /(?:Sat(?:urday)?)[\s:]+(\d+(?:\.\d+)?)/i,
+      sun: /(?:Sun(?:day)?)[\s:]+(\d+(?:\.\d+)?)/i,
+    };
+    const hoursByDay: ExtractedWCP["hoursByDay"] = {};
+    let hasDayHours = false;
+    for (const [day, pattern] of Object.entries(dayPatterns)) {
+      const m = content.match(pattern);
+      if (m) {
+        (hoursByDay as Record<string, number>)[day] = parseFloat(m[1]);
+        hasDayHours = true;
+      }
+    }
 
     const hours = hoursMatch ? parseFloat(hoursMatch[1]) : 0;
     const regularHours = Math.min(hours, 40);
     const overtimeHours = Math.max(0, hours - 40);
+    const wage = wageMatch ? parseFloat(wageMatch[1]) : 0;
 
     const result: ExtractedWCP = {
       rawInput: content,
+      workerName: workerNameMatch ? workerNameMatch[1].trim() : undefined,
+      socialSecurityLast4: ssnMatch ? ssnMatch[1] : undefined,
       role: roleMatch ? roleMatch[1].trim() : "Unknown",
+      localityCode: localityMatch ? localityMatch[1].trim() : undefined,
       hours,
       regularHours,
       overtimeHours,
-      wage: wageMatch ? parseFloat(wageMatch[1]) : 0,
+      hoursByDay: hasDayHours ? hoursByDay : undefined,
+      wage,
       fringe: fringeMatch ? parseFloat(fringeMatch[1]) : undefined,
+      grossPay: grossPayMatch
+        ? parseFloat(grossPayMatch[1])
+        : undefined,
+      weekEnding: weekEndingMatch ? weekEndingMatch[1] : undefined,
+      projectId: projectIdMatch ? projectIdMatch[1] : undefined,
     };
 
     console.log(`[Layer 1] Extraction completed in ${Date.now() - startTime}ms`);
@@ -122,68 +134,50 @@ interface ClassificationResult {
 }
 
 /**
- * Resolve classification with hybrid approach
+ * Resolve classification via hybrid retrieval pipeline.
  *
- * Tier 1: Exact match
- * Tier 2: Alias database
- * Tier 3: Unknown (requires manual resolution)
+ * Tier 1: Exact match (in-memory fallback in hybrid-retriever)
+ * Tier 2: Alias match (in-memory fallback)
+ * Tier 3: Semantic match (BM25 + vector + rerank)
+ * Tier 4: Unknown
  *
  * @param role Role string from WCP
  * @returns Classification result with confidence
  */
-function resolveClassification(role: string): ClassificationResult {
-  const normalizedRole = role.trim();
+async function resolveClassification(role: string): Promise<ClassificationResult> {
+  const result = await hybridLookup(role);
 
-  // Tier 1: Exact match
-  if (DBWDRates[normalizedRole]) {
-    return {
-      trade: normalizedRole,
-      confidence: 1.0,
-      method: "exact",
-    };
+  if (!result.rateInfo) {
+    return { trade: "Unknown", confidence: 0.3, method: "unknown" };
   }
 
-  // Tier 2: Alias match
-  const aliasedTrade = ClassificationAliases[normalizedRole];
-  if (aliasedTrade && DBWDRates[aliasedTrade]) {
-    return {
-      trade: aliasedTrade,
-      confidence: 0.9,
-      method: "alias",
-    };
-  }
+  const method = result.method === "in_memory"
+    ? (result.confidence >= 1.0 ? "exact" : "alias")
+    : result.method === "hybrid" || result.method === "vector_only"
+      ? "semantic"
+      : "alias";
 
-  // Tier 3: Unknown
   return {
-    trade: "Unknown",
-    confidence: 0.3,
-    method: "unknown",
+    trade: result.rateInfo.trade,
+    confidence: result.confidence,
+    method,
   };
 }
 
 // ============================================================================
-// DBWD Rate Lookup
+// DBWD Rate Lookup — delegates to hybrid retriever
 // ============================================================================
 
 /**
- * Look up DBWD rate information for a trade
+ * Look up DBWD rate information for a trade via hybrid retrieval.
+ * Wraps hybridLookup to return just the rate info.
  *
- * @param trade Trade classification
+ * @param trade Trade classification string
  * @returns DBWD rate info or null if not found
  */
-function lookupDBWDRate(trade: string): DBWDRateInfo | null {
-  const rate = DBWDRates[trade];
-  if (!rate) return null;
-
-  return {
-    dbwdId: `${trade.toUpperCase().slice(0, 4)}0490-001`, // Prototype ID
-    baseRate: rate.base,
-    fringeRate: rate.fringe,
-    totalRate: rate.base + rate.fringe,
-    version: "2024-06-01",
-    effectiveDate: "2024-06-01",
-    trade,
-  };
+async function lookupDBWDRate(trade: string): Promise<DBWDRateInfo | null> {
+  const result = await hybridLookup(trade);
+  return result.rateInfo;
 }
 
 // ============================================================================
@@ -217,9 +211,17 @@ function checkPrevailingWage(
 }
 
 /**
- * Validate overtime calculation (40 U.S.C. § 3702)
+ * Validate overtime calculation (CWHSSA — 40 U.S.C. §§ 3701-3708 / 29 CFR 5.32)
  *
- * Overtime must be 1.5× base rate. Fringe is NOT multiplied by 1.5.
+ * Under CWHSSA, overtime for hours > 40/week on covered federal contracts
+ * requires a premium of 0.5× the basic rate of pay (half-time premium).
+ * Fringe benefits are owed on ALL hours worked at the straight-time rate —
+ * they are NOT multiplied by 1.5 for overtime hours.
+ *
+ * Correct gross pay = (regularHours × baseRate) + (overtimeHours × baseRate × 1.5)
+ * Fringe obligation = totalHours × fringeRate (separate from gross pay)
+ *
+ * Source: 29 CFR 5.32; DOL CWHSSA Overtime Slides; DOL Fact Sheet #66E
  */
 function checkOvertime(
   extracted: ExtractedWCP,
@@ -231,37 +233,66 @@ function checkOvertime(
       id: `overtime_check_${String(checkId).padStart(3, "0")}`,
       type: "overtime",
       passed: true,
-      regulation: "40 U.S.C. § 3702",
+      regulation: "29 CFR 5.32 (CWHSSA)",
       severity: "info",
       message: "No overtime hours worked",
     };
   }
 
-  // Calculate correct overtime rate: 1.5× base + fringe
-  const correctOvertimeRate = dbwdRate.baseRate * 1.5 + dbwdRate.fringeRate;
+  // Correct gross pay: regular hours at base + OT hours at 1.5× base
+  // Fringe is NOT included in gross pay (reported separately on WH-347)
+  const regularHrs = extracted.regularHours ?? Math.min(extracted.hours, 40);
+  const overtimeHrs = extracted.overtimeHours ?? Math.max(0, extracted.hours - 40);
+  const correctGrossPay =
+    regularHrs * dbwdRate.baseRate +
+    overtimeHrs * dbwdRate.baseRate * 1.5;
 
-  // Check if reported wage appears to be using same rate for all hours
-  // (common violation: paying regular rate for OT instead of 1.5×)
-  const sameRateViolation = Math.abs(extracted.wage - dbwdRate.baseRate) < 0.01;
+  // Gross pay if contractor wrongly paid straight time for all hours
+  const straightTimeGrossPay = extracted.hours * dbwdRate.baseRate;
 
-  const passed = !sameRateViolation; // Simplified check
+  // Use reported grossPay if available; otherwise infer from wage field
+  const reportedGrossPay =
+    extracted.grossPay ?? extracted.wage * extracted.hours;
+
+  // Violation: reported gross < correct gross (OT premium underpaid)
+  const overtimePremiumOwed = correctGrossPay - straightTimeGrossPay;
+  const passed = reportedGrossPay >= correctGrossPay - 0.01; // $0.01 tolerance
+
+  const owedAmount = correctGrossPay - reportedGrossPay;
 
   return {
     id: `overtime_check_${String(checkId).padStart(3, "0")}`,
     type: "overtime",
     passed,
-    regulation: "40 U.S.C. § 3702",
-    expected: correctOvertimeRate,
-    actual: extracted.wage,
+    regulation: "29 CFR 5.32 (CWHSSA)",
+    expected: correctGrossPay,
+    actual: reportedGrossPay,
+    difference: passed ? undefined : owedAmount,
     severity: passed ? "info" : "critical",
     message: passed
-      ? `Overtime rate calculated correctly at 1.5× base + fringe = $${correctOvertimeRate.toFixed(2)}/hr`
-      : `OVERTIME ERROR: Worker paid $${extracted.wage.toFixed(2)}/hr for all hours instead of $${correctOvertimeRate.toFixed(2)}/hr for OT hours (owes $${(correctOvertimeRate - extracted.wage).toFixed(2)} × ${extracted.overtimeHours} hrs)`,
+      ? `Overtime gross pay $${reportedGrossPay.toFixed(2)} meets CWHSSA requirement ($${correctGrossPay.toFixed(2)}): ${regularHrs}h × $${dbwdRate.baseRate} + ${overtimeHrs}h × $${(dbwdRate.baseRate * 1.5).toFixed(2)}`
+      : `OVERTIME ERROR: Gross pay $${reportedGrossPay.toFixed(2)} below CWHSSA requirement $${correctGrossPay.toFixed(2)} (OT premium of $${overtimePremiumOwed.toFixed(2)} underpaid — owes $${owedAmount.toFixed(2)} total)`,
   };
 }
 
 /**
- * Validate fringe benefits (29 CFR 5.22)
+ * Validate fringe benefits (40 U.S.C. § 3141(2)(B) / 29 CFR 5.5(a)(1)(i))
+ *
+ * The prevailing wage obligation = basic hourly rate (BHR) + fringe benefits.
+ * Contractors may satisfy the fringe obligation by:
+ *   (a) paying fringe entirely as cash wages alongside the BHR, or
+ *   (b) contributing to a bona fide fringe benefit plan, or
+ *   (c) a combination of (a) and (b).
+ *
+ * IMPORTANT (DOL Fact Sheet #66E / 29 CFR 5.31): Under DBRA (unlike SCA),
+ * cash wages paid IN EXCESS of the BHR may be used to offset the fringe
+ * benefit portion of the prevailing wage obligation.
+ *
+ * Therefore the check is: (reportedWage + reportedFringe) >= (BHR + fringeRate)
+ * — not a strict fringe-only comparison.
+ *
+ * Fringe benefits must be paid on ALL hours worked, including overtime hours.
+ * Source: 40 U.S.C. § 3141(2)(B); 29 CFR 5.5(a)(1)(i); 29 CFR 5.23; 29 CFR 5.31
  */
 function checkFringeBenefits(
   extracted: ExtractedWCP,
@@ -269,21 +300,26 @@ function checkFringeBenefits(
   checkId: number
 ): CheckResult {
   const reportedFringe = extracted.fringe ?? 0;
-  const passed = reportedFringe >= dbwdRate.fringeRate;
-  const difference = passed ? undefined : dbwdRate.fringeRate - reportedFringe;
+
+  // Per DOL Fact Sheet #66E: cash wages above BHR can offset fringe shortfall
+  const cashWageExcess = Math.max(0, extracted.wage - dbwdRate.baseRate);
+  const effectiveFringe = reportedFringe + cashWageExcess;
+
+  const passed = effectiveFringe >= dbwdRate.fringeRate;
+  const difference = passed ? undefined : dbwdRate.fringeRate - effectiveFringe;
 
   return {
     id: `fringe_check_${String(checkId).padStart(3, "0")}`,
     type: "fringe",
     passed,
-    regulation: "29 CFR 5.22",
+    regulation: "29 CFR 5.5(a)(1)(i) / 40 U.S.C. § 3141(2)(B)",
     expected: dbwdRate.fringeRate,
-    actual: reportedFringe,
+    actual: effectiveFringe,
     difference,
     severity: passed ? "info" : "error",
     message: passed
-      ? `Fringe benefits $${reportedFringe.toFixed(2)} meet requirement $${dbwdRate.fringeRate.toFixed(2)}`
-      : `FRINGE SHORTFALL: Reported fringe $${reportedFringe.toFixed(2)} below required $${dbwdRate.fringeRate.toFixed(2)} (owes $${difference!.toFixed(2)}/hr)`,
+      ? `Fringe obligation met: $${reportedFringe.toFixed(2)}/hr fringe${cashWageExcess > 0 ? ` + $${cashWageExcess.toFixed(2)}/hr cash wage offset` : ""} ≥ required $${dbwdRate.fringeRate.toFixed(2)}/hr`
+      : `FRINGE SHORTFALL: Effective fringe $${effectiveFringe.toFixed(2)}/hr (reported: $${reportedFringe.toFixed(2)} + wage excess: $${cashWageExcess.toFixed(2)}) below required $${dbwdRate.fringeRate.toFixed(2)}/hr (owes $${difference!.toFixed(2)}/hr)`,
   };
 }
 
@@ -353,29 +389,42 @@ function checkNegativeValues(
 }
 
 /**
- * Validate minimum wage (federal minimum wage requirement)
- * Current federal minimum wage: $7.25/hr (as of 2024)
+ * Sanity check: wage must be at least the FLSA federal minimum ($7.25/hr).
+ *
+ * Note: On Davis-Bacon contracts the effective floor is the prevailing wage
+ * (always >> $7.25), so this check catches only extreme data-entry errors
+ * (e.g. zero wages, obviously corrupt data). The prevailing wage check
+ * (checkPrevailingWage) enforces the actual Davis-Bacon obligation.
+ *
+ * EO 14026 ($17.75/hr for federal contractors) was revoked 2025-03-14;
+ * for contracts awarded after that date the applicable floor reverts to
+ * the FLSA federal minimum of $7.25/hr (29 U.S.C. § 206(a)(1)).
+ *
+ * Regulation: 29 U.S.C. § 206(a)(1) (FLSA); 40 U.S.C. § 3142 governs
+ * the actual prevailing wage obligation.
  */
 function checkMinimumWage(
   extracted: ExtractedWCP,
   checkId: number
 ): CheckResult {
-  const FEDERAL_MINIMUM_WAGE = 7.25;
-  const passed = extracted.wage >= FEDERAL_MINIMUM_WAGE;
-  const difference = passed ? undefined : FEDERAL_MINIMUM_WAGE - extracted.wage;
+  // FLSA federal minimum wage — floor sanity check only
+  // (Davis-Bacon prevailing wage is always higher and checked separately)
+  const FLSA_MINIMUM_WAGE = 7.25; // 29 U.S.C. § 206(a)(1)
+  const passed = extracted.wage >= FLSA_MINIMUM_WAGE;
+  const difference = passed ? undefined : FLSA_MINIMUM_WAGE - extracted.wage;
 
   return {
     id: `minimum_wage_check_${String(checkId).padStart(3, "0")}`,
     type: "minimum_wage",
     passed,
-    regulation: "Fair Labor Standards Act (FLSA)",
-    expected: FEDERAL_MINIMUM_WAGE,
+    regulation: "29 U.S.C. § 206(a)(1) (FLSA)",
+    expected: FLSA_MINIMUM_WAGE,
     actual: extracted.wage,
     difference,
     severity: passed ? "info" : "critical",
     message: passed
-      ? `Wage $${extracted.wage.toFixed(2)}/hr meets federal minimum wage $${FEDERAL_MINIMUM_WAGE}/hr`
-      : `MINIMUM WAGE VIOLATION: Wage $${extracted.wage.toFixed(2)}/hr below federal minimum $${FEDERAL_MINIMUM_WAGE}/hr (owes $${difference!.toFixed(2)}/hr)`,
+      ? `Wage $${extracted.wage.toFixed(2)}/hr meets FLSA floor $${FLSA_MINIMUM_WAGE}/hr (Davis-Bacon prevailing wage checked separately)`
+      : `MINIMUM WAGE VIOLATION: Wage $${extracted.wage.toFixed(2)}/hr below FLSA federal minimum $${FLSA_MINIMUM_WAGE}/hr (29 U.S.C. § 206(a)(1)) — owes $${difference!.toFixed(2)}/hr`,
   };
 }
 
@@ -435,14 +484,15 @@ export async function layer1Deterministic(
   });
   timings.push({ stage: "extraction", ms: Date.now() - extractStart });
 
-  // Step 2: Resolve classification
+  // Step 2: Resolve classification via hybrid retrieval
   const classifyStart = Date.now();
-  const classification = resolveClassification(extracted.role);
+  const classification = await resolveClassification(extracted.role);
   timings.push({ stage: "classification", ms: Date.now() - classifyStart });
 
-  // Step 3: Look up DBWD rate
+  // Step 3: Look up DBWD rate (already fetched in Step 2 via hybrid retriever,
+  //         but we call again to surface the canonical rate info for the report)
   const lookupStart = Date.now();
-  const dbwdRate = lookupDBWDRate(classification.trade);
+  const dbwdRate = await lookupDBWDRate(classification.trade);
   timings.push({ stage: "dbwd_lookup", ms: Date.now() - lookupStart });
 
   // Step 4: Run compliance checks
