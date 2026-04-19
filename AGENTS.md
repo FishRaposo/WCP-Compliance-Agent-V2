@@ -91,9 +91,9 @@ npm run lint:pipeline    # AST-based architectural lint (runs in CI)
 
 ## Environment
 
-- `OPENAI_API_KEY` is required. Set to `"mock"` or `"mock-key"` for offline development/testing.
-- Optional: `OPENAI_MODEL` (default: `GPT 5.4`), `AGENT_MAX_STEPS` (default: `3`), `MOCK_MODE`.
-- The `MOCK_MODE` env var is used by trust calibration tests in CI.
+- `OPENAI_API_KEY` is required. Set to `"mock"`, `"mock-key"`, `"test-api-key"`, or empty for offline development/testing (triggers mock mode via `isMockMode()`).
+- Optional: `OPENAI_MODEL` (default: `GPT 5.4`), `AGENT_MAX_STEPS` (default: `3`).
+- Mock mode is detected via `isMockMode()` in `src/utils/mock-responses.ts` — no separate MOCK_MODE env var.
 - `src/utils/env-validator.ts` loads `.env` via dotenv and fails fast if `OPENAI_API_KEY` is missing.
 - `tests/setup.ts` sets `OPENAI_API_KEY=test-api-key` and `NODE_ENV=test` for all tests.
 
@@ -120,7 +120,7 @@ npm run lint:pipeline    # AST-based architectural lint (runs in CI)
 - Tests require `OPENAI_API_KEY` to be set (tests/setup.ts handles this).
 - Layer 2 tests use mock mode automatically when key is `"test-api-key"` or `"mock"`.
 - Pipeline tests (`npm run test:pipeline`) are the critical subset that must always pass before merge.
-- Trust calibration tests (`tests/eval/trust-calibration.test.ts`) run against a golden set and may need real API keys in CI (`MOCK_MODE=false`).
+- Trust calibration tests (`tests/eval/trust-calibration.test.ts`) run against a golden set and may need real API keys in CI (set `OPENAI_API_KEY` to a real key, not a mock value).
 
 ## CI (GitHub Actions)
 

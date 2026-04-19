@@ -400,7 +400,7 @@ npm run test:retrieval     # Search quality
 npm run test:coverage
 
 # Run in CI mode (stricter)
-MOCK_MODE=true npm test
+OPENAI_API_KEY=mock npm test
 ```
 
 ### Golden set management

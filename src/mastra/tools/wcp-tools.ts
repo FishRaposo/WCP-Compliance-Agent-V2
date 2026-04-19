@@ -1,28 +1,32 @@
 /**
  * WCP Tools - Data Extraction and Validation
- * 
+ *
+ * @deprecated These Mastra-based tools are legacy and are being superseded by the three-layer pipeline
+ * in src/pipeline/. New code should use the pipeline orchestrator (src/pipeline/orchestrator.ts) instead.
+ *
  * This module implements deterministic validation for Davis-Bacon Act compliance.
- * 
+ *
  * Regulatory Basis:
  * - 40 U.S.C. § 3142: Prevailing wage requirements
  * - 40 U.S.C. § 3702: Overtime compensation (1.5x base rate)
  * - 29 CFR 5.22: Fringe benefits requirements
  * - 29 CFR 5.5(a)(3): Weekly payroll submission requirements
- * 
+ *
  * Implementation Approach:
  * - extractWCPTool: Extracts structured WCP data from text input
  * - validateWCPTool: Validates against DBWD rates with deterministic arithmetic
- * 
+ *
  * Why Deterministic?
  * LLMs can hallucinate calculations. Deterministic code guarantees:
  * - 100% arithmetic accuracy for wage comparisons
  * - Reproducible results (same input = same output)
  * - Exact calculations regulators can verify
- * 
+ *
  * @file src/mastra/tools/wcp-tools.ts
  * @see docs/compliance/traceability-matrix.md - Regulation-to-code mapping
  * @see docs/compliance/regulatory-compliance-report.md - System compliance overview
  * @see docs/foundation/wcp-and-dbwd-reference.md - Domain requirements
+ * @see docs/phase-0-out-of-scope.md - Migration plan
  */
 
 // External dependencies

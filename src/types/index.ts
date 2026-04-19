@@ -45,7 +45,6 @@ export interface ShowcaseScenario {
 // API Types
 export interface AnalyzeRequest {
   content: string;
-  maxSteps?: number;
 }
 
 export interface AnalyzeResponse {
@@ -65,5 +64,5 @@ export interface HealthMetrics {
 export interface ErrorInfo {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }

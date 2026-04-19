@@ -29,7 +29,7 @@ export interface CheckResult {
   id: string;
 
   /** Type of compliance check */
-  type: "wage" | "overtime" | "fringe" | "classification" | "deduction";
+  type: "wage" | "overtime" | "fringe" | "classification" | "deduction" | "data_integrity" | "minimum_wage" | "hours";
 
   /** Whether the check passed */
   passed: boolean;
@@ -47,7 +47,7 @@ export interface CheckResult {
   difference?: number;
 
   /** Severity of failure */
-  severity: "info" | "warning" | "error" | "critical";
+  severity: "info" | "warning" | "error" | "critical" | "high";
 
   /** Human-readable explanation */
   message: string;
@@ -371,13 +371,13 @@ export interface TrustScoredDecision {
 
 export const CheckResultSchema = z.object({
   id: z.string(),
-  type: z.enum(["wage", "overtime", "fringe", "classification", "deduction"]),
+  type: z.enum(["wage", "overtime", "fringe", "classification", "deduction", "data_integrity", "minimum_wage", "hours"]),
   passed: z.boolean(),
   regulation: z.string(),
   expected: z.number().optional(),
   actual: z.number().optional(),
   difference: z.number().optional(),
-  severity: z.enum(["info", "warning", "error", "critical"]),
+  severity: z.enum(["info", "warning", "error", "critical", "high"]),
   message: z.string(),
 });
 

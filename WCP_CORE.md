@@ -313,12 +313,11 @@ npm run lint:pipeline # AST-based architectural enforcement
 
 ```bash
 # Required
-export OPENAI_API_KEY=sk-...          # Get from OpenAI dashboard
+export OPENAI_API_KEY=sk-...          # Get from OpenAI dashboard (set to 'mock', 'mock-key', or empty for mock mode)
 
 # Optional
 export OPENAI_MODEL=gpt-5.4            # Default: GPT 5.4
 export AGENT_MAX_STEPS=3              # Default: 3
-export MOCK_MODE=false                # Use mock responses if true
 export NODE_ENV=development
 ```
 

@@ -1,30 +1,20 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { generateWcpDecision } from "../../src/entrypoints/wcp-entrypoint.js";
 
-describe("wcp entrypoint integration (no live LLM)", () => {
-  it("requests the wcpAgent and calls generate with the expected options", async () => {
-    const generate = vi.fn(async () => ({
-      object: { status: "Approved" },
-      text: "ok",
-      toolResults: [],
-    }));
-
-    const getAgent = vi.fn(async () => ({ generate }));
-
+describe("wcp entrypoint integration", () => {
+  it("generates WCP decision via pipeline orchestrator", async () => {
     const response = await generateWcpDecision({
       content: "Role: Electrician, Hours: 40, Wage: $55.00",
-      mastraInstance: { getAgent },
-      maxSteps: 3,
     });
-
-    expect(getAgent).toHaveBeenCalledWith("wcpAgent");
-    expect(generate).toHaveBeenCalledTimes(1);
 
     // Verify the response structure
     expect(response).toBeDefined();
-    expect(response.object).toBeDefined();
-    expect(response.object.status).toBe("Approved");
-    expect(response.text).toBe("ok");
-    expect(response.toolResults).toEqual([]);
+    expect(response.traceId).toBeDefined();
+    expect(response.finalStatus).toBeDefined();
+    expect(response.deterministic).toBeDefined();
+    expect(response.verdict).toBeDefined();
+    expect(response.trust).toBeDefined();
+    expect(response.humanReview).toBeDefined();
+    expect(response.auditTrail).toBeDefined();
   });
 });

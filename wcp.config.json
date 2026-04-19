@@ -1,0 +1,198 @@
+{
+  "$schema": "./wcp.config.schema.json",
+  "version": "0.1.0",
+  "description": "WCP Compliance Agent - Centralized Configuration",
+
+  "pipeline": {
+    "deterministic": {
+      "extraction": {
+        "rolePatterns": [
+          "role[:\\s]+(\\w+)",
+          "classification[:\\s]+(\\w+)"
+        ],
+        "hoursPattern": "hours[:\\s]+(\\d+(?:\\.\\d+)?)",
+        "wagePattern": "wage[:\\s]+\\$?(\\d+(?:\\.\\d+)?)",
+        "fringePattern": "fringe[:\\s]+\\$?(\\d+(?:\\.\\d+)?)"
+      },
+      "checks": {
+        "classification": {
+          "enabled": true,
+          "severity": "critical",
+          "regulation": "29 CFR 5.5(a)(3)(i)",
+          "confidenceThreshold": 0.70
+        },
+        "baseWage": {
+          "enabled": true,
+          "severity": "critical",
+          "regulation": "40 U.S.C. § 3142"
+        },
+        "overtime": {
+          "enabled": true,
+          "severity": "high",
+          "regulation": "40 U.S.C. § 3702",
+          "thresholdHours": 40,
+          "multiplier": 1.5
+        },
+        "fringe": {
+          "enabled": true,
+          "severity": "medium",
+          "regulation": "29 CFR 5.5(a)(3)"
+        }
+      }
+    },
+    "llm": {
+      "model": "gpt-5.4",
+      "temperature": 0.7,
+      "maxTokens": 2000,
+      "maxSteps": 3,
+      "timeout": 30000,
+      "systemPromptPath": "./src/pipeline/reference/instructions/layer2-system-prompt.md"
+    },
+    "trust": {
+      "thresholds": {
+        "autoApprove": 0.85,
+        "flagForReview": 0.60,
+        "requireHuman": 0.60
+      },
+      "weights": {
+        "deterministic": 0.25,
+        "classification": 0.15,
+        "llmSelf": 0.30,
+        "agreement": 0.30
+      },
+      "severityImpact": {
+        "critical": 0.0,
+        "high": 0.5,
+        "medium": 0.75,
+        "low": 0.9
+      }
+    }
+  },
+
+  "dbwd": {
+    "source": "hardcoded",
+    "effectiveDate": "2024-06-01",
+    "geographicScope": "nationwide",
+    "rates": {
+      "Electrician": {
+        "base": 51.69,
+        "fringe": 34.63,
+        "total": 86.32,
+        "dbwdId": "DBWD-2024-06-01-ELEC"
+      },
+      "Laborer": {
+        "base": 26.45,
+        "fringe": 12.50,
+        "total": 38.95,
+        "dbwdId": "DBWD-2024-06-01-LABR"
+      },
+      "Plumber": {
+        "base": 48.50,
+        "fringe": 32.00,
+        "total": 80.50,
+        "dbwdId": "DBWD-2024-06-01-PLMB"
+      },
+      "Carpenter": {
+        "base": 42.75,
+        "fringe": 28.50,
+        "total": 71.25,
+        "dbwdId": "DBWD-2024-06-01-CARP"
+      },
+      "Mason": {
+        "base": 45.20,
+        "fringe": 30.00,
+        "total": 75.20,
+        "dbwdId": "DBWD-2024-06-01-MASN"
+      }
+    },
+    "phase2Target": {
+      "source": "postgresql",
+      "schema": "./src/pipeline/reference/values/dbwd-rates.md",
+      "tableName": "dbwd_rates"
+    }
+  },
+
+  "api": {
+    "port": 3000,
+    "host": "localhost",
+    "cors": {
+      "enabled": true,
+      "allowedOrigins": [
+        "http://localhost:3000",
+        "http://localhost:3001"
+      ]
+    },
+    "timeout": 30000,
+    "endpoints": {
+      "analyze": "/analyze",
+      "apiAnalyze": "/api/analyze",
+      "health": "/health",
+      "apiHealth": "/api/health"
+    }
+  },
+
+  "features": {
+    "pdfParsing": false,
+    "ragLookup": false,
+    "batchProcessing": false,
+    "observability": false
+  },
+
+  "observability": {
+    "enabled": false,
+    "logging": {
+      "level": "info",
+      "format": "json"
+    },
+    "tracing": {
+      "enabled": false,
+      "langfuse": {
+        "publicKey": "",
+        "secretKey": "",
+        "host": "https://cloud.langfuse.com"
+      }
+    }
+  },
+
+  "database": {
+    "url": "file:./data/local.db",
+    "maxConnections": 10,
+    "migrationPath": "./migrations",
+    "logging": false
+  },
+
+  "humanReview": {
+    "enabled": true,
+    "persistence": "memory",
+    "queuePath": "./data/human-review-queue.json",
+    "retentionDays": 365
+  },
+
+  "audit": {
+    "enabled": true,
+    "retentionYears": 7,
+    "trail": {
+      "layer1": true,
+      "layer2": true,
+      "layer3": true,
+      "humanReview": true
+    }
+  },
+
+  "mock": {
+    "enabled": false,
+    "modeDetection": "openaiApiKey",
+    "validKeys": [
+      "mock",
+      "mock-key",
+      "test-api-key",
+      ""
+    ]
+  },
+
+  "references": {
+    "legislation": "./src/pipeline/reference/legislation/",
+    "values": "./src/pipeline/reference/values/",
+    "instructions": "./src/pipeline/reference/instructions/"
+  }
+}

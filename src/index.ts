@@ -111,7 +111,7 @@ validateEnvironmentOrExit();
     
     // Exit with success code for CI/CD
     process.exit(0);
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Structured error handling with proper error formatting
     const formattedError = formatApiError(error);
     
@@ -121,7 +121,7 @@ validateEnvironmentOrExit();
     
     // Show details if available
     if (error && typeof error === 'object' && 'details' in error) {
-      console.error("\nDetails:", (error as any).details);
+      console.error("\nDetails:", error.details);
     }
     
     // Exit with error code for CI/CD

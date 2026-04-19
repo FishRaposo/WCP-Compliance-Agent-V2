@@ -1,19 +1,23 @@
 /**
  * WCP Agent - Compliance Decision-Making
- * 
+ *
+ * @deprecated This Mastra-based agent is legacy and is being superseded by the three-layer pipeline
+ * in src/pipeline/. New code should use the pipeline orchestrator (src/pipeline/orchestrator.ts) instead.
+ *
  * LLM-powered agent that processes WCPs and makes compliance decisions.
  * Uses a hybrid approach: deterministic tools for accuracy + LLM for reasoning.
- * 
+ *
  * Workflow:
  * 1. Extract data using extractWCPTool
  * 2. Validate data using validateWCPTool
  * 3. Make compliance decision (Approved/Revise/Reject)
  * 4. Generate explanation with audit trail
- * 
+ *
  * @file src/mastra/agents/wcp-agent.ts
  * @see AGENTS.md for agent patterns
  * @see WORKFLOW.md for decision workflows
  * @see CONTEXT.md for architecture overview
+ * @see docs/phase-0-out-of-scope.md - Migration plan
  */
 
 // External dependencies

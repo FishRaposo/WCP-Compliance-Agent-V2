@@ -42,13 +42,6 @@ import { executeDecisionPipeline, type DecisionPipelineInput } from "../pipeline
 import type { TrustScoredDecision } from "../types/decision-pipeline.js";
 import { ExternalApiError, RateLimitError } from "../utils/errors.js";
 
-type StepFinishCallback = (args: {
-  text?: string;
-  toolCalls?: unknown;
-  toolResults?: unknown;
-  finishReason?: string;
-}) => void;
-
 /**
  * Generate WCP Compliance Decision
  *
@@ -70,7 +63,8 @@ type StepFinishCallback = (args: {
  * - Computes trust score for human review gating
  *
  * Mock Mode:
- * When MOCK_MODE=true, returns deterministic mock responses without API calls.
+ * When OPENAI_API_KEY is set to 'mock', 'mock-key', 'test-api-key', or is empty/undefined,
+ * returns deterministic mock responses without API calls. This is checked via isMockMode().
  * Useful for:
  * - Testing without OpenAI API costs
  * - Offline development
@@ -78,9 +72,6 @@ type StepFinishCallback = (args: {
  *
  * @param args.content - Raw WCP input text (e.g., "Role: Electrician, Hours: 45, Wage: $35.50")
  * @param args.traceId - Optional trace ID (generated if not provided)
- * @param args.mastraInstance - DEPRECATED: kept for compatibility, not used
- * @param args.maxSteps - DEPRECATED: kept for compatibility, not used
- * @param args.onStepFinish - DEPRECATED: kept for compatibility, not used
  *
  * @returns Promise<TrustScoredDecision> - Compliance decision with findings, trust score, audit trail, and health metrics
  *
@@ -109,9 +100,6 @@ type StepFinishCallback = (args: {
 export async function generateWcpDecision(args: {
   content: string;
   traceId?: string;
-  mastraInstance?: { getAgent: (name: string) => Promise<{ generate: Function }> };
-  maxSteps?: number;
-  onStepFinish?: StepFinishCallback;
 }): Promise<TrustScoredDecision> {
   const { content, traceId } = args;
 
@@ -127,29 +115,29 @@ export async function generateWcpDecision(args: {
     const decision = await executeDecisionPipeline(pipelineInput);
 
     return decision;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Handle specific API errors from Layer 2
-    if (error.status === 429) {
+    if (error && typeof error === "object" && "status" in error && error.status === 429) {
       throw new RateLimitError("OpenAI API rate limit exceeded", {
-        retryAfter: error.headers?.["retry-after"],
+        retryAfter: "headers" in error && error.headers ? (error.headers as Record<string, unknown>)["retry-after"] : undefined,
       });
     }
-    if (error.code === "insufficient_quota") {
+    if (error && typeof error === "object" && "code" in error && error.code === "insufficient_quota") {
       throw new ExternalApiError("OpenAI API quota exceeded", {
-        code: error.code,
+        code: error.code as string,
         type: "quota_error",
       });
     }
-    if (error.name === "FetchError" || error.code === "ENOTFOUND") {
+    if (error && typeof error === "object" && ("name" in error && error.name === "FetchError" || "code" in error && error.code === "ENOTFOUND")) {
       throw new ExternalApiError("Network connection failed", {
-        originalError: error.message,
+        originalError: "message" in error ? String(error.message) : "Unknown error",
       });
     }
 
     // Re-throw pipeline errors
     throw new ExternalApiError("Decision pipeline error", {
-      code: error.code || "PIPELINE_ERROR",
-      message: error.message,
+      code: error && typeof error === "object" && "code" in error ? String(error.code) : "PIPELINE_ERROR",
+      message: error && typeof error === "object" && "message" in error ? String(error.message) : "Unknown error",
     });
   }
 }

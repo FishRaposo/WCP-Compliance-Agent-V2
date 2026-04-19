@@ -11,11 +11,19 @@
  * @see docs/adrs/ADR-005-decision-architecture.md - Architectural decision
  */
 
-import { v4 as uuidv4 } from "uuid";
 import { layer1Deterministic } from "./layer1-deterministic.js";
 import { layer2LLMVerdict } from "./layer2-llm-verdict.js";
 import { layer3TrustScore } from "./layer3-trust-score.js";
 import { humanReviewQueue } from "../services/human-review-queue.js";
+import { isMockMode } from "../utils/mock-responses.js";
+import { 
+  Layer1Error, 
+  Layer2Error, 
+  Layer3Error,
+  recoverLayer1Error,
+  recoverLayer2Error,
+  recoverLayer3Error
+} from "../utils/errors.js";
 import type { TrustScoredDecision } from "../types/decision-pipeline.js";
 
 // ============================================================================
@@ -60,6 +68,11 @@ export async function executeDecisionPipeline(
 ): Promise<TrustScoredDecision> {
   const traceId = input.traceId ?? generateTraceId();
   const startTime = Date.now();
+
+  // Log mode on first pipeline execution
+  const mockMode = isMockMode();
+  const model = process.env.OPENAI_MODEL || "gpt-5.4";
+  console.log(`[WCP] Mode: ${mockMode ? "MOCK" : `LIVE (model=${model})`}`);
 
   console.log(`\n[Pipeline] Starting decision pipeline for trace ${traceId}`);
   console.log(`[Pipeline] Input length: ${input.content.length} chars`);
@@ -157,6 +170,30 @@ export async function executeDecisionPipeline(
   } catch (error) {
     console.error(`\n[Pipeline] FATAL ERROR in trace ${traceId}:`, error);
 
+    // Determine error type and recovery strategy
+    let errorType = "unknown";
+    let canRecover = false;
+    let errorStage: "layer1" | "layer2" | "layer3" | "final" = "final";
+
+    if (error instanceof Layer1Error) {
+      errorType = error.name;
+      errorStage = "layer1";
+      canRecover = recoverLayer1Error(error);
+    } else if (error instanceof Layer2Error) {
+      errorType = error.name;
+      errorStage = "layer2";
+      canRecover = recoverLayer2Error(error);
+    } else if (error instanceof Layer3Error) {
+      errorType = error.name;
+      errorStage = "layer3";
+      canRecover = recoverLayer3Error(error);
+    } else if (error instanceof Error) {
+      errorType = "GenericError";
+      errorStage = "final";
+    }
+
+    console.error(`[Pipeline] Error classification: ${errorType} at ${errorStage}, recoverable: ${canRecover}`);
+
     // Create a fallback decision that requires human review
     const fallbackDecision: TrustScoredDecision = {
       traceId,
@@ -186,7 +223,7 @@ export async function executeDecisionPipeline(
             passed: false,
             regulation: "Error",
             severity: "critical",
-            message: `Pipeline execution failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+            message: `Pipeline execution failed: ${errorType} - ${error instanceof Error ? error.message : "Unknown error"}`,
           },
         ],
         classificationMethod: "unknown",
@@ -197,16 +234,16 @@ export async function executeDecisionPipeline(
       verdict: {
         traceId,
         status: "Reject",
-        rationale: `Pipeline execution failed. Conservatively rejecting pending human review. Error: ${error instanceof Error ? error.message : "Unknown"}`,
+        rationale: `Pipeline execution failed at ${errorStage} (${errorType}). Conservatively rejecting pending human review. Error: ${error instanceof Error ? error.message : "Unknown error"}`,
         referencedCheckIds: ["pipeline_error_001"],
         citations: [
           {
             statute: "Error",
-            description: "Pipeline failure",
+            description: `Pipeline failure at ${errorStage}`,
           },
         ],
         selfConfidence: 0,
-        reasoningTrace: "Error fallback",
+        reasoningTrace: `Error fallback - ${errorType} at ${errorStage}, recoverable: ${canRecover}`,
         tokenUsage: 0,
         model: "error-fallback",
         timestamp: new Date().toISOString(),
@@ -220,7 +257,7 @@ export async function executeDecisionPipeline(
           agreement: 0,
         },
         band: "require_human",
-        reasons: ["Pipeline execution failed - human review required"],
+        reasons: [`Pipeline execution failed at ${errorStage} (${errorType}) - human review required`],
       },
       humanReview: {
         required: true,
@@ -230,15 +267,19 @@ export async function executeDecisionPipeline(
       auditTrail: [
         {
           timestamp: new Date().toISOString(),
-          stage: "layer1",
+          stage: errorStage,
           event: "check_completed",
-          details: { error: error instanceof Error ? error.message : "Unknown" },
+          details: { 
+            errorType, 
+            canRecover, 
+            message: error instanceof Error ? error.message : "Unknown"
+          },
         },
         {
           timestamp: new Date().toISOString(),
           stage: "final",
           event: "finalized",
-          details: { fallback: true, error: true },
+          details: { fallback: true, error: true, errorType, errorStage },
         },
       ],
       finalStatus: "Pending Human Review",

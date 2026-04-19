@@ -112,7 +112,7 @@ Before considering work complete, verify:
 - [ ] **Unit tests**: New code has unit tests
 - [ ] **Integration tests**: End-to-end scenarios covered
 - [ ] **Edge cases**: Boundary conditions tested
-- [ ] **Mock mode**: Works without API calls when `MOCK_MODE=true`
+- [ ] **Mock mode**: Works without API calls when OPENAI_API_KEY is set to 'mock', 'mock-key', or empty
 
 ### Documentation
 

@@ -21,7 +21,6 @@ async function handleAnalyzeRequest(c: any) {
 
     const result = await generateWcpDecision({
       content,
-      maxSteps: parseInt(process.env.AGENT_MAX_STEPS || "3", 10),
     });
 
     const requestId = c.req.header("x-request-id") || crypto.randomUUID();
@@ -31,14 +30,14 @@ async function handleAnalyzeRequest(c: any) {
       requestId,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error analyzing WCP:", {
-      message: error.message,
-      code: error.code,
-      statusCode: error.statusCode,
-      type: error.constructor.name,
-      details: error.details,
-      stack: error.stack,
+      message: error && typeof error === "object" && "message" in error ? String(error.message) : "Unknown error",
+      code: error && typeof error === "object" && "code" in error ? String(error.code) : undefined,
+      statusCode: error && typeof error === "object" && "statusCode" in error ? Number(error.statusCode) : undefined,
+      type: error && typeof error === "object" && "constructor" in error ? String(error.constructor.name) : undefined,
+      details: error && typeof error === "object" && "details" in error ? error.details : undefined,
+      stack: error && typeof error === "object" && "stack" in error ? String(error.stack) : undefined,
     });
 
     if (error instanceof SyntaxError) {
@@ -48,7 +47,7 @@ async function handleAnalyzeRequest(c: any) {
     }
 
     const formattedError = formatApiError(error);
-    return c.json(formattedError, formattedError.error.statusCode as any);
+    return c.json(formattedError, formattedError.error.statusCode as number);
   }
 }
 

@@ -80,7 +80,7 @@ Tests verify the three-layer pipeline works correctly — deterministic rules, L
 ## No API Key? Use Mock Mode
 
 ```bash
-MOCK_MODE=true npm run dev
+OPENAI_API_KEY=mock npm run dev
 ```
 
 Returns deterministic responses without calling OpenAI. Good for offline development.

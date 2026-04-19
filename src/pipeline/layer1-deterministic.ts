@@ -309,6 +309,100 @@ function checkClassification(
   };
 }
 
+/**
+ * Validate no zero hours with wages reported (data integrity check)
+ */
+function checkZeroHoursWithWage(
+  extracted: ExtractedWCP,
+  checkId: number
+): CheckResult {
+  const passed = !(extracted.hours === 0 && extracted.wage > 0);
+
+  return {
+    id: `data_integrity_check_${String(checkId).padStart(3, "0")}`,
+    type: "data_integrity",
+    passed,
+    regulation: "29 CFR 5.5(a)(3)",
+    severity: passed ? "info" : "high",
+    message: passed
+      ? "Hours and wage data are consistent"
+      : `DATA INTEGRITY ERROR: Zero hours reported but wage is $${extracted.wage.toFixed(2)}/hr - invalid payroll data`,
+  };
+}
+
+/**
+ * Validate no negative values (data integrity check)
+ */
+function checkNegativeValues(
+  extracted: ExtractedWCP,
+  checkId: number
+): CheckResult {
+  const hasNegative = extracted.hours < 0 || extracted.wage < 0 || (extracted.fringe ?? 0) < 0;
+  const passed = !hasNegative;
+
+  return {
+    id: `data_integrity_check_${String(checkId).padStart(3, "0")}`,
+    type: "data_integrity",
+    passed,
+    regulation: "29 CFR 5.5(a)(3)",
+    severity: passed ? "info" : "critical",
+    message: passed
+      ? "All values are non-negative"
+      : `DATA INTEGRITY ERROR: Negative values detected - hours: ${extracted.hours}, wage: ${extracted.wage}, fringe: ${extracted.fringe ?? 0}`,
+  };
+}
+
+/**
+ * Validate minimum wage (federal minimum wage requirement)
+ * Current federal minimum wage: $7.25/hr (as of 2024)
+ */
+function checkMinimumWage(
+  extracted: ExtractedWCP,
+  checkId: number
+): CheckResult {
+  const FEDERAL_MINIMUM_WAGE = 7.25;
+  const passed = extracted.wage >= FEDERAL_MINIMUM_WAGE;
+  const difference = passed ? undefined : FEDERAL_MINIMUM_WAGE - extracted.wage;
+
+  return {
+    id: `minimum_wage_check_${String(checkId).padStart(3, "0")}`,
+    type: "minimum_wage",
+    passed,
+    regulation: "Fair Labor Standards Act (FLSA)",
+    expected: FEDERAL_MINIMUM_WAGE,
+    actual: extracted.wage,
+    difference,
+    severity: passed ? "info" : "critical",
+    message: passed
+      ? `Wage $${extracted.wage.toFixed(2)}/hr meets federal minimum wage $${FEDERAL_MINIMUM_WAGE}/hr`
+      : `MINIMUM WAGE VIOLATION: Wage $${extracted.wage.toFixed(2)}/hr below federal minimum $${FEDERAL_MINIMUM_WAGE}/hr (owes $${difference!.toFixed(2)}/hr)`,
+  };
+}
+
+/**
+ * Validate reasonable hours (workweek reasonableness check)
+ * Max reasonable hours: 84 hours/week (2× 40-hour workweek)
+ */
+function checkReasonableHours(
+  extracted: ExtractedWCP,
+  checkId: number
+): CheckResult {
+  const MAX_REASONABLE_HOURS = 84; // 2× standard workweek
+  const passed = extracted.hours <= MAX_REASONABLE_HOURS && extracted.hours >= 0;
+
+  return {
+    id: `hours_check_${String(checkId).padStart(3, "0")}`,
+    type: "hours",
+    passed,
+    regulation: "29 CFR 5.5(a)(3)",
+    actual: extracted.hours,
+    severity: passed ? "info" : "high",
+    message: passed
+      ? `Hours ${extracted.hours} within reasonable range (0-${MAX_REASONABLE_HOURS})`
+      : `HOURS OUT OF RANGE: ${extracted.hours} hours exceeds reasonable maximum ${MAX_REASONABLE_HOURS} hours/week - requires verification`,
+  };
+}
+
 // ============================================================================
 // Main Layer 1 Function
 // ============================================================================
@@ -355,6 +449,12 @@ export async function layer1Deterministic(
   const checkStart = Date.now();
   const checks: CheckResult[] = [];
   let checkId = 1;
+
+  // Data integrity checks (always run)
+  checks.push(checkNegativeValues(extracted, checkId++));
+  checks.push(checkZeroHoursWithWage(extracted, checkId++));
+  checks.push(checkReasonableHours(extracted, checkId++));
+  checks.push(checkMinimumWage(extracted, checkId++));
 
   // Classification check (always run)
   checks.push(checkClassification(extracted, classification, checkId++));

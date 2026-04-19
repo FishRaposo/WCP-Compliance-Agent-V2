@@ -79,24 +79,23 @@ PORT=3000
 NODE_ENV=development
 
 # Optional (for advanced features)
-MOCK_MODE=false
 POSTGRES_URL=postgresql://user:pass@localhost:5432/wcp
 ELASTICSEARCH_URL=http://localhost:9200
 ```
 
 ### Mock Mode
 
-For development without API costs:
+For development without API costs, set `OPENAI_API_KEY` to a mock value:
 
 ```bash
 # Run with mock responses (no OpenAI calls)
-MOCK_MODE=true npm run dev
+OPENAI_API_KEY=mock npm run dev
 
 # Or set in .env
-MOCK_MODE=true
+OPENAI_API_KEY=mock
 ```
 
-Mock mode returns deterministic responses for testing.
+Mock mode returns deterministic responses for testing. Valid mock values: `mock`, `mock-key`, `test-api-key`, empty, or undefined.
 
 ---
 
@@ -317,7 +316,7 @@ npm update
 cat .env
 
 # Run with mock mode (no API needed)
-MOCK_MODE=true npm test
+OPENAI_API_KEY=mock npm test
 
 # Run specific test for debugging
 npm run test:unit -- --reporter=verbose
@@ -347,7 +346,7 @@ echo %OPENAI_API_KEY%
 # Check quota at https://platform.openai.com/settings/organization/billing/overview
 
 # Use mock mode if quota exceeded
-MOCK_MODE=true npm run dev
+OPENAI_API_KEY=mock npm run dev
 ```
 
 ---

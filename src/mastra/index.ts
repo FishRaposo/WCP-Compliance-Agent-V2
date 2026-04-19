@@ -1,28 +1,15 @@
 /**
  * Mastra Instance Registration
- * 
+ *
+ * @deprecated This Mastra-based architecture is legacy and is being superseded by the three-layer pipeline
+ * in src/pipeline/. New code should use the pipeline orchestrator (src/pipeline/orchestrator.ts) instead.
+ *
  * Registers all agents, tools, and workflows with Mastra framework.
- * Includes Phase 1 enhancements:
- * - PinoLogger for structured logging
- * - LibSQLStore for persistent storage
- * - Observability for AI tracing
- * 
- * Current Registration:
- * - Agents: wcpAgent (WCP compliance auditor)
- * - Logger: PinoLogger (structured logging)
- * - Storage: LibSQLStore (SQLite storage)
- * - Observability: AI tracing for production monitoring
- * 
- * Future Registration (planned):
- * - Workflows: wcpWorkflow (multi-document processing)
- * - Scorers: wcpScorers (evaluation framework)
- * - Memory: Agent memory for context
- * 
+ * This is the entry point for the Mastra-based architecture.
+ *
  * @file src/mastra/index.ts
  * @see AGENTS.md - Mastra registration patterns
- * @see TODO.md - Future enhancements and roadmap
- * 
- * Note: Future registration plans are documented in TODO.md
+ * @see docs/phase-0-out-of-scope.md - Migration plan
  */
 
 // External dependencies
@@ -74,9 +61,9 @@ function ensureDatabaseDirectory(dbUrl: string): void {
     const dir = dirname(dbPath);
     try {
       mkdirSync(dir, { recursive: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Only ignore if directory already exists, log other errors
-      if (error.code !== 'EEXIST') {
+      if (error && typeof error === "object" && "code" in error && error.code !== 'EEXIST') {
         console.error(`Failed to create database directory: ${dir}`, error);
       }
     }
