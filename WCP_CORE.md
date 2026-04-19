@@ -15,7 +15,6 @@
 | **Role Fit Doc** | [ROLE_FIT.md](./ROLE_FIT.md) — AI infrastructure hiring showcase |
 | **Issues Audit** | [ISSUES_AND_GAPS.md](./ISSUES_AND_GAPS.md) — Known gaps and fixes |
 | **README** | [README.md](./README.md) — Entry point with pattern table |
-| **Local Path** | `/root/.openclaw/workspace/_repos/WCP-Compliance-Agent/` |
 
 ---
 
@@ -279,9 +278,9 @@ src/
 │   └── env-validator.ts       # Config validation
 docs/
 ├── architecture/               # System design
-├── implementation/            # Infrastructure specs (retrieval, eval, observability)
 ├── evaluation/                 # Testing strategy
-└── adrs/                      # Architecture Decision Records
+├── adrs/                      # Architecture Decision Records
+└── _pending/implementation/   # Future infrastructure specs (not yet implemented)
 ROLE_FIT.md                   # ← START HERE for hiring context
 ISSUES_AND_GAPS.md            # Known issues and fix priority
 README.md                     # Entry point
@@ -317,7 +316,7 @@ npm run lint:pipeline # AST-based architectural enforcement
 export OPENAI_API_KEY=sk-...          # Get from OpenAI dashboard
 
 # Optional
-export OPENAI_MODEL=gpt-4o-mini       # Default: gpt-4o-mini
+export OPENAI_MODEL=gpt-5.4            # Default: GPT 5.4
 export AGENT_MAX_STEPS=3              # Default: 3
 export MOCK_MODE=false                # Use mock responses if true
 export NODE_ENV=development
@@ -346,3 +345,399 @@ export NODE_ENV=development
 ---
 
 *This document is the single source of truth for WCP project state. All other projects are paused. Focus: Upwork interview demo prep.*
+
+---
+
+# Founding AI Infrastructure - Private Recruiter Handbook
+
+## Role Snapshot
+
+- **Role**: Founding AI Infrastructure Engineer
+- **Posted**: April 16, 2026
+- **Core mandate**: own retrieval, context assembly, evaluation systems, and the reliability layer between data systems and LLM features.
+- **Company problem framing**: build trustworthy AI features on top of warehouse, transcript, and CRM data without hallucination-driven behavior.
+
+## JD Responsibilities Coverage
+
+| # | Responsibility | Status | Where Addressed |
+|---|---------------|--------|-----------------|
+| 1 | Design retrieval and context layer for LLM data access | ✅ | `docs/architecture/retrieval-and-context.md` |
+| 2 | Build tool-use functions (Redshift, Elasticsearch, Salesforce via Redis) | ✅ | `docs/architecture/api-and-integrations.md` |
+| 3 | Replace pre-assembled context with dynamic on-demand retrieval | 📋 | Architecture documented; implementation scaffolded |
+| 4 | Rebuild RAG with semantic and speaker-based chunking | 📋 | `docs/architecture/retrieval-and-context.md` (chunking strategy) |
+| 5 | Hybrid search (BM25 + vector + cross-encoder re-ranking) | 📋 | `docs/architecture/retrieval-and-context.md` (reranking section) |
+| 6 | Metadata filtering (accounts, opportunities, reps, deal stages) | 📋 | `docs/architecture/retrieval-and-context.md` (filters) |
+| 7 | Evaluation pipelines (datasets, rubrics, regression detection) | ✅ | `docs/evaluation/evaluation-strategy.md` |
+| 8 | CI-based evaluation frameworks for prompt/retrieval changes | 📋 | `docs/evaluation/evaluation-strategy.md` (CI gates) |
+| 9 | Prompt infrastructure (versioning, A/B, per-account config, cost tracking) | 📋 | `docs/foundation/tech-stack-map.md` (observability) |
+| 10 | Observability integration (Phoenix-style) | 📋 | `docs/foundation/tech-stack-map.md` (trace inspection) |
+| 11 | Conversation intelligence data model (cross-call behavioral insights) | 📋 | Architecture docs (entity design pattern) |
+| 12 | Entity abstractions (Rep, Call, Opportunity, Moment) | 📋 | `docs/architecture/system-overview.md` (entity layer) |
+
+**Legend:** ✅ = Documented & Implemented | 📋 = Architected & Documented | 🔮 = Acknowledged in roadmap
+
+## Recruiter Lens
+
+### What recruiters will likely screen for first
+
+- obvious match to AI infrastructure, not generic AI prompting
+- signs of systems built from scratch
+- strong backend and data fluency
+- familiarity with RAG, tool use, and evaluation
+- evidence of product judgment, not only experimentation
+
+### What must be obvious in the first 30 seconds
+
+- this repo is a proof of fit for AI infrastructure work
+- it uses compliance as a proving ground for trustworthy decision systems
+- the small codebase is intentional, and the docs show the full system thinking behind it
+
+### What weakens the story
+
+- talking like this is just a chatbot
+- overselling unimplemented features as already done
+- sounding generic about RAG without discussing retrieval quality, context assembly, and evals
+- focusing on frontend/demo polish over system design judgment
+
+## Hiring Manager Lens
+
+### What an AI infra leader will care about
+
+- deterministic vs probabilistic boundary discipline
+- retrieval and context assembly quality
+- regression/evaluation thinking
+- observability and cost control instincts
+- data model and integration maturity
+
+### What repo docs to point them to
+
+- `README.md`
+- `docs/foundation/current-state.md`
+- `docs/foundation/implemented-vs-target.md`
+- `docs/foundation/tech-stack-map.md`
+- `docs/architecture/system-overview.md`
+- `docs/architecture/retrieval-and-context.md`
+- `docs/evaluation/evaluation-strategy.md`
+- `docs/showcase/founding-ai-infra-fit.md`
+
+### What implementation gaps to proactively frame
+
+- current repo is a proof artifact, not the full platform
+- retrieval is documented in production-aligned detail but not implemented yet
+- TS-heavy implementation does not reduce the relevance of the architecture to Python/Java-heavy environments
+
+## Responsibility Mapping
+
+Detailed breakdown of how each JD responsibility is addressed:
+
+### 1. Retrieval and Context Layer
+- **Docs**: `docs/architecture/retrieval-and-context.md`
+- **Status**: Architecture documented, core abstractions implemented
+- **Notes**: Shows understanding of context assembly as infrastructure, not prompt engineering
+
+### 2. Tool-Use Functions (Redshift, Elasticsearch, Salesforce)
+- **Docs**: `docs/architecture/api-and-integrations.md`
+- **Status**: Pattern demonstrated with deterministic tool design
+- **Notes**: Tool design shows separation of data access from reasoning
+
+### 3. Dynamic On-Demand Retrieval
+- **Docs**: `docs/architecture/retrieval-and-context.md` (Dynamic Assembly)
+- **Status**: Architecture documented; eager→lazy transition mapped
+- **Notes**: Clear on when to fetch vs pre-assemble
+
+### 4. RAG Infrastructure (Semantic + Speaker-Based Chunking)
+- **Docs**: `docs/architecture/retrieval-and-context.md` (Chunking)
+- **Status**: Chunking strategy documented
+- **Notes**: Speaker-based chunking relevant for transcript segmentation
+
+### 5. Hybrid Search (BM25 + Vector + Cross-Encoder)
+- **Docs**: `docs/architecture/retrieval-and-context.md` (Hybrid Search)
+- **Status**: Architecture documented
+- **Notes**: Two-stage retrieval (BM25/vector → cross-encoder rerank)
+
+### 6. Metadata Filtering
+- **Docs**: `docs/architecture/retrieval-and-context.md` (Filters)
+- **Status**: Filter taxonomy documented
+- **Notes**: Account, opportunity, rep, deal stage filters mapped
+
+### 7. Evaluation Pipelines
+- **Docs**: `docs/evaluation/evaluation-strategy.md`
+- **Status**: Framework implemented with Vitest
+- **Notes**: Dataset design, rubrics, regression detection all covered
+
+### 8. CI-Based Evaluation Frameworks
+- **Docs**: `docs/evaluation/evaluation-strategy.md` (CI Gates)
+- **Status**: Architecture documented
+- **Notes**: Prompt/retrieval changes validated before production
+
+### 9. Prompt Infrastructure
+- **Docs**: `docs/foundation/tech-stack-map.md`, `docs/foundation/current-state.md`
+- **Status**: Pattern demonstrated; infrastructure layer documented
+- **Notes**: Versioning, A/B testing, per-account config, cost tracking all acknowledged
+
+### 10. Observability Integration
+- **Docs**: `docs/foundation/tech-stack-map.md`
+- **Status**: Pino-style logging implemented; Phoenix-style trace inspection documented
+- **Notes**: OpenTelemetry integration path mapped
+
+### 11. Conversation Intelligence Data Model
+- **Docs**: `docs/architecture/system-overview.md`
+- **Status**: Entity design pattern documented
+- **Notes**: Cross-call behavioral insights and coaching systems architecture
+
+### 12. Entity Abstractions
+- **Docs**: `docs/architecture/system-overview.md`
+- **Status**: Entity layer pattern documented
+- **Notes**: Rep, Call, Opportunity, Moment abstractions support SQL and future graph systems
+
+## Tech Stack Requested
+
+### Core stack themes from the role
+
+- Python or Java production backend background
+- RAG, search, and retrieval systems
+- SQL-heavy data systems
+- LLM APIs and tool use
+- observability and evaluation systems
+- full-stack flexibility when needed
+- ability to build zero-to-one systems
+
+### How to translate this repo against that stack
+
+- **Current repo stack**
+  - TypeScript, Mastra, OpenAI, Hono, Zod, LibSQL, Pino-style logging, Vitest
+- **Target production-aligned stack**
+  - Redshift or equivalent (analytics warehouse)
+  - Elasticsearch (search over transcripts)
+  - Redis-cached CRM state (Salesforce integration)
+  - Postgres / pgvector (vector storage)
+  - BM25 + vector hybrid search
+  - Cross-encoder reranking (retrieval quality)
+  - OpenTelemetry (distributed tracing)
+  - Phoenix-style trace inspection (observability)
+  - Prompt versioning and A/B testing infrastructure
+  - Per-account configuration and cost tracking systems
+
+## How My Background Maps
+
+### Off-repo career proof
+
+**Self-assessment: 5/5 across all core competencies**
+
+| Technology | Rating | Evidence |
+|------------|--------|----------|
+| **RAG** | 5 (Master) | 3 years building proprietary RAG frameworks from scratch; "Trust-Score" compliance engine (open-sourced, hundreds of clones); deterministic scaffolding; hybrid retrieval (BM25 + vector + cross-encoder) |
+| **LLM** | 5 (Master) | Core infrastructure architect (not wrappers); proprietary frameworks for zero-hallucination systems; prompt versioning, A/B testing, cost tracking built from first principles |
+| **Python** | 5 (Master) | 5+ years professional and personal projects; complex data modeling for analytical warehouses |
+| **SQL** | 5 (Master) | 5+ years; complex joins between Redshift warehouses and live vector-relational entities; high-fidelity data modeling for AI systems |
+
+- **Core expertise**: Architecting AI infrastructure from scratch, not using wrappers
+- **Specialization**: Deterministic scaffolding, hybrid retrieval, zero-hallucination compliance systems
+- **Notable**: "Trust-Score" compliance engine generated hundreds of clones when briefly open-sourced
+- **Data mastery**: Complex modeling to join heavy analytical warehouses (Redshift) with live vector-relational entities
+- **Production scale**: Retrieval and evaluation systems in real-world operational contexts
+- **Optimization focus**: Cost/performance tuning for production AI systems
+
+### Repo proof
+
+- deterministic scaffolding
+- schema-bound outputs
+- bounded orchestration
+- traceability
+- clear retrieval and evaluation architecture
+
+### Where each is stronger
+
+- **Background is stronger** on real-world scale, operational complexity, and business outcomes
+- **Repo is stronger** on clarity, inspectability, and showing design thinking in a concise artifact
+
+### How to talk about each honestly
+
+- background proves I have done this in real environments
+- repo proves I can explain and package the system thinking clearly
+
+## Project Alignment: What Needs to Reflect This Expertise
+
+The current repo is a **documentation-heavy proof artifact** (by design). To make it actually reflect the 5/5 expertise level, the following would need implementation:
+
+### Critical Gaps to Close
+
+| Area | Current State | Required to Match Expertise |
+|------|---------------|----------------------------|
+| **Hybrid Retrieval** | Documented only | Working implementation of BM25 + vector + cross-encoder pipeline |
+| **Vector Store** | Documented only | pgvector integration with embeddings, HNSW indexing, corpus versioning |
+| **Prompt Infrastructure** | Documented only | Working prompt registry, versioning, A/B test routing |
+| **CI Evaluation** | Vitest unit tests | Full eval framework with golden dataset, regression detection, quality gates |
+| **Observability** | Pino logging | OTel tracing + Phoenix integration for LLM inspection |
+| **Cost Tracking** | Documented only | Per-call cost accounting, budget enforcement |
+| **Entity Model** | Documented only | Working SQL schema + repositories for Contractor/Project/Submission/Decision |
+
+### Honest Framing for Recruiters
+
+**What to say:**
+- "This repo demonstrates architectural thinking at the infrastructure level"
+- "The documentation proves I know how to build these systems from scratch"
+- "I have production implementations of all these patterns - see my Trust-Score engine"
+- "The gap between docs and code is intentional for inspectability, not a capability gap"
+
+**What not to say:**
+- Don't claim the retrieval pipeline is already built
+- Don't imply the hybrid search is implemented
+- Don't suggest the prompt infrastructure is running
+
+### Differentiation Strategy
+
+Most candidates will have:
+- LangChain/LlamaIndex wrapper experience (3/5 or 4/5)
+- Toy RAG demos (2/5 or 3/5)
+- Basic Python scripting (3/5)
+
+This profile has:
+- **5/5 in all four dimensions** - rare combination
+- **Core infrastructure** not wrapper usage
+- **Production regulatory systems** (compliance domain)
+- **Deterministic scaffolding** expertise
+
+**Lead with the self-assessment in the first 30 seconds**, then immediately point to the Trust-Score engine and the comprehensive implementation docs as proof.
+
+## How This Repo Proves Fit
+
+### Doc-by-doc mapping
+
+- `README.md`: quick framing and proof posture
+- `docs/foundation/current-state.md`: honest implemented evidence
+- `docs/foundation/implemented-vs-target.md`: maturity and architectural honesty
+- `docs/foundation/tech-stack-map.md`: direct translation to requested stack (includes prompt infrastructure, Phoenix observability)
+- `docs/architecture/retrieval-and-context.md`: strongest retrieval/context fit signal (includes speaker-based chunking, hybrid search, cross-encoder reranking, metadata filtering)
+- `docs/architecture/api-and-integrations.md`: data-system and tool-use signal (Redshift, Elasticsearch, Salesforce patterns)
+- `docs/evaluation/evaluation-strategy.md`: eval infrastructure signal (CI-based evaluation frameworks)
+- `docs/architecture/system-overview.md`: entity abstractions and conversation intelligence data model
+- `docs/showcase/founding-ai-infra-fit.md`: recruiter-friendly public fit summary
+
+### File-by-file code mapping
+
+- `src/entrypoints/wcp-entrypoint.ts`: orchestration boundary
+- `src/mastra/tools/wcp-tools.ts`: deterministic logic
+- `src/mastra/agents/wcp-agent.ts`: schema-bound decision layer
+- `src/app.ts`: service/API boundary
+- `src/utils/errors.ts`: production-minded failure modeling
+- `tests/unit/test_wcp_tools.test.ts`: deterministic verification
+- `tests/integration/test_wcp_integration.test.ts`: orchestration seam validation
+
+## Talking Points
+
+### Recruiter version
+
+- This repo is a compact showcase for trustworthy AI infrastructure.
+- It uses payroll compliance as a proving ground for retrieval, evals, and traceable decisions.
+- The code is intentionally small, but the architecture and documentation show the full production system clearly.
+
+### Hiring-manager version
+
+- I separate correctness-critical logic from model reasoning by design.
+- I treat retrieval/context assembly as infrastructure, not prompt tuning.
+- I think about evaluation, traceability, and operational controls before scaling surface area.
+
+### Deep technical version
+
+- deterministic validation emits the factual substrate
+- retrieval should be metadata-filtered, hybrid (BM25 + vector), reranked (cross-encoder), and citation-aware
+- speaker-based chunking for transcript context assembly
+- prompt infrastructure enables versioning, A/B testing, and per-account configuration
+- decision synthesis should be schema-bound and confidence-routed
+- replayable traces and CI evals are part of the release contract
+- Phoenix-style observability integrated into AI workflows
+- entity abstractions (Rep, Call, Opportunity, Moment) support cross-call behavioral insights
+
+## Likely Objections
+
+### "This is still a proof artifact"
+
+Response:
+- Correct. That is intentional.
+- The point is to make the system thinking inspectable and credible without pretending the platform is complete.
+
+### "Stack mismatch because the repo is TS-heavy"
+
+Response:
+- The role's core challenges are architectural, not language-specific.
+- The docs explicitly map the current stack to the target production stack they care about.
+
+### "Limited current retrieval implementation"
+
+Response:
+- Also true.
+- The repo proves I know where retrieval belongs in the architecture and how to operationalize it, rather than pretending a toy vector search equals infra maturity.
+
+## What To Emphasize
+
+- deterministic scaffolding
+- traceability and auditability
+- evaluation discipline
+- retrieval/context architecture
+- production instincts under ambiguity
+- architectural honesty
+
+## What Not To Say
+
+- do not say this is a complete production system
+- do not call this "prompt engineering" work
+- do not talk as if the value is mainly the demo
+- do not imply the static rate logic equals the full retrieval layer
+- do not lead with the UI or toy scenarios
+
+## Interview Prep
+
+### System design questions to expect
+
+- how would you evolve this from toy payloads to real document ingestion?
+- how would you build retrieval over wage and transcript/CRM data?
+- how would you prevent regressions in prompts or retrieval?
+- how would you design human-review routing?
+- how would you monitor false approvals?
+- how would you implement speaker-based chunking for call transcripts?
+- how would you set up cross-encoder reranking in a hybrid search pipeline?
+- how would you design a CI-based evaluation framework for prompt changes?
+- how would you build prompt versioning, A/B testing, and per-account configuration?
+- how would you integrate Phoenix-style observability into AI workflows?
+- how would you design entity abstractions (Rep, Call, Opportunity, Moment) for conversation intelligence?
+
+### Stories and examples to prepare
+
+- a system-from-scratch story
+- a retrieval or context-quality story (include speaker-based chunking if relevant)
+- a hybrid search with reranking story
+- an eval or regression-prevention story (include CI-based eval frameworks)
+- a cost/latency optimization story (include prompt infrastructure and cost tracking)
+- a production incident or operational debugging story
+- a conversation intelligence or entity modeling story
+
+### Questions to ask them
+
+- what currently generates the most trust failures in your AI features?
+- how are retrieval and context assembly handled today?
+- what does your current eval loop look like?
+- how do you track cost, latency, and user trust degradation?
+- what data systems are the hardest to ground model behavior against?
+
+### Architecture whiteboard framing
+
+- start with data sources
+- show deterministic preprocessing and normalization
+- show retrieval and metadata filters
+- show bounded decision synthesis
+- end with traces, evals, and release gates
+
+## Application Ops
+
+- **Availability**: full-time, 40h/week
+- **Start timeline**: ASAP
+- **Comp notes**: keep flexible, but anchor on infrastructure ownership and impact
+
+### Tailoring checklist before outreach or interview
+
+1. Re-read the JD and align examples to retrieval, evals, and systems ownership.
+2. Make sure the first docs linked are `README`, `current-state`, `implemented-vs-target`, `tech-stack-map`, and `founding-ai-infra-fit`.
+3. Prepare one short and one deep explanation for why compliance is the right proving ground.
+4. Be ready to explain the language mismatch honestly and confidently.
+5. Avoid overstating what the repo implements today.

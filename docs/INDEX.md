@@ -116,7 +116,6 @@ Architecture Decision Records (ADRs):
 ### Showcase (For Hiring)
 - [showcase/case-study.md](./showcase/case-study.md)
 - [showcase/founding-ai-infra-fit.md](./showcase/founding-ai-infra-fit.md)
-- [showcase/demo-walkthrough.md](./showcase/demo-walkthrough.md)
 
 ---
 
