@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Unit tests for `generateMockWcpDecision` and `isMockMode` in `src/utils/mock-responses.ts`
 - Product roadmap with 5 phases (scaffolding → MVP → showcase → post-launch)
 - CHANGELOG.md for tracking changes
 
