@@ -121,7 +121,7 @@ Returns server status, mock mode flag, and OpenAI model config.
 
 ```bash
 npm run test:pipeline    # 101 pipeline tests — must always pass
-npm run test:unit        # all unit tests
+npm run test:unit        # all unit tests (262 tests)
 npm run test:coverage    # coverage report (≥80% gate)
 npm run lint:pipeline    # AST architectural lint
 npm run build            # TypeScript compilation
@@ -170,10 +170,10 @@ src/entrypoints/       # Public API entry point
 src/retrieval/         # Phase 02: hybrid BM25 + vector retrieval
 src/prompts/           # Versioned prompt registry
 src/types/             # Typed decision contracts
-tests/unit/            # 280+ unit tests
+tests/unit/            # 260+ unit tests
 tests/integration/     # Decision pipeline integration tests
 tests/eval/            # 100-example golden set (trust calibration)
-showcase/              # React demo UI (Vite + Tailwind)
+src/frontend/          # React demo UI (Vite + Tailwind) → builds to dist/showcase/
 api/                   # Vercel serverless functions
 docs/                  # Architecture, compliance, ADRs
 ```

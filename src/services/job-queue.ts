@@ -6,6 +6,11 @@
  *
  * When Postgres is unavailable, falls back to a bounded in-memory map.
  * Workers pick up pending jobs and run them through the decision pipeline.
+ *
+ * ⚠️  In-memory fallback is PROCESS-LOCAL: jobs queued in one process are
+ * invisible to other processes. It is suitable for single-process local
+ * development only and must NOT be used in multi-process or serverless
+ * deployments. Set POSTGRES_URL to enable the durable Postgres-backed queue.
  */
 
 import { randomUUID } from "crypto";

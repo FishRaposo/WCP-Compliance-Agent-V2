@@ -6,9 +6,18 @@
  */
 
 import { config } from 'dotenv';
+import pino from 'pino';
 
 // Load environment variables
 config();
+
+// Inline logger for startup — avoids circular dep with logger.ts (which reads LOG_LEVEL set here)
+const startupLog = pino({
+  level: process.env.LOG_LEVEL ?? 'info',
+  base: { service: 'wcp-compliance-agent', module: 'EnvValidator' },
+  formatters: { level: (label) => ({ level: label }) },
+  timestamp: pino.stdTimeFunctions.isoTime,
+});
 
 /**
  * Environment variable validation result
@@ -114,23 +123,17 @@ export function validateEnvironmentOrExit(): void {
   
   // Print warnings
   if (result.warnings.length > 0) {
-    console.warn('\n⚠️  Environment Warnings:');
-    result.warnings.forEach(warning => console.warn(`  - ${warning}`));
+    startupLog.warn({ warnings: result.warnings }, 'Environment warnings detected');
   }
-  
+
   // Print errors and exit if invalid
   if (!result.isValid) {
-    console.error('\n❌ Environment Validation Failed:');
-    console.error('Required environment variables are missing or invalid:');
-    result.errors.forEach(error => console.error(`  - ${error}`));
-    console.error('\n🚀 Quick Fix Options:');
-    console.error('  Option 1: Run the setup wizard - npm run setup');
-    console.error('  Option 2: Copy .env.example to .env and fill in the values:');
-    console.error('    cp .env.example .env');
-    console.error('    # Edit .env with your OPENAI_API_KEY');
-    console.error('\nGet your API key at: https://platform.openai.com/api-keys\n');
+    startupLog.error(
+      { errors: result.errors },
+      'Environment validation failed — set OPENAI_API_KEY (sk-...) or use "mock" for offline mode. See .env.example.'
+    );
     process.exit(1);
   }
-  
-  console.log('✅ Environment validation passed');
+
+  startupLog.info('Environment validation passed');
 }
