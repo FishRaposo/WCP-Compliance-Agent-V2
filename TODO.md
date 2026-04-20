@@ -46,7 +46,7 @@ Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
 
 ## 🔧 Backlog (from 2026-04-20 audit)
 
-### A5 — Upgrade `@vercel/node` to fix 9 devDependency vulnerabilities [S]
+### A5 — `@vercel/node` devDependency vulnerabilities — no fix available without breaking changes [S]
 
 `npm audit` reports 9 vulnerabilities (3 moderate, 6 high) in `@vercel/node`'s transitive deps:
 - `ajv` ReDoS (moderate) — `@vercel/static-config`
@@ -55,8 +55,10 @@ Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
 - `smol-toml` DoS (moderate) — `@vercel/python-analysis`
 - `undici` ×6 (high) — `@vercel/node`
 
-All are in **devDependencies only** and do not affect the production Hono server. The fix (`@vercel/node@3.0.1`) is a **breaking downgrade** from the current `^5.7.11`. Assess compatibility with `api/analyze.ts` and `api/health.ts` before upgrading.
-[src: `npm audit`]
+**All are in devDependencies only** and have zero attack surface: `@vercel/node` is only imported as a TypeScript type source (`VercelRequest`, `VercelResponse`) in `api/analyze.ts` and `api/health.ts`. The production Hono server does not import or run any of these packages. No user data passes through them.
+
+The only npm-provided fix (`npm audit fix --force`) downgrades `@vercel/node` to `3.0.1` or upgrades to `5.7.12` in a way that still leaves 5 vulnerabilities. Transitive dep pinning via `overrides` would risk breaking Vercel's internal build toolchain. Accepted as-is; will revisit if a clean upstream fix becomes available.
+[src: `npm audit`, `package.json`]
 
 ### A6 — Add rate limiting to API endpoints [M]
 

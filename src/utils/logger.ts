@@ -15,7 +15,7 @@ export const logger = pino({
   level,
   base: {
     service: "wcp-compliance-agent",
-    version: "0.1.0",
+    version: "0.6.0",
   },
   formatters: {
     level(label) {

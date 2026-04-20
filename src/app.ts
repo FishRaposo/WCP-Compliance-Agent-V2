@@ -20,6 +20,8 @@ function formattedStatusCode(err: unknown): 400 | 422 | 500 {
   return 500;
 }
 
+const MAX_CONTENT_BYTES = 64 * 1024; // 64 KB
+
 async function handleAnalyzeRequest(c: Context) {
   try {
     const body = await c.req.json();
@@ -33,6 +35,11 @@ async function handleAnalyzeRequest(c: Context) {
     if (typeof content !== "string") {
       const error = new ValidationError("Content must be a string");
       return c.json(formatApiError(error), 400);
+    }
+
+    if (Buffer.byteLength(content, "utf8") > MAX_CONTENT_BYTES) {
+      const error = new ValidationError(`Content exceeds maximum allowed size of ${MAX_CONTENT_BYTES / 1024} KB`);
+      return c.json(formatApiError(error), 413);
     }
 
     const result = await generateWcpDecision({

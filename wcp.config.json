@@ -1,6 +1,6 @@
 {
   "$schema": "./wcp.config.schema.json",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "description": "WCP Compliance Agent - Centralized Configuration",
 
   "pipeline": {
@@ -87,13 +87,6 @@
   "api": {
     "port": 3000,
     "host": "localhost",
-    "cors": {
-      "enabled": true,
-      "allowedOrigins": [
-        "http://localhost:3000",
-        "http://localhost:3001"
-      ]
-    },
     "timeout": 30000,
     "endpoints": {
       "analyze": "/analyze",
@@ -127,7 +120,7 @@
   },
 
   "database": {
-    "url": "file:./data/local.db",
+    "url": "postgresql://wcp_user:wcp_dev_password@localhost:5432/wcp_compliance",
     "maxConnections": 10,
     "logging": false
   },
