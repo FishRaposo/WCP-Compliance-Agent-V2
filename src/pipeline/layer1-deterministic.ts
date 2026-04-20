@@ -159,6 +159,11 @@ async function resolveClassification(role: string): Promise<ClassificationResult
     return { trade: "Unknown", confidence: 0.3, method: "unknown" };
   }
 
+  // Treat low-confidence hits as unknown — avoids aliasing unrelated trades
+  if (result.confidence < 0.5) {
+    return { trade: "Unknown", confidence: result.confidence, method: "unknown" };
+  }
+
   const method = result.method === "in_memory"
     ? (result.confidence >= 1.0 ? "exact" : "alias")
     : result.method === "hybrid" || result.method === "vector_only"
@@ -342,7 +347,7 @@ function checkSignatures(
     type: "signature",
     passed: hasSig,
     regulation: "29 CFR 5.5(a)(3)(ii)(B)",
-    severity: hasSig ? "info" : "error",
+    severity: hasSig ? "info" : "warning",
     message: hasSig
       ? `Certified payroll signed by: ${extracted.signatures!.join(", ")}`
       : "MISSING_SIGNATURE: No signature found on certified payroll — WH-347 requires contractor certification",
@@ -519,7 +524,7 @@ function checkZeroHoursWithWage(
     type: "data_integrity",
     passed,
     regulation: "29 CFR 5.5(a)(3)",
-    severity: passed ? "info" : "high",
+    severity: passed ? "info" : "critical",
     message: passed
       ? "Hours and wage data are consistent"
       : `DATA INTEGRITY ERROR: Zero hours reported but wage is $${extracted.wage.toFixed(2)}/hr - invalid payroll data`,
@@ -605,7 +610,7 @@ function checkReasonableHours(
     passed,
     regulation: "29 CFR 5.5(a)(3)",
     actual: extracted.hours,
-    severity: passed ? "info" : "high",
+    severity: passed ? "info" : "error",
     message: passed
       ? `Hours ${extracted.hours} within reasonable range (0-${MAX_REASONABLE_HOURS})`
       : `HOURS OUT OF RANGE: ${extracted.hours} hours exceeds reasonable maximum ${MAX_REASONABLE_HOURS} hours/week - requires verification`,

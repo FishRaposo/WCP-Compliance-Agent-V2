@@ -14,12 +14,16 @@ export function generateMockWcpDecision(input: string) {
   const roleMatch = input.match(/role[:\s]+(\w[\w\s]*)/i);
   const hoursMatch = input.match(/hours[:\s]+(\d+(?:\.\d+)?)/i);
   const wageMatch = input.match(/wage[:\s]+\$?(\d+(?:\.\d+)?)/i);
+  const fringeMatch = input.match(/fringe[:\s]+\$?(\d+(?:\.\d+)?)/i);
+  const grossPayMatch = input.match(/gross\s*pay[:\s]+\$?(\d+(?:\.\d+)?)/i);
 
   const role = roleMatch ? roleMatch[1].trim() : 'UNKNOWN';
   const hours = hoursMatch ? parseFloat(hoursMatch[1]) : 0;
   const wage = wageMatch ? parseFloat(wageMatch[1]) : 0;
+  const fringe = fringeMatch ? parseFloat(fringeMatch[1]) : null;
+  const grossPay = grossPayMatch ? parseFloat(grossPayMatch[1]) : null;
 
-  // Case-insensitive corpus lookup
+  // Case-insensitive corpus lookup (also check aliases)
   const corpusEntry = Object.entries(IN_MEMORY_CORPUS).find(
     ([key]) => key.toLowerCase() === role.toLowerCase()
   );
@@ -39,9 +43,21 @@ export function generateMockWcpDecision(input: string) {
       violations.push({ type: 'Underpay', detail: `Wage $${wage}/hr is below DBWD base rate of $${dbwdRate.base}/hr for ${tradeName}.` });
     }
 
+    if (fringe !== null && fringe < dbwdRate.fringe) {
+      if (status === 'Approved') status = 'Revise';
+      violations.push({ type: 'Fringe Shortfall', detail: `Fringe $${fringe}/hr is below DBWD required fringe $${dbwdRate.fringe}/hr for ${tradeName}.` });
+    }
+
     if (hours > 40) {
-      if (status !== 'Reject') status = 'Revise';
-      violations.push({ type: 'Overtime', detail: `Hours ${hours} exceeds 40 hours/week. Overtime pay should be 1.5x base rate for hours over 40.` });
+      const regularHrs = Math.min(hours, 40);
+      const overtimeHrs = hours - 40;
+      const correctGross = regularHrs * dbwdRate.base + overtimeHrs * dbwdRate.base * 1.5;
+      const reportedGross = grossPay ?? (wage * hours);
+      const otCorrect = reportedGross >= correctGross - 0.01;
+      if (!otCorrect) {
+        if (status !== 'Reject') status = 'Revise';
+        violations.push({ type: 'Overtime', detail: `OT underpaid: reported gross $${reportedGross.toFixed(2)} vs required $${correctGross.toFixed(2)}.` });
+      }
     }
   }
 
