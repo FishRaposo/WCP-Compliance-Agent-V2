@@ -7,6 +7,11 @@
  */
 
 import pino from "pino";
+import { createRequire } from "module";
+
+// Read version from package.json at startup — single source of truth
+const _require = createRequire(import.meta.url);
+const _pkg = _require("../../package.json") as { version: string };
 
 const isTest = process.env.NODE_ENV === "test";
 const level = process.env.LOG_LEVEL ?? (isTest ? "silent" : "info");
@@ -15,7 +20,7 @@ export const logger = pino({
   level,
   base: {
     service: "wcp-compliance-agent",
-    version: "0.6.0",
+    version: _pkg.version,
   },
   formatters: {
     level(label) {

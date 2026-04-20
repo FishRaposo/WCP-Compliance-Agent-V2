@@ -120,7 +120,7 @@
   },
 
   "database": {
-    "url": "postgresql://wcp_user:wcp_dev_password@localhost:5432/wcp_compliance",
+    "_note": "Connection URL is read from the POSTGRES_URL environment variable, not from this file.",
     "maxConnections": 10,
     "logging": false
   },
