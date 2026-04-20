@@ -134,8 +134,9 @@ export default function App() {
 
           {/* Input */}
           <div className="space-y-3">
-            <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">Or enter custom payroll text</p>
+            <label htmlFor="payroll-input" className="block text-xs text-slate-500 uppercase tracking-wider font-medium">Or enter custom payroll text</label>
             <textarea
+              id="payroll-input"
               className="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
               placeholder="e.g. Role: Electrician, Hours: 45, Wage: 35.00, Fringe: 20.00"
               value={content}
@@ -147,6 +148,7 @@ export default function App() {
               <button
                 onClick={analyze}
                 disabled={loading || !content.trim()}
+                aria-busy={loading}
                 className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors disabled:cursor-not-allowed"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
