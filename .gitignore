@@ -13,6 +13,8 @@ dist/
 coverage/
 *.tsbuildinfo
 .npm-cache/
+test-results/
+playwright-report/
 
 # Local runtime data
 data/
@@ -37,3 +39,7 @@ Thumbs.db
 job.md
 job.new.md
 _archive/
+
+# IDE / agent configs
+.claude/
+.agents/

@@ -104,9 +104,9 @@ PORT=3001 npm run dev
 
 ## What's Next
 
-- **[DEMO_SCRIPT.md](../DEMO_SCRIPT.md)** — 5-minute presentation script
-- **[ROLE_FIT.md](../ROLE_FIT.md)** — Why this matters for AI infrastructure hiring
-- **[docs/INDEX.md](./INDEX.md)** — Full documentation navigation
+- **[README.md](../README.md)** — Project overview, architecture, and API reference
+- **[docs/architecture/system-overview.md](./architecture/system-overview.md)** — System design and decision pipeline
+- **[docs/compliance/regulatory-compliance-report.md](./compliance/regulatory-compliance-report.md)** — Davis-Bacon Act implementation
 
 ---
 

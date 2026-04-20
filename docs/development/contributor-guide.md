@@ -173,7 +173,7 @@ Update docs when you change:
 |-------------|----------------|
 | Add/remove check | `current-state.md`, `traceability-matrix.md` |
 | Change pipeline structure | `decision-architecture.md` |
-| Add ADR | `adrs/README.md`, `INDEX.md` |
+| Add ADR | `adrs/README.md` |
 | Change API | `quick-start.md`, `api-and-integrations.md` |
 | Change trust formula | `trust-scoring.md`, ADR if structural |
 | Add npm script | `quick-start.md` |

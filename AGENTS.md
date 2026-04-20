@@ -132,6 +132,4 @@ OPENAI_API_KEY=mock node dist/server.js
 npx vite
 ```
 
-## OpenClaw Skills
 
-This repo includes a `.agents/skills/` directory. Load skills via the `skill` tool when a task matches. Key active skills: `jobs-ive` (presentation coaching), `mmx-cli` (MiniMax sub-agent), `md-to-pdf` (PDF export), `process-doc` (SOP documentation). See `.agents/skills/<name>/SKILL.md` for each skill's protocol.

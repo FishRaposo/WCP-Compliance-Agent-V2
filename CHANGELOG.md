@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Changed
+- Removed personal IDE configs (`.claude/`, `.agents/skills/`) from repository
+- Fixed broken documentation links in `docs/quick-start.md`
+- Updated `docs/roadmap/RELEASE_PLAN.md` to mark Phase 03 as complete
+
+---
+
 ## [0.6.0] - 2026-04-19 — Phase 03: Open Source Release
 
 ### Added

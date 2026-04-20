@@ -19,7 +19,7 @@ Build a technical showcase demonstrating **regulated-domain AI infrastructure** 
 |---|-------|----------|--------|-----------|
 | 01 | Scaffolding | Weeks 1–4 | ✅ **Complete** (2026-04-19) | Architecture aligned, ≥80% coverage, CI workflow, ADR-004 |
 | 02 | MVP | Weeks 5–12 | ✅ **Complete** (2026-04-19) | Hybrid retrieval, 11-field extraction, real decisions |
-| 03 | Showcase | Weeks 13–18 | � **In Progress** | Live URL, 10+ users, portfolio ready |
+| 03 | Showcase | Weeks 13–18 | ✅ **Complete** (2026-04-19) | Live URL, portfolio ready |
 | 05 | Post-Launch | Weeks 19+ | 🔲 Planned | Optimization, expansion, monitoring |
 
 **Total investment**: 6–9 months part-time (10–20 hrs/week)  
