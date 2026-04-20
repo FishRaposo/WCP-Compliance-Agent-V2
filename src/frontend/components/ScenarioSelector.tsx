@@ -5,7 +5,7 @@ interface Scenario {
   description: string
 }
 
-export const SCENARIOS: Scenario[] = [
+const SCENARIOS: Scenario[] = [
   {
     label: 'Clean — Approved',
     emoji: '✅',

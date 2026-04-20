@@ -3,12 +3,23 @@
 Actionable gaps for the WCP Compliance Agent — scoped to the current three-layer pipeline architecture.
 Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
 
-**Last updated:** 2026-04-19 — **All backlog items resolved.** H1–H6, M1–M8, T6, I6–I8 complete.  
+**Last updated:** 2026-04-20 — Sprint 2 audit complete. A1–A4 fixed. New backlog items A5–A12 added.  
 **Architecture reference:** `AGENTS.md`
 
 ---
 
-## ✅ Resolved (this sprint)
+## ✅ Resolved (sprint 2 audit — 2026-04-20)
+
+| Item | What was done | Key files |
+|---|---|---|
+| **A1** | Fixed critical regex bug: per-day hour patterns matched `(\.\d+...)` requiring a leading decimal point, meaning `Mon: 8` would never match. Corrected to `(\d+(?:\.\d+)?)`. | `src/pipeline/layer1-deterministic.ts:68-74` |
+| **A2** | Fixed broken ESLint frontend config: `reactHooks.configs['recommended-latest']` uses the legacy `plugins: [string]` format, rejected by ESLint 9. Changed to `reactHooks.configs.flat['recommended-latest']`. | `eslint.config.frontend.js` |
+| **A3** | Fixed React lint error: `setVisiblePanels(0)` was called synchronously inside `useEffect`, triggering cascading renders. Moved reset into the cleanup function instead. | `src/frontend/components/PipelineVisualizer.tsx:95-101` |
+| **A4** | Fixed `persistDecision().catch(() => {})` in orchestrator silently swallowing unexpected errors. Now logs the error before suppressing. | `src/pipeline/orchestrator.ts:156` |
+
+---
+
+## ✅ Resolved (sprint 1)
 
 | Item | What was done | Key files |
 |---|---|---|
@@ -30,6 +41,62 @@ Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
 | **I6** | Playwright E2E tests for 6 API scenarios + health + async job; CI Stage 7 | `tests/e2e/api-scenarios.test.ts`, `playwright.config.ts` |
 | **I7** | `.min(0)` Zod constraints on all numeric fields in `ExtractedWCPSchema` | `src/types/decision-pipeline.ts` |
 | **I8** | `superRefine` cross-field `traceId` consistency in `TrustScoredDecisionSchema` | `src/types/decision-pipeline.ts` |
+
+---
+
+## 🔧 Backlog (from 2026-04-20 audit)
+
+### A5 — Upgrade `@vercel/node` to fix 9 devDependency vulnerabilities [S]
+
+`npm audit` reports 9 vulnerabilities (3 moderate, 6 high) in `@vercel/node`'s transitive deps:
+- `ajv` ReDoS (moderate) — `@vercel/static-config`
+- `minimatch` ReDoS ×3 (high) — `@vercel/python-analysis`
+- `path-to-regexp` backtracking ReDoS (high) — `@vercel/node`
+- `smol-toml` DoS (moderate) — `@vercel/python-analysis`
+- `undici` ×6 (high) — `@vercel/node`
+
+All are in **devDependencies only** and do not affect the production Hono server. The fix (`@vercel/node@3.0.1`) is a **breaking downgrade** from the current `^5.7.11`. Assess compatibility with `api/analyze.ts` and `api/health.ts` before upgrading.
+[src: `npm audit`]
+
+### A6 — Add rate limiting to API endpoints [M]
+
+`POST /api/analyze`, `POST /api/analyze-pdf`, and `POST /api/analyze-csv` have no rate limiting. Each request can trigger an OpenAI API call. Consider adding a simple in-memory rate limiter (e.g., `hono/rate-limiter` or a sliding window on traceId/IP) to protect against cost spikes and API quota exhaustion. Layer 2 already throws `RateLimitError` on 429s from OpenAI — this item adds a *server-side* guard upstream of that.
+[src: `src/app.ts:101-148`]
+
+### A7 — Input size limit on `/api/analyze` text endpoint [S]
+
+`POST /api/analyze` accepts arbitrary-length JSON bodies. Only the PDF endpoint (`MAX_PDF_BYTES`, default 10 MB) and the CSV endpoint (no explicit limit) have any size guard. The text endpoint has no `Content-Length` check, enabling trivial DoS via large payloads that are passed to the full pipeline. Add a `MAX_CONTENT_BYTES` limit (suggested: 64 KB) and return 413 if exceeded.
+[src: `src/app.ts:23-63`]
+
+### A8 — In-memory job fallback is process-local (undocumented) [S]
+
+`claimNextJob()` in `job-queue.ts` falls back to `IN_MEMORY_JOBS` when PostgreSQL is unavailable. If a worker process starts after jobs were queued in a different process, in-memory jobs are invisible to it. Document this limitation clearly in the service header and add a comment warning that the in-memory fallback is process-local and suitable for single-process development only.
+[src: `src/services/job-queue.ts:186-228`]
+
+### A9 — `audit_events` table missing `trace_id` index [S]
+
+`persistAuditEvents()` inserts rows per audit event, but `audit_events` has no index on `trace_id`. Any query joining or filtering on `trace_id` will do a full scan as the table grows (7-year retention creates large row counts). The `decisions` table has a PRIMARY KEY on `trace_id`; `audit_events` only has a `BIGSERIAL` primary key.
+
+Add to migration:
+```sql
+CREATE INDEX IF NOT EXISTS audit_events_trace_id_idx ON audit_events (trace_id);
+```
+[src: `src/services/audit-persistence.ts:42-49`, `migrations/001_create_audit_tables.sql`]
+
+### A10 — `Layer2InputSchema` diverges from `DeterministicReport` type [M]
+
+`layer2-llm-verdict.ts` defines its own `Layer2InputSchema` (a Zod object) with only a subset of `DeterministicReport`'s fields. If `DeterministicReport` grows new required fields, `Layer2InputSchema` will be stale and validators may silently strip new fields from the prompt context. Consider deriving it from the canonical `DeterministicReportSchema` in `src/types/decision-pipeline.ts` via `.pick()` / `.omit()`, so type evolution is tracked in one place.
+[src: `src/pipeline/layer2-llm-verdict.ts:56-96`]
+
+### A11 — `validateEnvironmentOrExit` uses `console.*` instead of pino [S]
+
+`src/utils/env-validator.ts` still uses `console.warn` / `console.error` / `console.log` directly (lines 117–135). All other modules use `childLogger()`. Since `validateEnvironmentOrExit()` runs at startup before the full app is initialised, this is partially intentional, but produces inconsistent log format. Consider instantiating a local pino logger inline in `env-validator.ts` so log format matches the rest of the system.
+[src: `src/utils/env-validator.ts:112-136`]
+
+### A12 — `wcp.config.json` has dead CORS entry [XS]
+
+`wcp.config.json:94` contains a CORS `allowedOrigins` list (including `http://localhost:3001`) that is never read — CORS is entirely controlled by `src/app.ts:68-80` via `process.env.ALLOWED_ORIGINS`. The dead config entry could mislead contributors into thinking origins are configurable via `wcp.config.json`. Remove the stale CORS block or add a comment clarifying it is unused.
+[src: `wcp.config.json:90-96`, `src/app.ts:68-83`]
 
 ---
 

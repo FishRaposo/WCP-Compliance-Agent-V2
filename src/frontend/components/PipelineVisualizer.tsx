@@ -93,11 +93,15 @@ export function PipelineVisualizer({ result, isMockMode }: Props) {
   const [visiblePanels, setVisiblePanels] = useState(0)
 
   useEffect(() => {
-    setVisiblePanels(0)
     const t1 = setTimeout(() => setVisiblePanels(1), 50)
     const t2 = setTimeout(() => setVisiblePanels(2), 200)
     const t3 = setTimeout(() => setVisiblePanels(3), 400)
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
+      setVisiblePanels(0)
+    }
   }, [result])
 
   const failCount = result.deterministic.checks.filter(c => !c.passed).length

@@ -153,7 +153,9 @@ export async function executeDecisionPipeline(
     };
 
     // M1: Persist to PostgreSQL (non-blocking, graceful degradation)
-    persistDecision(decisionWithHealth).catch(() => {});
+    persistDecision(decisionWithHealth).catch((err) => {
+      log.error({ err }, "Background persistDecision failed");
+    });
 
     return decisionWithHealth;
   } catch (error) {
