@@ -65,13 +65,13 @@ export async function extractWCPData(content: string): Promise<ExtractedWCP> {
 
     // Day-by-day hours (e.g. "Mon: 8, Tue: 8, Wed: 8, Thu: 8, Fri: 8")
     const dayPatterns: Record<string, RegExp> = {
-      mon: /(?:Mon(?:day)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
-      tue: /(?:Tue(?:sday)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
-      wed: /(?:Wed(?:nesday)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
-      thu: /(?:Thu(?:rsday)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
-      fri: /(?:Fri(?:day)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
-      sat: /(?:Sat(?:urday)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
-      sun: /(?:Sun(?:day)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
+      mon: /(?:Mon(?:day)?)[\.\s:]+(\d+(?:\.\d+)?)/i,
+      tue: /(?:Tue(?:sday)?)[\.\s:]+(\d+(?:\.\d+)?)/i,
+      wed: /(?:Wed(?:nesday)?)[\.\s:]+(\d+(?:\.\d+)?)/i,
+      thu: /(?:Thu(?:rsday)?)[\.\s:]+(\d+(?:\.\d+)?)/i,
+      fri: /(?:Fri(?:day)?)[\.\s:]+(\d+(?:\.\d+)?)/i,
+      sat: /(?:Sat(?:urday)?)[\.\s:]+(\d+(?:\.\d+)?)/i,
+      sun: /(?:Sun(?:day)?)[\.\s:]+(\d+(?:\.\d+)?)/i,
     };
 
     // Extended WH-347 field extraction
