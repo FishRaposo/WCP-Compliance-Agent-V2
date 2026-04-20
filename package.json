@@ -21,7 +21,9 @@
     "test:frontend": "vitest run --config vitest.config.frontend.ts",
     "lint:pipeline": "tsx scripts/lint-pipeline-discipline.ts",
     "lint:frontend": "eslint src/frontend --config eslint.config.frontend.js",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:live:smoke": "vitest run --config vitest.config.live.ts tests/live/smoke.test.ts --reporter=verbose",
+    "test:live:calibration": "vitest run --config vitest.config.live.ts tests/live/live-calibration.test.ts --reporter=verbose"
   },
   "keywords": [
     "ai-infrastructure",

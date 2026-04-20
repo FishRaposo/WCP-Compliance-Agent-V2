@@ -243,8 +243,12 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
     // Parse and validate output
     let rawOutput: z.infer<typeof RawLLMOutputSchema>;
     try {
-      // Try to parse as JSON first
-      const parsed = JSON.parse(response.text);
+      // Try to parse as JSON first (strip markdown code fences if present)
+      const stripped = response.text
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```\s*$/, "")
+        .trim();
+      const parsed = JSON.parse(stripped);
       rawOutput = RawLLMOutputSchema.parse(parsed);
     } catch {
       // Fallback: try to extract from text using simple heuristics
@@ -340,11 +344,12 @@ function extractVerdictFromText(
 ): z.infer<typeof RawLLMOutputSchema> {
   const lowerText = text.toLowerCase();
 
-  // Determine status from keywords
+  // Determine status from keywords — check negated forms first to avoid false Rejects
+  const noViolation = lowerText.includes("no violation") || lowerText.includes("no critical") || lowerText.includes("all checks pass");
   let status: "Approved" | "Revise" | "Reject" = "Revise"; // Default conservative
-  if (lowerText.includes("reject") || lowerText.includes("violation")) {
+  if (!noViolation && (lowerText.includes("reject") || lowerText.includes("violation"))) {
     status = "Reject";
-  } else if (lowerText.includes("approved") || lowerText.includes("compliant")) {
+  } else if (noViolation || lowerText.includes("approved") || lowerText.includes("compliant")) {
     status = "Approved";
   }
 
