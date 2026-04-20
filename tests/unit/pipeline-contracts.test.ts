@@ -129,9 +129,7 @@ describe("Pipeline Contracts", () => {
       };
 
       const result = ExtractedWCPSchema.safeParse(data);
-      // Note: Zod doesn't validate number ranges by default without .min()
-      // This test documents current behavior
-      expect(result.success).toBe(true); // Would need .min(0) to reject
+      expect(result.success).toBe(false); // Enforced by .min(0) on hours
     });
   });
 
@@ -372,10 +370,9 @@ describe("Pipeline Contracts", () => {
         },
       };
 
-      // Note: Zod doesn't automatically validate cross-field equality
-      // This would need custom refinement
+      // Enforced by superRefine cross-field traceId check
       const result = TrustScoredDecisionSchema.safeParse(decision);
-      expect(result.success).toBe(true); // Schema-level validation passes
+      expect(result.success).toBe(false);
     });
   });
 

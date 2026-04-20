@@ -64,46 +64,24 @@
   },
 
   "dbwd": {
-    "source": "hardcoded",
+    "source": "json",
+    "corpusPath": "./data/dbwd-corpus.json",
     "effectiveDate": "2024-06-01",
     "geographicScope": "nationwide",
-    "rates": {
-      "Electrician": {
-        "base": 51.69,
-        "fringe": 34.63,
-        "total": 86.32,
-        "dbwdId": "DBWD-2024-06-01-ELEC"
-      },
-      "Laborer": {
-        "base": 26.45,
-        "fringe": 12.50,
-        "total": 38.95,
-        "dbwdId": "DBWD-2024-06-01-LABR"
-      },
-      "Plumber": {
-        "base": 48.50,
-        "fringe": 32.00,
-        "total": 80.50,
-        "dbwdId": "DBWD-2024-06-01-PLMB"
-      },
-      "Carpenter": {
-        "base": 42.75,
-        "fringe": 28.50,
-        "total": 71.25,
-        "dbwdId": "DBWD-2024-06-01-CARP"
-      },
-      "Mason": {
-        "base": 45.20,
-        "fringe": 30.00,
-        "total": 75.20,
-        "dbwdId": "DBWD-2024-06-01-MASN"
-      }
-    },
     "phase2Target": {
       "source": "postgresql",
       "schema": "./src/pipeline/reference/values/dbwd-rates.md",
       "tableName": "dbwd_rates"
     }
+  },
+
+  "tradeAliases": {
+    "Wire Technician": "Electrician",
+    "Electrical Technician": "Electrician",
+    "Pipe Fitter": "Plumber",
+    "Welder": "Ironworker",
+    "Cement Finisher": "Concrete Worker",
+    "Backhoe Operator": "Operating Engineer"
   },
 
   "api": {
@@ -126,14 +104,14 @@
   },
 
   "features": {
-    "pdfParsing": false,
+    "pdfParsing": true,
     "ragLookup": true,
-    "batchProcessing": false,
-    "observability": false
+    "batchProcessing": true,
+    "observability": true
   },
 
   "observability": {
-    "enabled": false,
+    "enabled": true,
     "logging": {
       "level": "info",
       "format": "json"

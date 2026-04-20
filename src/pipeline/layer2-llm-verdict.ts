@@ -24,7 +24,10 @@ import {
   validateReferencedCheckIds,
 } from "../types/decision-pipeline.js";
 import { generateMockWcpDecision, isMockMode } from "../utils/mock-responses.js";
-import { resolvePrompt } from "../prompts/resolver.js";
+import { resolvePrompt, resolvePromptTemplate } from "../prompts/resolver.js";
+import { childLogger } from "../utils/logger.js";
+
+const log = childLogger("Layer2");
 
 // ============================================================================
 // LLM Agent Configuration
@@ -76,7 +79,7 @@ const Layer2InputSchema = z.object({
     checks: z.array(
       z.object({
         id: z.string(),
-        type: z.enum(["wage", "overtime", "fringe", "classification", "deduction", "minimum_wage", "hours", "data_integrity"]),
+        type: z.enum(["wage", "overtime", "fringe", "classification", "deduction", "minimum_wage", "hours", "data_integrity", "total_hours", "signature", "overtime_weekly", "overtime_daily"]),
         passed: z.boolean(),
         regulation: z.string(),
         expected: z.number().optional(),
@@ -188,11 +191,11 @@ Your output MUST include referencedCheckIds - list the [check_id] values you cit
  */
 export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLMVerdict> {
   const startTime = Date.now();
-  console.log(`[Layer 2] Starting LLM verdict for trace ${report.traceId}`);
+  log.info({ traceId: report.traceId }, "Starting LLM verdict");
 
   // Check mock mode
   if (isMockMode()) {
-    console.log("[Layer 2] Mock mode active - using mock verdict");
+    log.info({ traceId: report.traceId }, "Mock mode active - using mock verdict");
     const mockDecision = generateMockWcpDecision(report.extracted.rawInput);
 
     // Convert mock decision to LLMVerdict format
@@ -212,17 +215,19 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
       tokenUsage: 0, // No tokens used in mock mode
       model: "mock",
       timestamp: new Date().toISOString(),
+      promptVersion: 2,
+      promptKey: "wcp_verdict",
     };
 
-    console.log(`[Layer 2] Mock verdict completed in ${Date.now() - startTime}ms`);
+    log.info({ ms: Date.now() - startTime }, "Mock verdict completed");
     return verdict;
   }
 
   const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
 
   // Resolve active prompt from registry (falls back to static fallback if DB unavailable)
-  const resolvedInstructions = await resolvePrompt("wcp_verdict");
-  const systemInstructions = resolvedInstructions ?? STATIC_FALLBACK_INSTRUCTIONS;
+  const resolvedTemplate = await resolvePromptTemplate("wcp_verdict");
+  const systemInstructions = resolvedTemplate?.content ?? STATIC_FALLBACK_INSTRUCTIONS;
 
   // Build prompt
   const prompt = buildLayer2Prompt(report);
@@ -243,7 +248,7 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
       rawOutput = RawLLMOutputSchema.parse(parsed);
     } catch {
       // Fallback: try to extract from text using simple heuristics
-      console.log("[Layer 2] Could not parse JSON, using fallback parsing");
+      log.warn({ traceId: report.traceId }, "Could not parse JSON response, using fallback text extraction");
       rawOutput = extractVerdictFromText(response.text, report);
     }
 
@@ -260,9 +265,7 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
     );
 
     if (!validation.valid) {
-      console.warn(
-        `[Layer 2] Invalid referencedCheckIds: ${validation.missing.join(", ")}`
-      );
+      log.warn({ missing: validation.missing }, "Invalid referencedCheckIds - falling back to failed checks");
       // Fallback: reference all failed checks
       rawOutput.referencedCheckIds = report.checks
         .filter((c) => !c.passed)
@@ -286,20 +289,18 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
       tokenUsage: response.usage?.totalTokens ?? 0,
       model,
       timestamp: new Date().toISOString(),
+      promptVersion: resolvedTemplate?.version,
+      promptKey: resolvedTemplate?.key,
     };
 
     // Final schema validation
     LLMVerdictSchema.parse(verdict);
 
-    console.log(
-      `[Layer 2] Verdict completed in ${Date.now() - startTime}ms: ${verdict.status} (confidence: ${(
-        verdict.selfConfidence * 100
-      ).toFixed(0)}%)`
-    );
+    log.info({ ms: Date.now() - startTime, status: verdict.status, selfConfidence: verdict.selfConfidence, promptVersion: verdict.promptVersion }, "Verdict completed");
 
     return verdict;
   } catch (error) {
-    console.error("[Layer 2] Error generating verdict:", error);
+    log.error({ traceId: report.traceId, err: error }, "Error generating verdict");
 
     // Fallback: create a conservative verdict that requires human review
     const fallbackVerdict: LLMVerdict = {

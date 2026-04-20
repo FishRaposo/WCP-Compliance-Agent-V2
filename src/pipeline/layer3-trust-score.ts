@@ -24,6 +24,9 @@ import {
   type HumanReview,
   type AuditEvent,
 } from "../types/decision-pipeline.js";
+import { childLogger } from "../utils/logger.js";
+
+const log = childLogger("Layer3");
 
 // ============================================================================
 // Trust Formula Constants
@@ -315,6 +318,8 @@ export function generateAuditTrail(
       selfConfidence: verdict.selfConfidence,
       tokenUsage: verdict.tokenUsage,
       model: verdict.model,
+      promptVersion: verdict.promptVersion,
+      promptKey: verdict.promptKey,
     },
   });
 
@@ -353,7 +358,7 @@ export function layer3TrustScore(
   verdict: LLMVerdict
 ): TrustScoredDecision {
   const startTime = Date.now();
-  console.log(`[Layer 3] Computing trust score for trace ${report.traceId}`);
+  log.info({ traceId: report.traceId }, "Computing trust score");
 
   // Step 1: Compute trust components
   const components = computeTrustComponents(report, verdict);
@@ -401,9 +406,7 @@ export function layer3TrustScore(
     finalizedAt: new Date().toISOString(),
   };
 
-  console.log(
-    `[Layer 3] Trust score computed in ${Date.now() - startTime}ms: ${score.toFixed(2)} (${band}) → ${finalStatus}`
-  );
+  log.info({ traceId: report.traceId, ms: Date.now() - startTime, score, band, finalStatus }, "Trust score computed");
 
   return decision;
 }

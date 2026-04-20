@@ -29,7 +29,7 @@ export interface CheckResult {
   id: string;
 
   /** Type of compliance check */
-  type: "wage" | "overtime" | "fringe" | "classification" | "deduction" | "data_integrity" | "minimum_wage" | "hours";
+  type: "wage" | "overtime" | "fringe" | "classification" | "deduction" | "data_integrity" | "minimum_wage" | "hours" | "total_hours" | "signature" | "overtime_weekly" | "overtime_daily";
 
   /** Whether the check passed */
   passed: boolean;
@@ -54,13 +54,53 @@ export interface CheckResult {
 }
 
 /**
- * Extracted WCP data (11 structured fields per WH-347)
+ * Per-employee record within a WH-347 certified payroll
+ */
+export interface ExtractedEmployee {
+  /** Worker's full name */
+  workerName?: string;
+
+  /** Worker classification/trade role */
+  role: string;
+
+  /** Last 4 digits of SSN — masked for privacy */
+  socialSecurityLast4?: string;
+
+  /** Hours worked per day of week */
+  hoursByDay?: {
+    mon?: number;
+    tue?: number;
+    wed?: number;
+    thu?: number;
+    fri?: number;
+    sat?: number;
+    sun?: number;
+  };
+
+  /** Regular hours (≤ 40) */
+  regularHours?: number;
+
+  /** Overtime hours (> 40) */
+  overtimeHours?: number;
+
+  /** Gross pay for the week */
+  grossPay?: number;
+
+  /** Fringe benefit rate */
+  fringe?: number;
+
+  /** Reported base hourly rate */
+  reportedBaseRate?: number;
+}
+
+/**
+ * Extracted WCP data — full WH-347 data model
  */
 export interface ExtractedWCP {
   /** Raw input text (for audit trail) */
   rawInput: string;
 
-  /** Worker name (if available) */
+  /** Worker name (if available) — single-worker shorthand */
   workerName?: string;
 
   /** Last 4 digits of SSN — masked for privacy */
@@ -107,8 +147,29 @@ export interface ExtractedWCP {
   /** Week ending date (YYYY-MM-DD if available) */
   weekEnding?: string;
 
+  /** Week start date (YYYY-MM-DD if available) */
+  weekStart?: string;
+
   /** Project or contract ID */
   projectId?: string;
+
+  /** Subcontractor name (WH-347 box 1) */
+  subcontractor?: string;
+
+  /** Reported base hourly rate (may differ from wage field) */
+  reportedBaseRate?: number;
+
+  /** Reported fringe rate (explicit from form) */
+  reportedFringeRate?: number;
+
+  /** Reported total compensation (base + fringe) */
+  reportedTotalPay?: number;
+
+  /** Signatories on the certified payroll */
+  signatures?: string[];
+
+  /** Per-employee records (multi-worker payrolls) */
+  employees?: ExtractedEmployee[];
 }
 
 /**
@@ -243,6 +304,12 @@ export interface LLMVerdict {
 
   /** Timestamp */
   timestamp: string;
+
+  /** Prompt version used to generate this verdict (for audit trail) */
+  promptVersion?: number;
+
+  /** Prompt key used (e.g., "wcp_verdict") */
+  promptKey?: string;
 }
 
 // ============================================================================
@@ -394,7 +461,7 @@ export interface TrustScoredDecision {
 
 export const CheckResultSchema = z.object({
   id: z.string(),
-  type: z.enum(["wage", "overtime", "fringe", "classification", "deduction", "data_integrity", "minimum_wage", "hours"]),
+  type: z.enum(["wage", "overtime", "fringe", "classification", "deduction", "data_integrity", "minimum_wage", "hours", "total_hours", "signature", "overtime_weekly", "overtime_daily"]),
   passed: z.boolean(),
   regulation: z.string(),
   expected: z.number().optional(),
@@ -404,6 +471,26 @@ export const CheckResultSchema = z.object({
   message: z.string(),
 });
 
+export const ExtractedEmployeeSchema = z.object({
+  workerName: z.string().optional(),
+  role: z.string(),
+  socialSecurityLast4: z.string().optional(),
+  hoursByDay: z.object({
+    mon: z.number().min(0).optional(),
+    tue: z.number().min(0).optional(),
+    wed: z.number().min(0).optional(),
+    thu: z.number().min(0).optional(),
+    fri: z.number().min(0).optional(),
+    sat: z.number().min(0).optional(),
+    sun: z.number().min(0).optional(),
+  }).optional(),
+  regularHours: z.number().min(0).optional(),
+  overtimeHours: z.number().min(0).optional(),
+  grossPay: z.number().min(0).optional(),
+  fringe: z.number().min(0).optional(),
+  reportedBaseRate: z.number().min(0).optional(),
+});
+
 export const ExtractedWCPSchema = z.object({
   rawInput: z.string(),
   workerName: z.string().optional(),
@@ -411,23 +498,30 @@ export const ExtractedWCPSchema = z.object({
   role: z.string(),
   tradeCode: z.string().optional(),
   localityCode: z.string().optional(),
-  hours: z.number(),
-  regularHours: z.number().optional(),
-  overtimeHours: z.number().optional(),
+  hours: z.number().min(0),
+  regularHours: z.number().min(0).optional(),
+  overtimeHours: z.number().min(0).optional(),
   hoursByDay: z.object({
-    mon: z.number().optional(),
-    tue: z.number().optional(),
-    wed: z.number().optional(),
-    thu: z.number().optional(),
-    fri: z.number().optional(),
-    sat: z.number().optional(),
-    sun: z.number().optional(),
+    mon: z.number().min(0).optional(),
+    tue: z.number().min(0).optional(),
+    wed: z.number().min(0).optional(),
+    thu: z.number().min(0).optional(),
+    fri: z.number().min(0).optional(),
+    sat: z.number().min(0).optional(),
+    sun: z.number().min(0).optional(),
   }).optional(),
-  wage: z.number(),
-  fringe: z.number().optional(),
-  grossPay: z.number().optional(),
+  wage: z.number().min(0),
+  fringe: z.number().min(0).optional(),
+  grossPay: z.number().min(0).optional(),
   weekEnding: z.string().optional(),
+  weekStart: z.string().optional(),
   projectId: z.string().optional(),
+  subcontractor: z.string().optional(),
+  reportedBaseRate: z.number().min(0).optional(),
+  reportedFringeRate: z.number().min(0).optional(),
+  reportedTotalPay: z.number().min(0).optional(),
+  signatures: z.array(z.string()).optional(),
+  employees: z.array(ExtractedEmployeeSchema).optional(),
 });
 
 export const DBWDRateInfoSchema = z.object({
@@ -472,6 +566,8 @@ export const LLMVerdictSchema = z.object({
   tokenUsage: z.number(),
   model: z.string(),
   timestamp: z.string(),
+  promptVersion: z.number().optional(),
+  promptKey: z.string().optional(),
 });
 
 export const TrustScoreComponentsSchema = z.object({
@@ -525,6 +621,21 @@ export const TrustScoredDecisionSchema = z.object({
   auditTrail: z.array(AuditEventSchema),
   finalStatus: z.enum(["Approved", "Revise", "Reject", "Pending Human Review"]),
   finalizedAt: z.string(),
+}).superRefine((data, ctx) => {
+  if (data.deterministic.traceId !== data.traceId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `deterministic.traceId (${data.deterministic.traceId}) must equal root traceId (${data.traceId})`,
+      path: ["deterministic", "traceId"],
+    });
+  }
+  if (data.verdict.traceId !== data.traceId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `verdict.traceId (${data.verdict.traceId}) must equal root traceId (${data.traceId})`,
+      path: ["verdict", "traceId"],
+    });
+  }
 });
 
 // ============================================================================

@@ -3,69 +3,18 @@
 Actionable gaps for the WCP Compliance Agent — scoped to the current three-layer pipeline architecture.
 Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
 
-**Last updated:** 2026-04-20  
+**Last updated:** 2026-04-19 — B1–B3, S1–S6, T1–T5, T7–T8 resolved.  
 **Architecture reference:** `AGENTS.md`
 
 ---
 
-## 🔥 Blockers / Critical Bugs
+## 🧊 Active Tech Debt
 
-### B1 — Layer 2 model hardcoded, ignores `OPENAI_MODEL` env var [S]
-- **Source:** `src/pipeline/layer2-llm-verdict.ts:231,254,285`
-- **Problem:** `openai("gpt-4o-mini")` is hardcoded three times inside the actual `generateText` call and in the returned verdict object. The `OPENAI_MODEL` env var is read elsewhere (`orchestrator.ts:74`, `app.ts:86`, `agent-config.ts:34`) but **never wired into Layer 2**. Any operator setting `OPENAI_MODEL=gpt-4o` gets no effect on the actual inference.
-- **Fix:** Read `process.env.OPENAI_MODEL ?? "gpt-4o-mini"` once at the top of `generateLayer2Verdict`, pass it to `openai(model)` and to the returned `model` field.
-- **Risk:** Silent misconfiguration in production.
-
-### B2 — `wcp.config.json` trust weights not read at runtime [S]
-- **Source:** `wcp.config.json:57-62`, `src/pipeline/layer3-trust-score.ts:41-46`
-- **Problem:** `wcp.config.json` declares weights `{deterministic: 0.25, classification: 0.15, llmSelf: 0.30, agreement: 0.30}`, but `layer3-trust-score.ts` uses hardcoded constants `{0.35, 0.25, 0.20, 0.20}` — a completely different formula. The config file is **not loaded anywhere** in the pipeline.
-- **Fix:** Either delete the `trust.weights` block from `wcp.config.json` to avoid confusion, or load the config and wire `TRUST_WEIGHTS` from it (preferred long-term). Document the chosen formula as authoritative.
-- **Risk:** Misleading docs; any operator expecting to tune weights via config gets no effect.
-
-### B3 — SQL migrations referenced but directory does not exist [S]
-- **Source:** `docs/roadmap/RELEASE_PLAN.md:45`, `wcp.config.json:161`
-- **Problem:** `RELEASE_PLAN.md` claims `migrations/001_initial_schema.sql` is complete, and `wcp.config.json` sets `"migrationPath": "./migrations"`. Neither the `migrations/` directory nor the SQL file exists in the repository.
-- **Fix:** Either create the migration file (required before any PostgreSQL work) or remove the references to prevent false confidence.
-
----
-
-## 🏃 Active Sprint (Phase 03 / Showcase Polish)
-
-### S1 — Locality hardcoded to `"Metropolitan Area"` in retriever [S]
-- **Source:** `src/retrieval/hybrid-retriever.ts:156,170`
-- **Problem:** Both `buildRateInfo` and `hitToDBWDRateInfo` unconditionally set `locality: "Metropolitan Area"`. The `ExtractedWCP.localityCode` field exists but is never passed through to the rate lookup or stored in `DBWDRateInfo.locality`.
-- **Fix:** Accept and propagate an optional `locality` parameter from Layer 1 through `lookupDBWDRate()`. Fall back to `"Metropolitan Area"` only when absent.
-- **Files:** `src/retrieval/hybrid-retriever.ts`, `src/pipeline/layer1-deterministic.ts`
-
-### S2 — Mock mode `DBWD_RATES` has only 2 trades vs. 20 in main corpus [S]
-- **Source:** `src/utils/mock-responses.ts:9-12`
-- **Problem:** `generateMockWcpDecision` only recognises `Electrician` and `Laborer`. Every other trade produces an "Invalid Role" rejection in mock mode, making 18 of the 20 golden-set scenarios behave incorrectly during offline testing.
-- **Fix:** Either expand `DBWD_RATES` in `mock-responses.ts` to match `IN_MEMORY_CORPUS` in `hybrid-retriever.ts`, or refactor the mock to use the same in-memory corpus (preferred — single source of truth).
-- **Files:** `src/utils/mock-responses.ts`
-
-### S3 — `env-validator.ts` allowlist contains speculative model names [S]
-- **Source:** `src/utils/env-validator.ts:49`
-- **Problem:** Valid models include `'gpt-5.4'`, `'gpt-5.4-mini'`, `'gpt-5-nano'` — model IDs that do not exist in the OpenAI API as of the audit date. Accepting them silently allows misconfiguration.
-- **Fix:** Remove speculative model names. Accept a broader pattern (any non-empty string starting with `gpt-` or `o`) so new models don't require a code change, or gate only on known-working IDs.
-- **Files:** `src/utils/env-validator.ts`
-
-### S4 — `wcp.config.json` feature flags stale / misleading [S]
-- **Source:** `wcp.config.json:134-139`
-- **Problem:** `ragLookup: false` and `observability: false` are set, but the hybrid retriever (BM25 + vector + RRF + cross-encoder) is fully implemented and active. Nothing reads these flags to gate the feature — they give a false impression of capability.
-- **Fix:** Either set `ragLookup: true` (accurate) or delete the `features` block and document status in `AGENTS.md` / `CHANGELOG.md`.
-- **Files:** `wcp.config.json`
-
-### S5 — `wcp.config.json` model set to `"gpt-5.4"` (non-existent) [S]
-- **Source:** `wcp.config.json:44`
-- **Problem:** `pipeline.llm.model` is set to `"gpt-5.4"`, but this key is never read in the pipeline. Combined with B1 and B2, the config file is entirely decorative for LLM and trust configuration.
-- **Fix:** Set to `"gpt-4o-mini"` (matches actual runtime default) or wire the config load into Layer 2 (part of B1 fix).
-- **Files:** `wcp.config.json`
-
-### S6 — `RELEASE_PLAN.md` Phase 02 status inconsistent with codebase [S]
-- **Source:** `docs/roadmap/RELEASE_PLAN.md:78-93`
-- **Problem:** Plan lists BM25, vector search, RRF, cross-encoder, prompt registry, and 20-trade corpus as "Not started", but all are fully implemented. Phase 02 exit gate checkboxes are unchecked despite being met.
-- **Fix:** Update `RELEASE_PLAN.md` to reflect actual Phase 02 completion status (close gate, check exit criteria).
-- **Files:** `docs/roadmap/RELEASE_PLAN.md`
+### T6 — `console.log` in Layer 3 and orchestrator should use structured logging [S]
+- **Source:** `src/pipeline/orchestrator.ts`, `src/pipeline/layer3-trust-score.ts:356`
+- Every pipeline stage uses `console.log` / `console.warn` / `console.error` directly. When M5 (OTel) is implemented, these should route through a structured logger with level filtering.
+- Fix: introduce a minimal `src/utils/logger.ts` wrapper (pino or similar) and replace raw console calls.
+- **Do together with M5 to avoid doing this twice.**
 
 ---
 
@@ -80,7 +29,7 @@ Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
 ### H2 — Make DBWD rates configurable via JSON, not hardcoded [M]
 - **Source:** `src/pipeline/layer1-deterministic.ts`, `src/retrieval/hybrid-retriever.ts:29-50`
 - **Why:** 20 trades are hardcoded in `hybrid-retriever.ts`. Real deployments need 100+ trades and rates that change quarterly.
-- **What:** Move rate table to `data/dbwd-corpus.json` (already partially exists per comments). Support override via `WCP_CONFIG_PATH` env var. Expand to full 20 trades already in the corpus.
+- **What:** Move rate table to `data/dbwd-corpus.json` (already exists — use it as the load target). Support override via `WCP_CONFIG_PATH` env var.
 - **Files:** `wcp.config.json`, `src/retrieval/hybrid-retriever.ts`, `data/dbwd-corpus.json`
 - **Effort:** 1–2 days
 
@@ -148,10 +97,10 @@ Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
 - **Effort:** 2–4 hours
 
 ### M5 — OpenTelemetry spans per pipeline stage [M]
-- **Source:** `src/instrumentation.ts` (stub file, currently empty), `wcp.config.json:147 (tracing.enabled: false)`
+- **Source:** `src/instrumentation.ts` (deleted — implement fresh), `wcp.config.json:147 (tracing.enabled: false)`
 - **Why:** No distributed tracing. Can't diagnose latency spikes or cost anomalies.
-- **What:** Implement `src/instrumentation.ts`. Wrap Layer 1, Layer 2, Layer 3, and orchestrator in OTel spans. Export to console (dev) or OTLP endpoint (`OTEL_EXPORTER_OTLP_ENDPOINT` env).
-- **Files:** `src/instrumentation.ts`, `src/pipeline/orchestrator.ts`, each layer file
+- **What:** Create `src/instrumentation.ts`. Wrap Layer 1, Layer 2, Layer 3, and orchestrator in OTel spans. Export to console (dev) or OTLP endpoint (`OTEL_EXPORTER_OTLP_ENDPOINT` env). Wire T6 (structured logger) in the same pass.
+- **Files:** new `src/instrumentation.ts`, `src/pipeline/orchestrator.ts`, each layer file
 - **Effort:** 2–3 days
 
 ### M6 — CI evaluation aggregate quality gates [M]
@@ -203,52 +152,6 @@ Deferred from Phase 03 (per `RELEASE_PLAN.md:183`). Add E2E coverage for the six
 
 ### I8 — Cross-field `traceId` consistency validated at schema level [S]
 `TrustScoredDecisionSchema` does not enforce that `deterministic.traceId`, `verdict.traceId`, and the root `traceId` are equal. A test comment explicitly notes this gap. [src: `tests/unit/pipeline-contracts.test.ts:367-379`] Add a Zod `.superRefine()` check.
-
----
-
-## 🔧 Tech Debt
-
-### T1 — `src/utils/mock-responses.ts` DBWD_RATES diverged from main corpus [S]
-- **Source:** `src/utils/mock-responses.ts:9-12` vs. `src/retrieval/hybrid-retriever.ts:29-50`
-- `DBWD_RATES` (mock) has 2 entries; `IN_MEMORY_CORPUS` (retriever) has 20. These should share a single source, or mock should delegate to the retriever's in-memory corpus.
-- (Also tracked as S2 in Active Sprint)
-
-### T2 — `wcp.config.json` is entirely decorative for LLM and trust config [S]
-- **Source:** `wcp.config.json:43-70`, `src/pipeline/layer2-llm-verdict.ts`, `src/pipeline/layer3-trust-score.ts`
-- The config file defines `pipeline.llm.model`, `pipeline.llm.temperature`, and `pipeline.trust.weights` but none of these keys are read by any code. The pipeline uses hardcoded values exclusively.
-- Fix: wire the config loader or remove the stale blocks to prevent operator confusion. (Related to B1, B2)
-
-### T3 — `handleAnalyzeRequest` uses `any` type for Hono context [S]
-- **Source:** `src/app.ts:8`
-- `async function handleAnalyzeRequest(c: any)` — defeats TypeScript's strict mode for the entire HTTP handler.
-- Fix: use `Context` from `hono` with proper generics.
-- **Files:** `src/app.ts`
-
-### T4 — `mastra/` directory is unused dead code [M]
-- **Source:** `src/mastra/` (agents/, tools/, index.ts)
-- The Mastra agent framework was replaced by the current three-layer pipeline. The `src/mastra/` directory remains but is not imported by any active code path (confirmed by zero imports in `src/pipeline/` or `src/entrypoints/`).
-- Fix: remove `src/mastra/` and all associated `@mastra` deps from `package.json`.
-- **Files:** `src/mastra/`, `package.json`
-
-### T5 — `agentConfig` in `src/config/agent-config.ts` is unused [S]
-- **Source:** `src/config/agent-config.ts`
-- `getAgentConfig()` and `DEFAULT_AGENT_CONFIG` are defined but never imported by any pipeline code. Configuration leaks from the Mastra era.
-- Fix: remove the file or repurpose if T4 is resolved.
-
-### T6 — `console.log` in Layer 3 and orchestrator should use structured logging [S]
-- **Source:** `src/pipeline/orchestrator.ts`, `src/pipeline/layer3-trust-score.ts:356`
-- Every pipeline stage uses `console.log` / `console.warn` / `console.error` directly. When M5 (OTel) is implemented, these should route through a structured logger with level filtering.
-- Fix: introduce a minimal `src/utils/logger.ts` wrapper (pino or similar) and replace raw console calls.
-
-### T7 — `src/instrumentation.ts` is a 3-line empty stub [S]
-- **Source:** `src/instrumentation.ts`
-- Created as a placeholder for OTel initialization but has no implementation. Currently imported nowhere.
-- Fix: implement as part of M5, or delete until M5 is scheduled.
-
-### T8 — `data/dbwd-corpus.json` referenced but status unclear [S]
-- **Source:** `src/retrieval/hybrid-retriever.ts:26` (comment: "Matches all 20 entries in data/dbwd-corpus.json")
-- The comment implies a JSON file exists, but the `data/` directory content was not confirmed during this audit. If missing, the in-memory corpus is the sole fallback and should be documented as such.
-- Fix: verify `data/dbwd-corpus.json` exists and matches `IN_MEMORY_CORPUS`; add to `.gitignore` policy if auto-generated.
 
 ---
 

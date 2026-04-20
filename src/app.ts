@@ -4,6 +4,21 @@ import { cors } from "hono/cors";
 import { generateWcpDecision } from "./entrypoints/wcp-entrypoint.js";
 import { formatApiError, ValidationError } from "./utils/errors.js";
 import { isMockMode } from "./utils/mock-responses.js";
+import { extractTextFromPDF, PDFIngestionError } from "./ingestion/pdf-ingestion.js";
+import { parseCSVBuffer, csvToWCPInputs } from "./ingestion/csv-ingestion.js";
+import { listDecisions } from "./services/audit-persistence.js";
+import { createJob, getJob, updateJob } from "./services/job-queue.js";
+import { childLogger } from "./utils/logger.js";
+
+const log = childLogger("App");
+
+function formattedStatusCode(err: unknown): 400 | 422 | 500 {
+  if (err && typeof err === "object" && "statusCode" in err) {
+    const code = Number((err as { statusCode: unknown }).statusCode);
+    if (code === 400 || code === 422) return code;
+  }
+  return 500;
+}
 
 async function handleAnalyzeRequest(c: Context) {
   try {
@@ -32,14 +47,9 @@ async function handleAnalyzeRequest(c: Context) {
       timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
-    console.error("Error analyzing WCP:", {
-      message: error && typeof error === "object" && "message" in error ? String(error.message) : "Unknown error",
-      code: error && typeof error === "object" && "code" in error ? String(error.code) : undefined,
-      statusCode: error && typeof error === "object" && "statusCode" in error ? Number(error.statusCode) : undefined,
-      type: error && typeof error === "object" && "constructor" in error ? String(error.constructor.name) : undefined,
-      details: error && typeof error === "object" && "details" in error ? error.details : undefined,
-      stack: error && typeof error === "object" && "stack" in error ? String(error.stack) : undefined,
-    });
+    log.error({
+      err: error,
+    }, "Error analyzing WCP");
 
     if (error instanceof SyntaxError) {
       const valError = new ValidationError("Invalid JSON format");
@@ -48,7 +58,7 @@ async function handleAnalyzeRequest(c: Context) {
     }
 
     const formattedError = formatApiError(error);
-    return c.json(formattedError, formattedError.error.statusCode as number);
+    return c.json(formattedError, formattedError.error.statusCode as 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500 | 503);
   }
 }
 
@@ -92,6 +102,90 @@ export function createApp() {
   app.post("/analyze", handleAnalyzeRequest);
   app.post("/api/analyze", handleAnalyzeRequest);
   app.get("/api/health", (c) => c.redirect("/health"));
+
+  // M2: PDF ingestion endpoint
+  app.post("/api/analyze-pdf", async (c: Context) => {
+    try {
+      const body = await c.req.parseBody();
+      const file = body["file"] as File | undefined;
+      if (!file) {
+        return c.json(formatApiError(new ValidationError("No file uploaded (field name: file)")), 400);
+      }
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const pdfResult = await extractTextFromPDF(buffer, file.name ?? "upload.pdf");
+      const decision = await generateWcpDecision({ content: pdfResult.text });
+      return c.json({ ...decision, pdfMeta: { pageCount: pdfResult.pageCount, fileName: pdfResult.fileName, sizeBytes: pdfResult.sizeBytes } });
+    } catch (err) {
+      if (err instanceof PDFIngestionError) {
+        return c.json(formatApiError(new ValidationError(err.message)), 422);
+      }
+      log.error({ err }, "PDF analysis error");
+      return c.json(formatApiError(err), formattedStatusCode(err));
+    }
+  });
+
+  // M3: CSV bulk ingestion endpoint
+  app.post("/api/analyze-csv", async (c: Context) => {
+    try {
+      const body = await c.req.parseBody();
+      const file = body["file"] as File | undefined;
+      if (!file) {
+        return c.json(formatApiError(new ValidationError("No file uploaded (field name: file)")), 400);
+      }
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const csvResult = parseCSVBuffer(buffer, file.name ?? "upload.csv");
+      const inputs = csvToWCPInputs(csvResult);
+      if (inputs.length === 0) {
+        return c.json(formatApiError(new ValidationError("CSV file contains no processable rows")), 422);
+      }
+      const decisions = await Promise.all(inputs.map((content) => generateWcpDecision({ content })));
+      return c.json({ decisions, csvMeta: { rowCount: csvResult.rowCount, fileName: csvResult.fileName, parseErrors: csvResult.errors } });
+    } catch (err) {
+      log.error({ err }, "CSV analysis error");
+      return c.json(formatApiError(err), formattedStatusCode(err));
+    }
+  });
+
+  // M1: Audit query endpoint
+  app.get("/api/decisions", async (c: Context) => {
+    const limit = Math.min(parseInt(c.req.query("limit") ?? "50", 10), 200);
+    const decisions = await listDecisions(limit);
+    return c.json({ decisions, count: decisions.length });
+  });
+
+  // M8: Async job endpoints
+  app.post("/api/jobs", async (c: Context) => {
+    try {
+      const body = await c.req.json();
+      const { content } = body ?? {};
+      if (!content || typeof content !== "string") {
+        return c.json(formatApiError(new ValidationError("content (string) is required")), 400);
+      }
+      const jobId = await createJob(content);
+      // Fire-and-forget: run pipeline asynchronously
+      (async () => {
+        try {
+          const result = await generateWcpDecision({ content });
+          await updateJob(jobId, "completed", result);
+        } catch (err) {
+          await updateJob(jobId, "failed", undefined, err instanceof Error ? err.message : String(err));
+        }
+      })();
+      return c.json({ jobId, status: "pending" }, 202);
+    } catch (err) {
+      log.error({ err }, "Failed to create job");
+      return c.json(formatApiError(err), 500);
+    }
+  });
+
+  app.get("/api/jobs/:jobId", async (c: Context) => {
+    const { jobId } = c.req.param();
+    const job = await getJob(jobId);
+    if (!job) {
+      return c.json(formatApiError(new ValidationError(`Job ${jobId} not found`)), 404);
+    }
+    return c.json(job);
+  });
 
   return app;
 }

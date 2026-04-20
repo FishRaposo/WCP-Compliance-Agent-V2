@@ -12,6 +12,9 @@
 
 import pg from "pg";
 import { isMockMode } from "../utils/mock-responses.js";
+import { childLogger } from "../utils/logger.js";
+
+const log = childLogger("DB");
 
 const { Pool } = pg;
 
@@ -52,10 +55,10 @@ export async function getPool(): Promise<pg.Pool | null> {
     client.release();
 
     _pool = pool;
-    console.log("[DB] PostgreSQL connected");
+    log.info("PostgreSQL connected");
     return _pool;
   } catch (err) {
-    console.warn("[DB] PostgreSQL unavailable — falling back to in-memory:", (err as Error).message);
+    log.warn({ err: (err as Error).message }, "PostgreSQL unavailable — falling back to in-memory");
     return null;
   }
 }
@@ -74,7 +77,7 @@ export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
   try {
     return await pool.query<T>(sql, params);
   } catch (err) {
-    console.error("[DB] Query error:", (err as Error).message, "\nSQL:", sql);
+    log.error({ err: (err as Error).message, sql }, "Query error");
     throw err;
   }
 }

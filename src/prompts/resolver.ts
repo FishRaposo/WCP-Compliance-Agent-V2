@@ -44,6 +44,15 @@ export async function resolvePrompt(key: string, orgId?: string): Promise<string
 }
 
 /**
+ * Resolve the full PromptTemplate (content + version metadata) for a key.
+ * Used by Layer 2 to capture promptVersion in the audit trail (M4).
+ */
+export async function resolvePromptTemplate(key: string, orgId?: string): Promise<import("./registry.js").PromptTemplate | null> {
+  bootstrap();
+  return promptRegistry.getActivePrompt(key, orgId);
+}
+
+/**
  * Seed the DB registry with all known prompts (call from seed-corpus.ts).
  */
 export async function seedPromptRegistry(): Promise<void> {

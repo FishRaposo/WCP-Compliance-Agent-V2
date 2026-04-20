@@ -25,6 +25,10 @@ import {
   recoverLayer3Error
 } from "../utils/errors.js";
 import type { TrustScoredDecision } from "../types/decision-pipeline.js";
+import { childLogger } from "../utils/logger.js";
+import { persistDecision } from "../services/audit-persistence.js";
+
+const log = childLogger("Orchestrator");
 
 // ============================================================================
 // Pipeline Input
@@ -72,71 +76,53 @@ export async function executeDecisionPipeline(
   // Log mode on first pipeline execution
   const mockMode = isMockMode();
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
-  console.log(`[WCP] Mode: ${mockMode ? "MOCK" : `LIVE (model=${model})`}`);
+  log.info({ mockMode, model }, "Pipeline mode");
 
   if (mockMode && process.env.NODE_ENV === "production") {
-    console.warn("[WCP] ⚠️  WARNING: Running in MOCK MODE in a production environment. Real OpenAI API key required for production decisions.");
+    log.warn("Running in MOCK MODE in production — real OpenAI API key required for production decisions");
   }
 
-  console.log(`\n[Pipeline] Starting decision pipeline for trace ${traceId}`);
-  console.log(`[Pipeline] Input length: ${input.content.length} chars`);
+  log.info({ traceId, inputLength: input.content.length }, "Starting decision pipeline");
 
   try {
     // ======================================================================
     // Layer 1: Deterministic Scaffold
     // ======================================================================
-    console.log(`\n[Pipeline] === LAYER 1: Deterministic Scaffold ===`);
+    log.info({ traceId }, "Layer 1: Deterministic Scaffold");
     const report = await layer1Deterministic(input.content, traceId);
 
-    console.log(
-      `[Pipeline] Layer 1 complete: ${report.checks.length} checks, score: ${report.deterministicScore.toFixed(2)}`
-    );
-
-    // Log check results summary
     const failedChecks = report.checks.filter((c) => !c.passed);
+    log.info({ checkCount: report.checks.length, deterministicScore: report.deterministicScore, failedCheckCount: failedChecks.length }, "Layer 1 complete");
     if (failedChecks.length > 0) {
-      console.log(`[Pipeline] Failed checks:`);
-      for (const check of failedChecks) {
-        console.log(`  - [${check.id}] ${check.type}: ${check.message.slice(0, 100)}`);
-      }
+      log.debug({ failedChecks: failedChecks.map((c) => ({ id: c.id, type: c.type })) }, "Failed checks");
     }
 
     // ======================================================================
     // Layer 2: LLM Verdict
     // ======================================================================
-    console.log(`\n[Pipeline] === LAYER 2: LLM Verdict ===`);
+    log.info({ traceId }, "Layer 2: LLM Verdict");
     const verdict = await layer2LLMVerdict(report);
 
-    console.log(
-      `[Pipeline] Layer 2 complete: ${verdict.status} (confidence: ${(verdict.selfConfidence * 100).toFixed(0)}%)`
-    );
-    console.log(`[Pipeline] Referenced checks: ${verdict.referencedCheckIds.join(", ")}`);
-    console.log(`[Pipeline] Rationale: ${verdict.rationale.slice(0, 150)}...`);
+    log.info({ status: verdict.status, selfConfidence: verdict.selfConfidence, referencedCheckIds: verdict.referencedCheckIds, promptVersion: verdict.promptVersion }, "Layer 2 complete");
 
     // ======================================================================
     // Layer 3: Trust Score + Human Review
     // ======================================================================
-    console.log(`\n[Pipeline] === LAYER 3: Trust Score + Human Review ===`);
+    log.info({ traceId }, "Layer 3: Trust Score + Human Review");
     const decision = layer3TrustScore(report, verdict);
 
-    console.log(
-      `[Pipeline] Layer 3 complete: trust=${decision.trust.score.toFixed(2)}, band=${decision.trust.band}`
-    );
-    console.log(
-      `[Pipeline] Human review: ${decision.humanReview.required ? "REQUIRED" : "not required"} (${decision.humanReview.status})`
-    );
+    log.info({ trustScore: decision.trust.score, band: decision.trust.band, humanReviewRequired: decision.humanReview.required }, "Layer 3 complete");
 
     // ======================================================================
     // Human Review Queue (if required)
     // ======================================================================
     if (decision.humanReview.required) {
-      console.log(`\n[Pipeline] === ENQUEUING FOR HUMAN REVIEW ===`);
+      log.info({ traceId }, "Enqueuing for human review");
       try {
         await humanReviewQueue.enqueue(decision);
-        console.log(`[Pipeline] Successfully enqueued for human review`);
+        log.info({ traceId }, "Successfully enqueued for human review");
       } catch (error) {
-        // Log but don't fail - decision is still valid
-        console.error(`[Pipeline] Failed to enqueue for review:`, error);
+        log.error({ traceId, err: error }, "Failed to enqueue for review");
         decision.auditTrail.push({
           timestamp: new Date().toISOString(),
           stage: "layer3",
@@ -153,11 +139,7 @@ export async function executeDecisionPipeline(
     // Finalize
     // ======================================================================
     const totalTime = Date.now() - startTime;
-    console.log(`\n[Pipeline] === COMPLETE ===`);
-    console.log(`[Pipeline] Trace: ${decision.traceId}`);
-    console.log(`[Pipeline] Final status: ${decision.finalStatus}`);
-    console.log(`[Pipeline] Total time: ${totalTime}ms`);
-    console.log(`[Pipeline] Audit trail: ${decision.auditTrail.length} events`);
+    log.info({ traceId: decision.traceId, finalStatus: decision.finalStatus, totalMs: totalTime, auditEvents: decision.auditTrail.length }, "Pipeline complete");
 
     // Add health metrics for backward compatibility with original health checks
     const decisionWithHealth: TrustScoredDecision = {
@@ -170,9 +152,12 @@ export async function executeDecisionPipeline(
       },
     };
 
+    // M1: Persist to PostgreSQL (non-blocking, graceful degradation)
+    persistDecision(decisionWithHealth).catch(() => {});
+
     return decisionWithHealth;
   } catch (error) {
-    console.error(`\n[Pipeline] FATAL ERROR in trace ${traceId}:`, error);
+    log.error({ traceId, err: error }, "FATAL ERROR in pipeline");
 
     // Determine error type and recovery strategy
     let errorType = "unknown";
@@ -196,7 +181,7 @@ export async function executeDecisionPipeline(
       errorStage = "final";
     }
 
-    console.error(`[Pipeline] Error classification: ${errorType} at ${errorStage}, recoverable: ${canRecover}`);
+    log.error({ errorType, errorStage, canRecover }, "Error classification");
 
     // Create a fallback decision that requires human review
     const fallbackDecision: TrustScoredDecision = {
@@ -300,7 +285,7 @@ export async function executeDecisionPipeline(
     try {
       await humanReviewQueue.enqueue(fallbackDecision);
     } catch (enqueueError) {
-      console.error(`[Pipeline] Failed to enqueue error decision:`, enqueueError);
+      log.error({ err: enqueueError }, "Failed to enqueue error decision");
     }
 
     return fallbackDecision;

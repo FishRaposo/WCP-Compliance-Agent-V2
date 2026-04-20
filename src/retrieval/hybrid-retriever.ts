@@ -14,12 +14,17 @@
  * Layer 1 calls lookupDBWDRate() — never the sub-modules directly.
  */
 
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
 import { bm25Search } from "./bm25-search.js";
 import { vectorSearch } from "./vector-search.js";
 import { rrfFusion } from "./rrf-fusion.js";
 import { crossEncoderRerank } from "./cross-encoder.js";
 import type { RetrievalHit, RetrievalResult } from "./types.js";
 import type { DBWDRateInfo } from "../types/decision-pipeline.js";
+import { childLogger } from "../utils/logger.js";
+
+const log = childLogger("HybridRetriever");
 
 // ============================================================================
 // In-memory fallback corpus (from Phase 01)
@@ -111,6 +116,83 @@ const CORPUS_DESCRIPTIONS = new Map<string, string>([
   ["DRWL0200", "Drywall Finisher: tapes, finishes, and prepares drywall surfaces for painting."],
   ["PROT0500", "Sprinkler Fitter: installs, services, and repairs fire protection and suppression systems."],
 ]);
+
+// ============================================================================
+// H2: Runtime corpus override via WCP_CONFIG_PATH
+// Loads a JSON file of trade rates at module init and merges into the tables.
+// ============================================================================
+
+interface CorpusEntry {
+  trade: string;
+  base: number;
+  fringe: number;
+  wdId: string;
+  tradeCode: string;
+  effectiveDate?: string;
+}
+
+interface ConfigAliases {
+  tradeAliases?: Record<string, string>;
+}
+
+function loadCorpusOverride(): void {
+  const configPath = process.env.WCP_CONFIG_PATH;
+  if (!configPath) return;
+
+  const absPath = resolve(configPath);
+  if (!existsSync(absPath)) {
+    log.warn({ absPath }, "WCP_CONFIG_PATH set but file not found");
+    return;
+  }
+
+  try {
+    const raw = readFileSync(absPath, "utf-8");
+    const parsed = JSON.parse(raw) as CorpusEntry[] | ConfigAliases;
+
+    if (Array.isArray(parsed)) {
+      for (const entry of parsed) {
+        if (entry.trade && typeof entry.base === "number" && typeof entry.fringe === "number") {
+          IN_MEMORY_CORPUS[entry.trade] = {
+            base: entry.base,
+            fringe: entry.fringe,
+            wdId: entry.wdId,
+            tradeCode: entry.tradeCode,
+          };
+        }
+      }
+      log.info({ count: parsed.length, absPath }, "Loaded trade entries from corpus override");
+    } else if (parsed && typeof parsed === "object" && "tradeAliases" in parsed) {
+      const aliases = (parsed as ConfigAliases).tradeAliases ?? {};
+      for (const [alias, canonical] of Object.entries(aliases)) {
+        IN_MEMORY_ALIASES[alias] = canonical;
+      }
+      log.info({ count: Object.keys(aliases).length, absPath }, "Loaded trade aliases from corpus override");
+    }
+  } catch (err) {
+    log.error({ err }, "Failed to parse WCP_CONFIG_PATH file");
+  }
+}
+
+loadCorpusOverride();
+
+// M7: Load tradeAliases from wcp.config.json at startup
+(function loadWcpConfigAliases(): void {
+  try {
+    const configPath = resolve("wcp.config.json");
+    if (!existsSync(configPath)) return;
+    const raw = readFileSync(configPath, "utf-8");
+    const config = JSON.parse(raw) as { tradeAliases?: Record<string, string> };
+    const aliases = config.tradeAliases ?? {};
+    for (const [alias, canonical] of Object.entries(aliases)) {
+      IN_MEMORY_ALIASES[alias] = canonical;
+    }
+    if (Object.keys(aliases).length > 0) {
+      log.info({ count: Object.keys(aliases).length }, "Merged aliases from wcp.config.json");
+    }
+  } catch {
+    // Non-fatal — config may not exist in all environments
+  }
+})();
 
 // ============================================================================
 // In-memory fallback lookup

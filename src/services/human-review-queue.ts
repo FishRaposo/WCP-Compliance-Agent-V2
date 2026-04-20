@@ -17,6 +17,9 @@ import type {
   ReviewQueueItem,
   ReviewAuditEvent,
 } from "../types/decision-pipeline.js";
+import { childLogger } from "../utils/logger.js";
+
+const log = childLogger("HumanReviewQueue");
 
 // ============================================================================
 // Configuration
@@ -106,7 +109,7 @@ async function saveQueue(queue: Map<string, ReviewQueueItem>): Promise<void> {
     const items = Array.from(queue.values());
     await fs.writeFile(QUEUE_FILE, JSON.stringify(items, null, 2), "utf-8");
   } catch (error) {
-    console.error("[HumanReviewQueue] Failed to save queue:", error);
+    log.error({ err: error }, "Failed to save queue");
     // Non-blocking: in-memory queue continues to work
   }
 }
@@ -137,9 +140,7 @@ class HumanReviewQueueService {
     const pendingCount = Array.from(this.queue.values()).filter(
       (i) => i.status === "pending"
     ).length;
-    console.log(
-      `[HumanReviewQueue] Initialized with ${pendingCount} pending items`
-    );
+    log.info({ pendingCount }, "Queue initialized");
   }
 
   /**
@@ -177,9 +178,7 @@ class HumanReviewQueueService {
     this.queue.set(decision.traceId, item);
     await saveQueue(this.queue);
 
-    console.log(
-      `[HumanReviewQueue] Enqueued ${decision.traceId} (${priority} priority, trust: ${decision.trust.score.toFixed(2)})`
-    );
+    log.info({ traceId: decision.traceId, priority, trustScore: decision.trust.score }, "Decision enqueued");
 
     return item;
   }
@@ -269,7 +268,7 @@ class HumanReviewQueueService {
     this.queue.set(traceId, item);
     await saveQueue(this.queue);
 
-    console.log(`[HumanReviewQueue] Assigned ${traceId} to ${reviewer}`);
+    log.info({ traceId, reviewer }, "Decision assigned");
     return item;
   }
 
@@ -321,9 +320,7 @@ class HumanReviewQueueService {
     this.queue.set(traceId, item);
     await saveQueue(this.queue);
 
-    console.log(
-      `[HumanReviewQueue] Review submitted for ${traceId}: ${decision} by ${reviewer}${isOverride ? " (OVERRIDE)" : ""}`
-    );
+    log.info({ traceId, decision, reviewer, isOverride }, "Review submitted");
     return item;
   }
 
@@ -364,7 +361,7 @@ class HumanReviewQueueService {
     this.queue.set(traceId, item);
     await saveQueue(this.queue);
 
-    console.log(`[HumanReviewQueue] Escalated ${traceId}: ${reason}`);
+    log.info({ traceId, reason }, "Decision escalated");
     return item;
   }
 
@@ -420,7 +417,7 @@ class HumanReviewQueueService {
   async clear(): Promise<void> {
     this.queue.clear();
     await saveQueue(this.queue);
-    console.log("[HumanReviewQueue] Cleared");
+    log.info("Queue cleared");
   }
 }
 

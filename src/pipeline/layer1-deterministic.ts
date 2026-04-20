@@ -18,9 +18,13 @@ import {
   type DeterministicReport,
   type CheckResult,
   type ExtractedWCP,
+  type ExtractedEmployee,
   type DBWDRateInfo,
 } from "../types/decision-pipeline.js";
 import { lookupDBWDRate as hybridLookup } from "../retrieval/hybrid-retriever.js";
+import { childLogger } from "../utils/logger.js";
+
+const log = childLogger("Layer1");
 
 // ============================================================================
 // DBWD Rate Database — Deprecated inline table
@@ -61,14 +65,23 @@ export async function extractWCPData(content: string): Promise<ExtractedWCP> {
 
     // Day-by-day hours (e.g. "Mon: 8, Tue: 8, Wed: 8, Thu: 8, Fri: 8")
     const dayPatterns: Record<string, RegExp> = {
-      mon: /(?:Mon(?:day)?)[\s:]+(\d+(?:\.\d+)?)/i,
-      tue: /(?:Tue(?:sday)?)[\s:]+(\d+(?:\.\d+)?)/i,
-      wed: /(?:Wed(?:nesday)?)[\s:]+(\d+(?:\.\d+)?)/i,
-      thu: /(?:Thu(?:rsday)?)[\s:]+(\d+(?:\.\d+)?)/i,
-      fri: /(?:Fri(?:day)?)[\s:]+(\d+(?:\.\d+)?)/i,
-      sat: /(?:Sat(?:urday)?)[\s:]+(\d+(?:\.\d+)?)/i,
-      sun: /(?:Sun(?:day)?)[\s:]+(\d+(?:\.\d+)?)/i,
+      mon: /(?:Mon(?:day)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
+      tue: /(?:Tue(?:sday)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
+      wed: /(?:Wed(?:nesday)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
+      thu: /(?:Thu(?:rsday)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
+      fri: /(?:Fri(?:day)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
+      sat: /(?:Sat(?:urday)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
+      sun: /(?:Sun(?:day)?)[\.\s:]+(\.\d+(?:\.\d+)?)/i,
     };
+
+    // Extended WH-347 field extraction
+    const subcontractorMatch = content.match(/(?:Subcontractor|Sub(?:contractor)?)[\.\s:]+([A-Za-z0-9\s,\.&'-]+?)(?:,|;|\n|$)/i);
+    const weekStartMatch = content.match(/(?:Week\s+Start|WS|Pay\s+Period\s+Start)[\.\s:]+(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4})/i);
+    const reportedBaseRateMatch = content.match(/(?:Reported\s+Base|Base\s+Rate|Straight\s+Time\s+Rate)[\.\s:]+\$?(\d+(?:\.\d+)?)/i);
+    const reportedFringeRateMatch = content.match(/(?:Reported\s+Fringe|Fringe\s+Rate|Benefit\s+Rate)[\.\s:]+\$?(\d+(?:\.\d+)?)/i);
+    const reportedTotalPayMatch = content.match(/(?:Reported\s+Total|Total\s+(?:Comp(?:ensation)?|Package))[\.\s:]+\$?(\d+(?:\.\d+)?)/i);
+    const signaturesMatch = content.match(/(?:Signed|Signature[s]?|Certified\s+by)[\.\s:]+([A-Za-z\s,]+?)(?:;|\n{2}|Date:|$)/i);
+
     const hoursByDay: ExtractedWCP["hoursByDay"] = {};
     let hasDayHours = false;
     for (const [day, pattern] of Object.entries(dayPatterns)) {
@@ -84,6 +97,10 @@ export async function extractWCPData(content: string): Promise<ExtractedWCP> {
     const overtimeHours = Math.max(0, hours - 40);
     const wage = wageMatch ? parseFloat(wageMatch[1]) : 0;
 
+    const parsedSignatures: string[] | undefined = signaturesMatch
+      ? signaturesMatch[1].split(',').map((s) => s.trim()).filter(Boolean)
+      : undefined;
+
     const result: ExtractedWCP = {
       rawInput: content,
       workerName: workerNameMatch ? workerNameMatch[1].trim() : undefined,
@@ -96,14 +113,18 @@ export async function extractWCPData(content: string): Promise<ExtractedWCP> {
       hoursByDay: hasDayHours ? hoursByDay : undefined,
       wage,
       fringe: fringeMatch ? parseFloat(fringeMatch[1]) : undefined,
-      grossPay: grossPayMatch
-        ? parseFloat(grossPayMatch[1])
-        : undefined,
+      grossPay: grossPayMatch ? parseFloat(grossPayMatch[1]) : undefined,
       weekEnding: weekEndingMatch ? weekEndingMatch[1] : undefined,
+      weekStart: weekStartMatch ? weekStartMatch[1] : undefined,
       projectId: projectIdMatch ? projectIdMatch[1] : undefined,
+      subcontractor: subcontractorMatch ? subcontractorMatch[1].trim() : undefined,
+      reportedBaseRate: reportedBaseRateMatch ? parseFloat(reportedBaseRateMatch[1]) : undefined,
+      reportedFringeRate: reportedFringeRateMatch ? parseFloat(reportedFringeRateMatch[1]) : undefined,
+      reportedTotalPay: reportedTotalPayMatch ? parseFloat(reportedTotalPayMatch[1]) : undefined,
+      signatures: parsedSignatures,
     };
 
-    console.log(`[Layer 1] Extraction completed in ${Date.now() - startTime}ms`);
+    log.debug({ ms: Date.now() - startTime }, "Extraction completed");
     return result;
 }
 
@@ -263,6 +284,123 @@ function checkOvertime(
 }
 
 /**
+ * Validate total hours: sum of hoursByDay vs reported hours (±0.25h tolerance)
+ *
+ * Regulation: 29 CFR 5.5(a)(3)(ii) — certified payroll must accurately reflect hours
+ */
+function checkTotals(
+  extracted: ExtractedWCP,
+  checkId: number
+): CheckResult {
+  const id = `total_hours_check_${String(checkId).padStart(3, "0")}`;
+
+  if (!extracted.hoursByDay || Object.keys(extracted.hoursByDay).length === 0) {
+    return {
+      id,
+      type: "total_hours",
+      passed: true,
+      regulation: "29 CFR 5.5(a)(3)(ii)",
+      severity: "warning",
+      message: "No per-day hours provided; cannot cross-check total hours",
+    };
+  }
+
+  const dayValues = Object.values(extracted.hoursByDay as Record<string, number>);
+  const computedTotal = dayValues.reduce((sum, h) => sum + h, 0);
+  const delta = Math.abs(computedTotal - extracted.hours);
+  const passed = delta <= 0.25;
+
+  return {
+    id,
+    type: "total_hours",
+    passed,
+    regulation: "29 CFR 5.5(a)(3)(ii)",
+    expected: extracted.hours,
+    actual: computedTotal,
+    difference: passed ? undefined : delta,
+    severity: passed ? "info" : "error",
+    message: passed
+      ? `Per-day hours sum (${computedTotal}h) matches reported total (${extracted.hours}h) within ±0.25h tolerance`
+      : `TOTAL_MISMATCH: Per-day hours sum (${computedTotal}h) differs from reported total (${extracted.hours}h) by ${delta.toFixed(2)}h (tolerance: ±0.25h)`,
+  };
+}
+
+/**
+ * Validate that a signature is present on the certified payroll
+ *
+ * Regulation: 29 CFR 5.5(a)(3)(ii)(B) — payroll must be certified
+ */
+function checkSignatures(
+  extracted: ExtractedWCP,
+  checkId: number
+): CheckResult {
+  const id = `signature_check_${String(checkId).padStart(3, "0")}`;
+  const hasSig = Array.isArray(extracted.signatures) && extracted.signatures.length > 0;
+
+  return {
+    id,
+    type: "signature",
+    passed: hasSig,
+    regulation: "29 CFR 5.5(a)(3)(ii)(B)",
+    severity: hasSig ? "info" : "error",
+    message: hasSig
+      ? `Certified payroll signed by: ${extracted.signatures!.join(", ")}`
+      : "MISSING_SIGNATURE: No signature found on certified payroll — WH-347 requires contractor certification",
+  };
+}
+
+/**
+ * Per-employee overtime checks: OVERTIME_WEEKLY (>40h/week) and OVERTIME_DAILY (>8h/day)
+ *
+ * Regulation: 29 CFR 5.32 (CWHSSA); 40 U.S.C. §§ 3701-3708
+ */
+function checkEmployeeOvertime(
+  employees: ExtractedEmployee[],
+  checkId: number
+): CheckResult[] {
+  const results: CheckResult[] = [];
+  let id = checkId;
+
+  for (const emp of employees) {
+    const name = emp.workerName ?? emp.role;
+
+    if (emp.hoursByDay && Object.keys(emp.hoursByDay).length > 0) {
+      const days = emp.hoursByDay as Record<string, number>;
+      const weeklyTotal = Object.values(days).reduce((s, h) => s + h, 0);
+
+      const weeklyPassed = weeklyTotal <= 40;
+      results.push({
+        id: `overtime_weekly_check_${String(id++).padStart(3, "0")}`,
+        type: "overtime_weekly",
+        passed: weeklyPassed,
+        regulation: "29 CFR 5.32 (CWHSSA)",
+        actual: weeklyTotal,
+        severity: weeklyPassed ? "info" : "critical",
+        message: weeklyPassed
+          ? `${name}: ${weeklyTotal}h/week — no weekly overtime`
+          : `OVERTIME_WEEKLY: ${name} worked ${weeklyTotal}h/week (${weeklyTotal - 40}h overtime) — OT premium required`,
+      });
+
+      for (const [day, hours] of Object.entries(days)) {
+        if (hours > 8) {
+          results.push({
+            id: `overtime_daily_check_${String(id++).padStart(3, "0")}`,
+            type: "overtime_daily",
+            passed: false,
+            regulation: "29 CFR 5.32 (CWHSSA)",
+            actual: hours,
+            severity: "warning",
+            message: `OVERTIME_DAILY: ${name} worked ${hours}h on ${day} (>${ 8}h/day threshold)`,
+          });
+        }
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
  * Validate fringe benefits (40 U.S.C. § 3141(2)(B) / 29 CFR 5.5(a)(1)(i))
  *
  * The prevailing wage obligation = basic hourly rate (BHR) + fringe benefits.
@@ -295,7 +433,7 @@ function checkFringeBenefits(
   const passed = effectiveFringe >= dbwdRate.fringeRate;
   const difference = passed ? undefined : dbwdRate.fringeRate - effectiveFringe;
 
-  return {
+  const baseResult: CheckResult = {
     id: `fringe_check_${String(checkId).padStart(3, "0")}`,
     type: "fringe",
     passed,
@@ -307,6 +445,41 @@ function checkFringeBenefits(
     message: passed
       ? `Fringe obligation met: $${reportedFringe.toFixed(2)}/hr fringe${cashWageExcess > 0 ? ` + $${cashWageExcess.toFixed(2)}/hr cash wage offset` : ""} ≥ required $${dbwdRate.fringeRate.toFixed(2)}/hr`
       : `FRINGE SHORTFALL: Effective fringe $${effectiveFringe.toFixed(2)}/hr (reported: $${reportedFringe.toFixed(2)} + wage excess: $${cashWageExcess.toFixed(2)}) below required $${dbwdRate.fringeRate.toFixed(2)}/hr (owes $${difference!.toFixed(2)}/hr)`,
+  };
+
+  return baseResult;
+}
+
+/**
+ * H6: Explicit fringe rate underpayment check against DBWD required rate
+ *
+ * When the WH-347 form contains an explicit reportedFringeRate field,
+ * validate it directly against the DBWD required fringe rate.
+ *
+ * Regulation: 29 CFR 5.5(a)(1)(i) / 40 U.S.C. § 3141(2)(B)
+ */
+function checkFringeUnderpayment(
+  extracted: ExtractedWCP,
+  dbwdRate: DBWDRateInfo,
+  checkId: number
+): CheckResult | null {
+  if (extracted.reportedFringeRate === undefined) return null;
+
+  const passed = extracted.reportedFringeRate >= dbwdRate.fringeRate;
+  const difference = passed ? undefined : dbwdRate.fringeRate - extracted.reportedFringeRate;
+
+  return {
+    id: `fringe_underpayment_check_${String(checkId).padStart(3, "0")}`,
+    type: "fringe",
+    passed,
+    regulation: "29 CFR 5.5(a)(1)(i) / 40 U.S.C. § 3141(2)(B)",
+    expected: dbwdRate.fringeRate,
+    actual: extracted.reportedFringeRate,
+    difference,
+    severity: passed ? "info" : "error",
+    message: passed
+      ? `Reported fringe rate $${extracted.reportedFringeRate.toFixed(2)}/hr meets DBWD required $${dbwdRate.fringeRate.toFixed(2)}/hr`
+      : `FRINGE_UNDERPAYMENT: Reported fringe rate $${extracted.reportedFringeRate.toFixed(2)}/hr is below DBWD required $${dbwdRate.fringeRate.toFixed(2)}/hr (shortfall: $${difference!.toFixed(2)}/hr)`,
   };
 }
 
@@ -460,7 +633,7 @@ export async function layer1Deterministic(
   const startTime = Date.now();
   const timings: { stage: string; ms: number }[] = [];
 
-  console.log(`[Layer 1] Starting deterministic scaffold for trace ${traceId}`);
+  log.info({ traceId }, "Starting deterministic scaffold");
 
   // Step 1: Extract structured data
   const extractStart = Date.now();
@@ -489,6 +662,12 @@ export async function layer1Deterministic(
   checks.push(checkReasonableHours(extracted, checkId++));
   checks.push(checkMinimumWage(extracted, checkId++));
 
+  // H3: Cross-check hoursByDay sum vs. reported total hours
+  checks.push(checkTotals(extracted, checkId++));
+
+  // H4: Signature presence check
+  checks.push(checkSignatures(extracted, checkId++));
+
   // Classification check (always run)
   checks.push(checkClassification(extracted, classification, checkId++));
 
@@ -497,6 +676,17 @@ export async function layer1Deterministic(
     checks.push(checkPrevailingWage(extracted, dbwdRate, checkId++));
     checks.push(checkOvertime(extracted, dbwdRate, checkId++));
     checks.push(checkFringeBenefits(extracted, dbwdRate, checkId++));
+
+    // H6: Explicit fringe underpayment check (only when reportedFringeRate present)
+    const fringeUnderpayment = checkFringeUnderpayment(extracted, dbwdRate, checkId++);
+    if (fringeUnderpayment) checks.push(fringeUnderpayment);
+
+    // H5: Per-employee overtime checks (only when employees[] present)
+    if (extracted.employees && extracted.employees.length > 0) {
+      const empOtChecks = checkEmployeeOvertime(extracted.employees, checkId);
+      checkId += empOtChecks.length;
+      checks.push(...empOtChecks);
+    }
   } else {
     // Add a check result indicating we couldn't validate wages
     checks.push({
@@ -541,7 +731,7 @@ export async function layer1Deterministic(
   };
 
   const totalTime = Date.now() - startTime;
-  console.log(`[Layer 1] Completed in ${totalTime}ms with score ${deterministicScore.toFixed(2)}`);
+  log.info({ traceId, totalMs: totalTime, deterministicScore }, "Layer 1 completed");
 
   return report;
 }

@@ -11,8 +11,7 @@ name: CI Pipeline
 #   4. pipeline-tests    — Full three-layer pipeline tests (mock mode)
 #   5. coverage          — Line/branch/function coverage ≥80% gate (mock mode)
 #   6. calibration       — Golden-set quality gate (requires OPENAI_API_KEY secret)
-#
-# Note: ingestion-tests stage removed (src/ingestion/ deleted in Phase 03 cleanup)
+#   7. e2e               — Playwright API scenario tests (I6, mock mode)
 
 on:
   push:
@@ -255,7 +254,67 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Run trust calibration
+      - name: Run trust calibration (quality gate)
         run: npm run test:calibration
-        # Continue on error for PRs (calibration failure is informational on PRs)
+        # M6: Hard failure on main branch — quality gate enforced.
+        # On PRs, calibration failures are informational only.
         continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+      - name: Upload calibration results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calibration-results
+          path: |
+            coverage/
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Stage 7: Playwright E2E Tests (I6)
+  # Starts the built server in mock mode and runs 6 API scenario tests + health.
+  # ---------------------------------------------------------------------------
+  e2e:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: pipeline-tests
+    env:
+      OPENAI_API_KEY: mock
+      NODE_ENV: test
+      E2E_BASE_URL: http://localhost:3000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Start server (background)
+        run: |
+          OPENAI_API_KEY=mock node dist/server.js &
+          sleep 3
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

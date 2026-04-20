@@ -94,7 +94,7 @@
         "trust": {
           "type": "object",
           "description": "Layer 3 trust score configuration",
-          "required": ["thresholds", "weights"],
+          "required": ["thresholds"],
           "properties": {
             "thresholds": {
               "type": "object",
@@ -129,14 +129,15 @@
     "dbwd": {
       "type": "object",
       "description": "DBWD prevailing wage rate configuration",
-      "required": ["source", "effectiveDate", "rates"],
+      "required": ["source", "effectiveDate"],
       "properties": {
-        "source": { "type": "string", "enum": ["hardcoded", "postgresql", "api"] },
+        "source": { "type": "string", "enum": ["hardcoded", "json", "postgresql", "api"] },
+        "corpusPath": { "type": "string", "description": "Path to JSON corpus file (used when source=json)" },
         "effectiveDate": { "type": "string", "format": "date" },
         "geographicScope": { "type": "string" },
         "rates": {
           "type": "object",
-          "description": "DBWD rates by trade",
+          "description": "Optional inline DBWD rates by trade (used when source=hardcoded)",
           "additionalProperties": {
             "type": "object",
             "properties": {
@@ -156,6 +157,11 @@
           }
         }
       }
+    },
+    "tradeAliases": {
+      "type": "object",
+      "description": "Map of trade synonym → canonical trade name (merged into retriever at startup)",
+      "additionalProperties": { "type": "string" }
     },
     "api": {
       "type": "object",
