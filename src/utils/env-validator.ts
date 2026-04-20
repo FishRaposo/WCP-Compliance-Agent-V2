@@ -46,8 +46,8 @@ const OPTIONAL_VARS = {
   OPENAI_MODEL: {
     defaultValue: 'gpt-4o-mini',
     validate: (value: string) => {
-      const validModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5-nano'];
-      return validModels.includes(value);
+      // Accept gpt-4*, gpt-3.5*, or o-series (o1, o3, o4-mini, etc.)
+      return /^(gpt-(4|3\.5)|o\d)/.test(value);
     }
   },
   AGENT_MAX_STEPS: {

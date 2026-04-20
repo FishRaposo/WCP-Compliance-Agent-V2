@@ -42,7 +42,7 @@ Build a technical showcase demonstrating **regulated-domain AI infrastructure** 
 | ADR-001 through ADR-005 | `docs/adrs/` | ✅ All accepted |
 | Compliance docs (traceability matrix, report, guide) | `docs/compliance/` | ✅ Complete |
 | PostgreSQL + pgvector setup guide | `docs/development/postgres-setup.md` | ✅ Complete |
-| SQL migration schema (Phase 02 prereq) | `migrations/001_initial_schema.sql` | ✅ Complete |
+| SQL migration schema (Phase 03 prereq) | `migrations/001_initial_schema.sql` | ⏳ Pending (M1) |
 | docker-compose.yml (local dev) | `docker-compose.yml` | ✅ Complete |
 | 248 passing tests | `tests/` | ✅ 0 failures |
 
@@ -77,20 +77,21 @@ Build a technical showcase demonstrating **regulated-domain AI infrastructure** 
 |-------------|--------|-----------|--------------|
 | PostgreSQL + pgvector running | 🔲 Not started | 4h | `docker-compose.yml` ✅ |
 | DBWD corpus ETL (SAM.gov → embeddings) | 🔲 Not started | 12h | PostgreSQL |
-| BM25 search (Meilisearch or Elasticsearch) | 🔲 Not started | 8h | PostgreSQL |
-| Vector search (pgvector HNSW) | 🔲 Not started | 8h | PostgreSQL, ETL |
-| Reciprocal Rank Fusion | 🔲 Not started | 4h | BM25 + vector |
-| Cross-encoder reranking | 🔲 Not started | 8h | RRF |
-| **Full hybrid retrieval pipeline** | 🔲 Not started | **20h total** | All above |
-| 11-field WCP schema (`WCPReport`) | 🔲 Not started | 8h | None |
-| PDF ingestion pipeline | 🔲 Not started | 16h | 11-field schema |
-| CSV ingestion | 🔲 Not started | 4h | 11-field schema |
-| Prompt registry (PostgreSQL-backed) | 🔲 Not started | 12h | PostgreSQL |
-| Prompt version resolution | 🔲 Not started | 8h | Prompt registry |
-| Golden dataset (50+ labeled WCPs) | 🔲 Not started | 20h | None |
-| CI evaluation pipeline (GitHub Actions) | 🔲 Not started | 8h | Golden dataset |
-| Regression detection (accuracy gates) | 🔲 Not started | 4h | CI eval pipeline |
-| Persistent human review queue (PostgreSQL) | 🔲 Not started | 8h | PostgreSQL |
+| BM25 search (Elasticsearch) | ✅ Implemented | `src/retrieval/bm25-search.ts` — live when `ELASTICSEARCH_URL` set |
+| Vector search (pgvector HNSW) | ✅ Implemented | `src/retrieval/vector-search.ts` — live when `POSTGRES_URL` set |
+| Reciprocal Rank Fusion | ✅ Implemented | `src/retrieval/rrf-fusion.ts` |
+| Cross-encoder reranking | ✅ Implemented | `src/retrieval/cross-encoder.ts` |
+| **Full hybrid retrieval pipeline** | ✅ Implemented | `src/retrieval/hybrid-retriever.ts` — falls back to 20-trade in-memory corpus |
+| 11-field WCP schema (`WCPReport`) | 🔲 Not started | 8h | None — tracked as H1 |
+| PDF ingestion pipeline | 🔲 Not started | 16h | H1 — tracked as M2 |
+| CSV ingestion | 🔲 Not started | 4h | H1 — tracked as M3 |
+| Prompt registry (PostgreSQL-backed) | ✅ Implemented | `src/prompts/` — file-backed resolver works without PostgreSQL |
+| Prompt version resolution | ✅ Implemented | `src/prompts/resolver.ts` |
+| Golden dataset (50+ labeled WCPs) | ✅ Implemented | `tests/eval/golden-set.ts` — 100 labeled examples |
+| CI evaluation pipeline (GitHub Actions) | ✅ Implemented | `tests/eval/trust-calibration.test.ts` — aggregate gates pending wire-up (M6) |
+| Regression detection (accuracy gates) | 🔲 Not started | 4h | M6 — wire into CI job |
+| Persistent human review queue (PostgreSQL) | 🔲 Not started | 8h | PostgreSQL — tracked as M1 |
+| 20-trade in-memory DBWD corpus | ✅ Implemented | `src/retrieval/hybrid-retriever.ts` |
 
 **Three-layer pipeline** (Phase 01 carry-over — structural complete, data stubbed):
 

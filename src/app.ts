@@ -1,11 +1,11 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 
 import { generateWcpDecision } from "./entrypoints/wcp-entrypoint.js";
 import { formatApiError, ValidationError } from "./utils/errors.js";
 import { isMockMode } from "./utils/mock-responses.js";
 
-async function handleAnalyzeRequest(c: any) {
+async function handleAnalyzeRequest(c: Context) {
   try {
     const body = await c.req.json();
     const { content } = body ?? {};

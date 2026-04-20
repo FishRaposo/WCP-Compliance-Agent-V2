@@ -1,6 +1,3 @@
-// Import instrumentation first to suppress warnings before any other imports
-import "./instrumentation.js";
-
 import { serve } from "@hono/node-server";
 import { validateEnvironmentOrExit } from "./utils/env-validator.js";
 import { createApp } from "./app.js";

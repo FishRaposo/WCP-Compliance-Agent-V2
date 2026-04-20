@@ -162,8 +162,8 @@ async function resolveClassification(role: string): Promise<ClassificationResult
  * @param trade Trade classification string
  * @returns DBWD rate info or null if not found
  */
-async function lookupDBWDRate(trade: string): Promise<DBWDRateInfo | null> {
-  const result = await hybridLookup(trade);
+async function lookupDBWDRate(trade: string, locality?: string): Promise<DBWDRateInfo | null> {
+  const result = await hybridLookup(trade, 5, locality);
   return result.rateInfo;
 }
 
@@ -475,7 +475,7 @@ export async function layer1Deterministic(
   // Step 3: Look up DBWD rate (already fetched in Step 2 via hybrid retriever,
   //         but we call again to surface the canonical rate info for the report)
   const lookupStart = Date.now();
-  const dbwdRate = await lookupDBWDRate(classification.trade);
+  const dbwdRate = await lookupDBWDRate(classification.trade, extracted.localityCode);
   timings.push({ stage: "dbwd_lookup", ms: Date.now() - lookupStart });
 
   // Step 4: Run compliance checks

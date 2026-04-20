@@ -218,6 +218,8 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
     return verdict;
   }
 
+  const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+
   // Resolve active prompt from registry (falls back to static fallback if DB unavailable)
   const resolvedInstructions = await resolvePrompt("wcp_verdict");
   const systemInstructions = resolvedInstructions ?? STATIC_FALLBACK_INSTRUCTIONS;
@@ -228,7 +230,7 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
   try {
     // Call LLM via generateText
     const response = await generateText({
-      model: openai("gpt-4o-mini"),
+      model: openai(model),
       system: systemInstructions,
       messages: [{ role: "user", content: prompt }],
     });
@@ -251,7 +253,7 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
         ...rawOutput,
         traceId: report.traceId,
         tokenUsage: response.usage?.totalTokens ?? 0,
-        model: "gpt-4o-mini",
+        model,
         timestamp: new Date().toISOString(),
       },
       report
@@ -282,7 +284,7 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
       selfConfidence: rawOutput.selfConfidence,
       reasoningTrace: rawOutput.reasoningTrace,
       tokenUsage: response.usage?.totalTokens ?? 0,
-      model: "gpt-4o-mini",
+      model,
       timestamp: new Date().toISOString(),
     };
 

@@ -26,7 +26,7 @@ import type { DBWDRateInfo } from "../types/decision-pipeline.js";
 // Matches all 20 entries in data/dbwd-corpus.json for offline dev/test.
 // ============================================================================
 
-const IN_MEMORY_CORPUS: Record<string, { base: number; fringe: number; wdId: string; tradeCode: string }> = {
+export const IN_MEMORY_CORPUS: Record<string, { base: number; fringe: number; wdId: string; tradeCode: string }> = {
   Electrician:       { base: 51.69, fringe: 34.63, wdId: "WD-2024-ELEC-0490", tradeCode: "ELEC0490" },
   Laborer:           { base: 26.45, fringe: 12.50, wdId: "WD-2024-LABR-0210", tradeCode: "LABR0210" },
   Plumber:           { base: 48.20, fringe: 28.10, wdId: "WD-2024-PLMB-0380", tradeCode: "PLMB0380" },
@@ -116,20 +116,20 @@ const CORPUS_DESCRIPTIONS = new Map<string, string>([
 // In-memory fallback lookup
 // ============================================================================
 
-function inMemoryLookup(role: string): DBWDRateInfo | null {
+function inMemoryLookup(role: string, locality?: string): DBWDRateInfo | null {
   const normalized = role.trim();
 
   // Exact match
   const direct = IN_MEMORY_CORPUS[normalized];
   if (direct) {
-    return buildRateInfo(normalized, direct.base, direct.fringe, direct.wdId, direct.tradeCode, "2024-06-01", "exact");
+    return buildRateInfo(normalized, direct.base, direct.fringe, direct.wdId, direct.tradeCode, "2024-06-01", "exact", locality);
   }
 
   // Alias match
   const aliased = IN_MEMORY_ALIASES[normalized];
   if (aliased && IN_MEMORY_CORPUS[aliased]) {
     const r = IN_MEMORY_CORPUS[aliased];
-    return buildRateInfo(aliased, r.base, r.fringe, r.wdId, r.tradeCode, "2024-06-01", "alias");
+    return buildRateInfo(aliased, r.base, r.fringe, r.wdId, r.tradeCode, "2024-06-01", "alias", locality);
   }
 
   return null;
@@ -142,7 +142,8 @@ function buildRateInfo(
   wdId: string,
   tradeCode: string,
   effectiveDate: string,
-  _method: string
+  _method: string,
+  locality?: string
 ): DBWDRateInfo {
   return {
     dbwdId: wdId,
@@ -153,11 +154,11 @@ function buildRateInfo(
     effectiveDate,
     trade,
     tradeCode,
-    locality: "Metropolitan Area",
+    locality: locality ?? "Metropolitan Area",
   };
 }
 
-function hitToDBWDRateInfo(hit: RetrievalHit): DBWDRateInfo {
+function hitToDBWDRateInfo(hit: RetrievalHit, locality?: string): DBWDRateInfo {
   return {
     dbwdId: hit.wdId,
     baseRate: hit.baseRate,
@@ -167,7 +168,7 @@ function hitToDBWDRateInfo(hit: RetrievalHit): DBWDRateInfo {
     effectiveDate: hit.effectiveDate,
     trade: hit.jobTitle,
     tradeCode: hit.tradeCode,
-    locality: "Metropolitan Area",
+    locality: locality ?? "Metropolitan Area",
   };
 }
 
@@ -187,10 +188,12 @@ export interface LookupResult {
  *
  * @param role Trade classification string from WCP extraction
  * @param topK Number of candidates to return before re-ranking (default: 5)
+ * @param locality Optional locality override; falls back to "Metropolitan Area"
  */
 export async function lookupDBWDRate(
   role: string,
-  topK = 5
+  topK = 5,
+  locality?: string
 ): Promise<LookupResult> {
   const t0 = Date.now();
 
@@ -208,7 +211,7 @@ export async function lookupDBWDRate(
 
   // Full fallback to in-memory when both sources empty
   if (!hasBM25 && !hasVector) {
-    const fallback = inMemoryLookup(role);
+    const fallback = inMemoryLookup(role, locality);
     return {
       rateInfo: fallback,
       method: "in_memory",
@@ -232,7 +235,7 @@ export async function lookupDBWDRate(
   const method = hasBM25 && hasVector ? "hybrid" : hasBM25 ? "bm25_only" : "vector_only";
 
   return {
-    rateInfo: best ? hitToDBWDRateInfo(best) : null,
+    rateInfo: best ? hitToDBWDRateInfo(best, locality) : null,
     method,
     confidence: best ? Math.min(best.score, 1.0) : 0.3,
     retrievalResult: {

@@ -41,7 +41,7 @@
       }
     },
     "llm": {
-      "model": "gpt-5.4",
+      "model": "gpt-4o-mini",
       "temperature": 0.7,
       "maxTokens": 2000,
       "maxSteps": 3,
@@ -53,12 +53,6 @@
         "autoApprove": 0.85,
         "flagForReview": 0.60,
         "requireHuman": 0.60
-      },
-      "weights": {
-        "deterministic": 0.25,
-        "classification": 0.15,
-        "llmSelf": 0.30,
-        "agreement": 0.30
       },
       "severityImpact": {
         "critical": 0.0,
@@ -133,7 +127,7 @@
 
   "features": {
     "pdfParsing": false,
-    "ragLookup": false,
+    "ragLookup": true,
     "batchProcessing": false,
     "observability": false
   },
@@ -157,7 +151,6 @@
   "database": {
     "url": "file:./data/local.db",
     "maxConnections": 10,
-    "migrationPath": "./migrations",
     "logging": false
   },
 
