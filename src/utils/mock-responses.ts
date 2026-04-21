@@ -5,7 +5,15 @@
  * Uses deterministic logic based on the extracted WCP data.
  */
 
-import { IN_MEMORY_CORPUS } from "../retrieval/hybrid-retriever.js";
+// Inline corpus for mock mode — matches data/dbwd-rates.json
+// In production, this would load from the database via retrieval service
+const IN_MEMORY_CORPUS: Record<string, { base: number; fringe: number }> = {
+  Electrician: { base: 51.69, fringe: 34.63 },
+  Laborer: { base: 26.45, fringe: 12.5 },
+  Plumber: { base: 48.2, fringe: 28.1 },
+  Carpenter: { base: 45.0, fringe: 25.0 },
+  Mason: { base: 42.5, fringe: 22.5 },
+};
 
 /**
  * Generate a mock WCP decision based on the extracted data

@@ -19,7 +19,7 @@
     "types": ["node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/frontend/**/*"],
+  "exclude": ["node_modules", "dist", "src/frontend/**/*", "src/ingestion/**/*", "src/retrieval/**/*"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"

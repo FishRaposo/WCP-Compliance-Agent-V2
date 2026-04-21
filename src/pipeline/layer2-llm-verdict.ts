@@ -234,8 +234,10 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
 
   try {
     // Call LLM via generateText
+    // NOTE: Type assertion needed due to ai v4 / @ai-sdk/openai v2 model interface mismatch.
+    // In production, pin compatible versions of both packages.
     const response = await generateText({
-      model: openai(model),
+      model: openai(model) as any,
       system: systemInstructions,
       messages: [{ role: "user", content: prompt }],
     });
