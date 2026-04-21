@@ -133,7 +133,7 @@ function AuditEventDetails({ entry }: { entry: AuditEvent }) {
         )}
         {reasoningTrace && reasoningTrace !== rationale && (
           <p className="text-[10px] text-slate-600 leading-relaxed font-mono">
-            <span className="text-slate-700 font-medium not-italic">Trace:</span> {reasoningTrace}
+            <span className="text-slate-700 font-medium">Trace:</span> {reasoningTrace}
           </p>
         )}
       </div>

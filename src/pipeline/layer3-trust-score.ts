@@ -373,7 +373,7 @@ export function buildDecisionNarrative(
 ): string {
   const failedCritical = report.checks.filter((c) => !c.passed && c.severity === "critical");
   const failedErrors = report.checks.filter((c) => !c.passed && c.severity === "error");
-  const failedWarnings = report.checks.filter((c) => !c.passed && (c.severity === "warning" || c.severity === "high"));
+  const failedWarnings = report.checks.filter((c) => !c.passed && c.severity === "warning");
   const passCount = report.checks.filter((c) => c.passed).length;
   const totalCount = report.checks.length;
 
