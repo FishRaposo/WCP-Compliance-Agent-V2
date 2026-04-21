@@ -1,7 +1,12 @@
-# WCP Compliance Agent — v2 Architecture Plan
+# WCP Compliance Agent — v3 Architecture Plan
 
 **Date:** 2026-04-22
-**Scope:** Full refactor from TypeScript monolith → Python + TypeScript + React + Everything
+**Scope:** Full refactor from v2 TypeScript monolith → Python + TypeScript + React + Everything
+
+**Version History:**
+- **v1:** Original Mastra.ai build (deprecated)
+- **v2:** Current TypeScript monolith — compiles clean, Phase 01 PoC complete
+- **v3:** This plan — three-service architecture (Python backend + TS agent + React frontend)
 
 **Philosophy:** This is not a production system. This is a portfolio weapon — a vulgar display of architectural power demonstrating that you can design, connect, and orchestrate across every layer of the modern AI stack.
 
@@ -75,7 +80,7 @@
 
 ---
 
-## Directory Structure (v2)
+## Directory Structure (v3)
 
 ```
 WCP-Compliance-Agent/
@@ -292,7 +297,7 @@ WCP-Compliance-Agent/
     │   ├── TECH_STACK_ALIGNMENT.md    # Maps to both job descriptions
     │   └── INTERVIEW_TALKING_POINTS.md
     ├── architecture/
-    │   ├── V2_PLAN.md                 # This document
+    │   ├── V3_PLAN.md                 # This document
     │   ├── system-diagram.png
     │   ├── data-flow.md
     │   └── graph-model.md             # Future Neo4j entity design
@@ -638,6 +643,6 @@ volumes:
 
 ---
 
-*Plan version: 2026-04-22 v2.1*
+*Plan version: 2026-04-22 v3.0*
 *Estimated effort: 8-10 days of focused work*
 *Philosophy: Vulgar display of architectural power*
