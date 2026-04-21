@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, Shield } from 'lucide-react'
+import { ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, Shield, AlertTriangle } from 'lucide-react'
 import { Layer1Panel } from './Layer1Panel'
 import { Layer2Panel } from './Layer2Panel'
 import { Layer3Panel } from './Layer3Panel'
-import type { AnalysisResult } from '../types'
+import type { AnalysisResult, AuditEvent } from '../types'
 
 interface Props {
   result: AnalysisResult
@@ -41,6 +41,34 @@ function FinalStatusBanner({ status }: { status: string }) {
         <div className="text-xs text-slate-500 uppercase tracking-wider">Final Decision</div>
         <div className={`text-lg font-bold ${style.text}`}>{status}</div>
       </div>
+    </div>
+  )
+}
+
+function DecisionNarrativeCard({ auditTrail, finalStatus }: { auditTrail: AuditEvent[]; finalStatus: string }) {
+  const finalizedEvent = auditTrail.find(e => e.event === 'finalized')
+  const explanation = finalizedEvent?.details?.decisionExplanation as string | undefined
+  if (!explanation) return null
+
+  const isHumanReview = finalStatus === 'Pending Human Review'
+  const isRejected = finalStatus === 'Reject'
+
+  return (
+    <div className={`rounded-xl border px-5 py-4 space-y-1.5 ${
+      isHumanReview
+        ? 'bg-violet-950/20 border-violet-800'
+        : isRejected
+        ? 'bg-red-950/20 border-red-800'
+        : 'bg-slate-900/50 border-slate-700'
+    }`}>
+      <div className="flex items-center gap-2">
+        {isHumanReview
+          ? <AlertTriangle className="w-4 h-4 text-violet-400 shrink-0" />
+          : <Shield className="w-4 h-4 text-slate-500 shrink-0" />
+        }
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Decision Explanation</span>
+      </div>
+      <p className="text-sm text-slate-300 leading-relaxed">{explanation}</p>
     </div>
   )
 }
@@ -89,6 +117,70 @@ function CollapsiblePanel({ title, subtitle, badge, badgeColor, index, visible, 
   )
 }
 
+function AuditEventDetails({ entry }: { entry: AuditEvent }) {
+  const details = entry.details
+  if (!details) return null
+
+  if (entry.event === 'llm_reasoning') {
+    const rationale = details.rationale as string | undefined
+    const reasoningTrace = details.reasoningTrace as string | undefined
+    return (
+      <div className="pl-4 space-y-1 mt-0.5">
+        {rationale && (
+          <p className="text-[10px] text-slate-500 leading-relaxed">
+            <span className="text-slate-600 font-medium">Rationale:</span> {rationale}
+          </p>
+        )}
+        {reasoningTrace && reasoningTrace !== rationale && (
+          <p className="text-[10px] text-slate-600 leading-relaxed font-mono">
+            <span className="text-slate-700 font-medium not-italic">Trace:</span> {reasoningTrace}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  if (entry.event === 'check_completed' && entry.stage === 'layer1') {
+    const failedChecks = details.failedChecks as Array<{ id: string; severity: string; message: string }> | undefined
+    if (!failedChecks || failedChecks.length === 0) return null
+    return (
+      <div className="pl-4 mt-0.5 space-y-0.5">
+        {failedChecks.map(c => (
+          <p key={c.id} className="text-[10px] text-red-500/80 leading-relaxed">
+            <span className="font-mono">{c.id}</span>
+            <span className="text-slate-600 mx-1">·</span>
+            <span className="text-red-600/60">[{c.severity}]</span>
+            <span className="text-slate-600 mx-1">·</span>
+            {c.message}
+          </p>
+        ))}
+      </div>
+    )
+  }
+
+  if (entry.event === 'trust_computed') {
+    const reasons = details.reasons as string[] | undefined
+    if (!reasons || reasons.length === 0) return null
+    return (
+      <div className="pl-4 mt-0.5">
+        <p className="text-[10px] text-slate-600 leading-relaxed">{reasons.join(' • ')}</p>
+      </div>
+    )
+  }
+
+  if (entry.event === 'finalized') {
+    const explanation = details.decisionExplanation as string | undefined
+    if (!explanation) return null
+    return (
+      <div className="pl-4 mt-0.5">
+        <p className="text-[10px] text-slate-500 leading-relaxed">{explanation}</p>
+      </div>
+    )
+  }
+
+  return null
+}
+
 export function PipelineVisualizer({ result, isMockMode }: Props) {
   const [visiblePanels, setVisiblePanels] = useState(0)
 
@@ -123,6 +215,11 @@ export function PipelineVisualizer({ result, isMockMode }: Props) {
         <div className="text-[11px] text-slate-600 font-mono">
           trace: {result.traceId} · {result.timestamp ? new Date(result.timestamp).toLocaleString() : ''}
         </div>
+      )}
+
+      {/* Decision narrative — shown as soon as results are available */}
+      {result.auditTrail && (
+        <DecisionNarrativeCard auditTrail={result.auditTrail} finalStatus={result.finalStatus} />
       )}
 
       {/* Layer 1 */}
@@ -177,13 +274,16 @@ export function PipelineVisualizer({ result, isMockMode }: Props) {
             <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" />
             Audit trail ({result.auditTrail.length} events)
           </summary>
-          <div className="mt-2 space-y-1 pl-4 border-l border-slate-800">
+          <div className="mt-2 space-y-2 pl-4 border-l border-slate-800">
             {result.auditTrail.map((entry, i) => (
-              <div key={i} className="text-[11px] font-mono text-slate-600">
-                <span className="text-slate-500">[{entry.stage}]</span> {entry.event}
-                {entry.timestamp && (
-                  <span className="text-slate-700 ml-2">{new Date(entry.timestamp).toLocaleTimeString()}</span>
-                )}
+              <div key={i} className="space-y-0.5">
+                <div className="text-[11px] font-mono text-slate-600">
+                  <span className="text-slate-500">[{entry.stage}]</span> {entry.event}
+                  {entry.timestamp && (
+                    <span className="text-slate-700 ml-2">{new Date(entry.timestamp).toLocaleTimeString()}</span>
+                  )}
+                </div>
+                <AuditEventDetails entry={entry} />
               </div>
             ))}
           </div>
