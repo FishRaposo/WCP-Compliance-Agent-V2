@@ -1,5 +1,6 @@
 import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import { generateWcpDecision } from "./entrypoints/wcp-entrypoint.js";
 import { formatApiError, ValidationError } from "./utils/errors.js";
@@ -12,9 +13,13 @@ import { childLogger } from "./utils/logger.js";
 
 const log = childLogger("App");
 
+function hasStatusCode(err: unknown): err is { statusCode: unknown } {
+  return err !== null && typeof err === "object" && "statusCode" in err;
+}
+
 function formattedStatusCode(err: unknown): 400 | 422 | 500 {
-  if (err && typeof err === "object" && "statusCode" in err) {
-    const code = Number((err as { statusCode: unknown }).statusCode);
+  if (hasStatusCode(err)) {
+    const code = Number(err.statusCode);
     if (code === 400 || code === 422) return code;
   }
   return 500;
@@ -65,7 +70,7 @@ async function handleAnalyzeRequest(c: Context) {
     }
 
     const formattedError = formatApiError(error);
-    return c.json(formattedError, formattedError.error.statusCode as 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500 | 503);
+    return c.json(formattedError, formattedError.error.statusCode as ContentfulStatusCode);
   }
 }
 
@@ -94,7 +99,7 @@ export function createApp() {
     return c.json({
       status: "healthy",
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || "0.0.0",
+      version: process.env.npm_package_version || "0.6.0",
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || "development",
       mockMode,
@@ -114,8 +119,8 @@ export function createApp() {
   app.post("/api/analyze-pdf", async (c: Context) => {
     try {
       const body = await c.req.parseBody();
-      const file = body["file"] as File | undefined;
-      if (!file) {
+      const file = body["file"];
+      if (!(file instanceof File)) {
         return c.json(formatApiError(new ValidationError("No file uploaded (field name: file)")), 400);
       }
       const buffer = Buffer.from(await file.arrayBuffer());
@@ -132,14 +137,21 @@ export function createApp() {
   });
 
   // M3: CSV bulk ingestion endpoint
+  const MAX_CSV_BYTES = parseInt(process.env.API_MAX_CSV_BYTES ?? "5242880", 10); // 5 MB default
   app.post("/api/analyze-csv", async (c: Context) => {
     try {
       const body = await c.req.parseBody();
-      const file = body["file"] as File | undefined;
-      if (!file) {
+      const file = body["file"];
+      if (!(file instanceof File)) {
         return c.json(formatApiError(new ValidationError("No file uploaded (field name: file)")), 400);
       }
       const buffer = Buffer.from(await file.arrayBuffer());
+      if (buffer.byteLength > MAX_CSV_BYTES) {
+        return c.json(
+          formatApiError(new ValidationError(`CSV exceeds maximum allowed size of ${MAX_CSV_BYTES / 1024 / 1024} MB`)),
+          413
+        );
+      }
       const csvResult = parseCSVBuffer(buffer, file.name ?? "upload.csv");
       const inputs = csvToWCPInputs(csvResult);
       if (inputs.length === 0) {
@@ -155,9 +167,16 @@ export function createApp() {
 
   // M1: Audit query endpoint
   app.get("/api/decisions", async (c: Context) => {
-    const limit = Math.min(parseInt(c.req.query("limit") ?? "50", 10), 200);
-    const decisions = await listDecisions(limit);
-    return c.json({ decisions, count: decisions.length });
+    try {
+      const rawLimit = c.req.query("limit") ?? "50";
+      const parsed = parseInt(rawLimit, 10);
+      const limit = Number.isNaN(parsed) ? 50 : Math.min(parsed, 200);
+      const decisions = await listDecisions(limit);
+      return c.json({ decisions, count: decisions.length });
+    } catch (err) {
+      log.error({ err }, "Failed to list decisions");
+      return c.json(formatApiError(err), 500);
+    }
   });
 
   // M8: Async job endpoints
@@ -186,12 +205,17 @@ export function createApp() {
   });
 
   app.get("/api/jobs/:jobId", async (c: Context) => {
-    const { jobId } = c.req.param();
-    const job = await getJob(jobId);
-    if (!job) {
-      return c.json(formatApiError(new ValidationError(`Job ${jobId} not found`)), 404);
+    try {
+      const { jobId } = c.req.param();
+      const job = await getJob(jobId);
+      if (!job) {
+        return c.json(formatApiError(new ValidationError(`Job ${jobId} not found`)), 404);
+      }
+      return c.json(job);
+    } catch (err) {
+      log.error({ err }, "Failed to get job");
+      return c.json(formatApiError(err), 500);
     }
-    return c.json(job);
   });
 
   return app;

@@ -124,9 +124,6 @@ Proposed → Accepted → Implemented → [Deprecated/Superseded]
 ## Cross-References
 
 - [Decision Architecture Doctrine](../architecture/decision-architecture.md)
-- [Trust Scoring](../architecture/trust-scoring.md)
-- [Current State](../foundation/current-state.md)
-- [Platform Roadmap](../roadmap/platform-roadmap.md)
 
 ---
 

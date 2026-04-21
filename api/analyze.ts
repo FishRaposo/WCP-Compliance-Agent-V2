@@ -9,9 +9,21 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+function getAllowedOrigin(origin: string | undefined): string | null {
+  if (!origin) return null;
+  const allowed = ["http://localhost:3000", "http://localhost:5173"];
+  if (allowed.includes(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
+    return origin;
+  }
+  return null;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS — allow the showcase frontend
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = getAllowedOrigin(req.headers.origin as string | undefined);
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-OpenAI-Key");
 
@@ -27,10 +39,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const byokKey = req.headers["x-openai-key"];
   const keyToUse = (Array.isArray(byokKey) ? byokKey[0] : byokKey) || process.env.OPENAI_API_KEY || "";
 
-  // Override env for this invocation (Vercel serverless = single-tenant per request)
-  process.env.OPENAI_API_KEY = keyToUse;
+  const MAX_CONTENT_BYTES = 64 * 1024; // 64 KB
 
-  const { content } = req.body ?? {};
+  if (!req.body || typeof req.body !== "object") {
+    return res.status(400).json({
+      error: { message: "Invalid request body", statusCode: 400 },
+    });
+  }
+
+  const { content } = req.body as Record<string, unknown>;
 
   if (!content || typeof content !== "string") {
     return res.status(400).json({
@@ -38,16 +55,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
+  if (Buffer.byteLength(content, "utf8") > MAX_CONTENT_BYTES) {
+    return res.status(413).json({
+      error: { message: `Content exceeds maximum allowed size of ${MAX_CONTENT_BYTES / 1024} KB`, statusCode: 413 },
+    });
+  }
+
   try {
     // Dynamic import keeps cold-start lean and avoids top-level env read
     const { generateWcpDecision } = await import("../dist/entrypoints/wcp-entrypoint.js");
-    const result = await generateWcpDecision({ content });
-    return res.status(200).json({
-      ...result,
-      requestId: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-      mockMode: !keyToUse || ["mock", "mock-key", "test-api-key"].includes(keyToUse),
-    });
+    // Override env for this invocation (Vercel serverless = single-tenant per request)
+    const previousKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = keyToUse;
+    try {
+      const result = await generateWcpDecision({ content });
+      return res.status(200).json({
+        ...result,
+        requestId: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        mockMode: !keyToUse || ["mock", "mock-key", "test-api-key"].includes(keyToUse),
+      });
+    } finally {
+      process.env.OPENAI_API_KEY = previousKey;
+    }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     return res.status(500).json({ error: { message, statusCode: 500 } });

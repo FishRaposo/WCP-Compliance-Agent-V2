@@ -186,12 +186,13 @@ export async function executeDecisionPipeline(
     log.error({ errorType, errorStage, canRecover }, "Error classification");
 
     // Create a fallback decision that requires human review
+    const now = new Date().toISOString();
     const fallbackDecision: TrustScoredDecision = {
       traceId,
       deterministic: {
         traceId,
         dbwdVersion: "error",
-        timestamp: new Date().toISOString(),
+        timestamp: now,
         extracted: {
           rawInput: input.content,
           role: "Unknown",
@@ -237,7 +238,7 @@ export async function executeDecisionPipeline(
         reasoningTrace: `Error fallback - ${errorType} at ${errorStage}, recoverable: ${canRecover}`,
         tokenUsage: 0,
         model: "error-fallback",
-        timestamp: new Date().toISOString(),
+        timestamp: now,
       },
       trust: {
         score: 0,
@@ -253,11 +254,11 @@ export async function executeDecisionPipeline(
       humanReview: {
         required: true,
         status: "pending",
-        queuedAt: new Date().toISOString(),
+        queuedAt: now,
       },
       auditTrail: [
         {
-          timestamp: new Date().toISOString(),
+          timestamp: now,
           stage: errorStage,
           event: "check_completed",
           details: { 
@@ -267,14 +268,14 @@ export async function executeDecisionPipeline(
           },
         },
         {
-          timestamp: new Date().toISOString(),
+          timestamp: now,
           stage: "final",
           event: "finalized",
           details: { fallback: true, error: true, errorType, errorStage },
         },
       ],
       finalStatus: "Pending Human Review",
-      finalizedAt: new Date().toISOString(),
+      finalizedAt: now,
       health: {
         cycleTime: Date.now() - startTime,
         tokenUsage: 0,
@@ -305,7 +306,7 @@ export async function executeDecisionPipeline(
  */
 function generateTraceId(): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const random = crypto.randomUUID().slice(0, 4).toUpperCase();
   return `wcp-${date}-${random}`;
 }
 

@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "clean": "node -e \"const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', { recursive: true, force: true });\"",
+    "clean": "node -e \"import('fs').then(fs => { if (fs.existsSync('dist')) fs.rmSync('dist', { recursive: true, force: true }); });\"",
     "build:backend": "npm run clean --silent && tsc -p tsconfig.backend.json",
     "build:frontend": "vite build",
     "build": "npm run build:backend && npm run build:frontend",
@@ -47,6 +47,7 @@
     "@opentelemetry/auto-instrumentations-node": "^0.73.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.215.0",
     "@opentelemetry/sdk-node": "^0.215.0",
+    "@rollup/rollup-win32-x64-msvc": "^4.60.2",
     "@tailwindcss/vite": "^4.2.2",
     "@types/papaparse": "^5.5.2",
     "ai": "^5.0.0",

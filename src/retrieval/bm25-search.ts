@@ -6,7 +6,10 @@
  */
 
 import { Client } from "@elastic/elasticsearch";
+import { childLogger } from "../utils/logger.js";
 import type { RetrievalHit } from "./types.js";
+
+const log = childLogger("BM25");
 
 // ============================================================================
 // Client singleton
@@ -85,7 +88,7 @@ export async function bm25Search(
     }));
   } catch (err) {
     _esUnavailable = true;
-    console.warn("[BM25] Elasticsearch unavailable:", (err as Error).message);
+    log.warn({ err }, "[BM25] Elasticsearch unavailable");
     return [];
   }
 }

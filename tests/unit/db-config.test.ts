@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { getDatabaseConfig, DEFAULT_DATABASE_CONFIG } from '../../src/config/db-config.js';
 
 describe('getDatabaseConfig', () => {
-  const originalEnv = process.env;
+  const originalEnv = { ...process.env };
 
   beforeEach(() => {
     process.env = { ...originalEnv };

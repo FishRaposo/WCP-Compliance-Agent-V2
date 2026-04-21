@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { validateEnvironment } from '../../src/utils/env-validator.js';
 
 describe('validateEnvironment', () => {
-  const originalEnv = process.env;
+  const originalEnv = { ...process.env };
 
   beforeEach(() => {
     process.env = { ...originalEnv };

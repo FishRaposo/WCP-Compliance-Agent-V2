@@ -7,6 +7,9 @@
 
 import { promptRegistry, registerInMemoryPrompt } from "./registry.js";
 import { WCP_VERDICT_V2 } from "./versions/wcp-verdict-v2.js";
+import { childLogger } from "../utils/logger.js";
+
+const log = childLogger("PromptResolver");
 
 // ============================================================================
 // Bootstrap: register file-based prompts on module load
@@ -58,5 +61,5 @@ export async function resolvePromptTemplate(key: string, orgId?: string): Promis
 export async function seedPromptRegistry(): Promise<void> {
   bootstrap();
   await promptRegistry.registerPrompt(WCP_VERDICT_V2);
-  console.log("[PromptRegistry] Seeded v2 (active)");
+  log.info("[PromptRegistry] Seeded v2 (active)");
 }

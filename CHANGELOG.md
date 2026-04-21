@@ -9,9 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Logging consistency**: Replaced all `console.log` / `console.warn` calls with structured pino logger (`src/server.ts`, `src/retrieval/*`, `src/prompts/resolver.ts`, `src/prompts/registry.ts`)
+- **Type safety**: Removed unsafe `as` assertions in `src/app.ts` and `src/retrieval/vector-search.ts`
+- **Security**: Fixed `api/analyze.ts` to restore `process.env.OPENAI_API_KEY` after each request (try/finally), preventing key leakage between concurrent requests
+- **Security**: Added input size limits to CSV endpoint (`MAX_CSV_BYTES`) and Vercel analyze endpoint
+- **Security**: Added `instanceof File` validation in multipart upload endpoints (`src/app.ts`)
+- **Security**: Replaced wildcard CORS (`*`) in Vercel functions with origin validation matching the Hono app
+- **Code quality**: `generateTraceId()` now uses `crypto.randomUUID()` instead of `Math.random()`
+- **Code quality**: Fallback decision in orchestrator uses a single `new Date()` timestamp to avoid inconsistencies
+- **Code quality**: Fixed deprecated `.substr()` to `.slice()` in `src/utils/mock-responses.ts`
+- **Code quality**: Added `Number.isFinite()` guards around `parseFloat()` in `src/retrieval/vector-search.ts`
+- **Code quality**: Added error logging to previously silent `catch` blocks in `src/prompts/registry.ts`
+- **API robustness**: Added missing try/catch to `/api/decisions` and `/api/jobs/:jobId` endpoints
+- **API robustness**: Added `NaN` handling for `limit` query parameter in `/api/decisions`
+- **Tests**: Fixed runtime type errors in `tests/data/wcp-examples.ts` (TypeScript union syntax used as values)
+- **Tests**: Fixed `process.env` isolation bugs in 3 test files (shallow copy instead of reference)
+- **Tests**: Replaced tautology assertions (`expect(true).toBe(true)`) with real assertions
+- **Build**: `package.json` `clean` script now uses ESM-compatible `import('fs')`
+- **Docs**: Removed broken internal links in `docs/development/`, `docs/adrs/`, `docs/architecture/`
+
 ### Changed
 - Removed personal IDE configs (`.claude/`, `.agents/skills/`) from repository
-- Fixed broken documentation links in `docs/quick-start.md`
+- Updated `.gitignore` to exclude `.claude/`, `.agents/`, `test-results/`, `playwright-report/`
 - Updated `docs/roadmap/RELEASE_PLAN.md` to mark Phase 03 as complete
 
 ---

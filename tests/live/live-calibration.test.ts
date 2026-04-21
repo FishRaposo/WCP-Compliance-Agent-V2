@@ -184,7 +184,6 @@ if (!IS_LIVE) {
         "     npx vitest run tests/live/live-calibration.test.ts\n" +
         "  Expected cost: ~$1-3 per run (gpt-4o-mini, 102 cases)\n"
       );
-      expect(true).toBe(true);
     });
   });
 }

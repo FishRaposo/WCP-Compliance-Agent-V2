@@ -9,9 +9,9 @@ Guides for contributors and developers working on the WCP Compliance Agent.
 ## Quick Links
 
 - [Contributor Guide](./contributor-guide.md) — Workflow, branching, PRs, review checklist
-- [Development Environment](./dev-environment.md) — Setup, debugging, troubleshooting
-- [How to Add a Check](./how-to-add-check.md) — Step-by-step for new validation checks
-- [How to Add an ADR](./how-to-add-adr.md) — ADR authoring process
+- **Development Environment** — Setup, debugging, troubleshooting
+- **How to Add a Check** — Step-by-step for new validation checks
+- **How to Add an ADR** — ADR authoring process
 
 ---
 
@@ -21,7 +21,7 @@ New to the project? Start here:
 
 1. [Quick Start](../quick-start.md) — 5-minute setup
 2. [Development Environment](./dev-environment.md) — Full environment setup
-3. [Current State](../foundation/current-state.md) — What's implemented
+3. **Current State** — See README and source code for what's implemented
 4. [Three-Layer Architecture](../architecture/decision-architecture.md) — How decisions work
 
 ---
@@ -76,7 +76,7 @@ Every check must cite the regulation it enforces:
 |------|-------|
 | Add new validation check | [how-to-add-check.md](./how-to-add-check.md) |
 | Document architecture decision | [how-to-add-adr.md](./how-to-add-adr.md) |
-| Debug failing tests | [dev-environment.md#debugging](./dev-environment.md) |
+| Debug failing tests | See test output and `npm run test:unit` |
 | Update docs after code change | See Maintenance Rule below |
 
 ---
@@ -85,19 +85,17 @@ Every check must cite the regulation it enforces:
 
 When code changes, update documentation in this order:
 
-1. **`foundation/current-state.md`** — Update what's implemented
-2. **`foundation/implemented-vs-target.md`** — Update gaps
+1. **README.md** — Update overview
+2. **CHANGELOG.md** — Document changes
 3. Other docs — Cross-references, examples
-
-See [Documentation Roadmap](../roadmap/documentation-roadmap.md) for full governance.
 
 ---
 
 ## Questions?
 
-- **How do I...?** → Check [FAQ.md](../FAQ.md)
+- **How do I...?** → Check README.md and docs/quick-start.md
 - **What's the architecture?** → Read [system-overview.md](../architecture/system-overview.md)
-- **Where's the code?** → See [current-state.md](../foundation/current-state.md)
+- **Where's the code?** → See `src/` directory and README.md
 
 ---
 

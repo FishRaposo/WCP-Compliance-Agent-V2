@@ -8,7 +8,10 @@
 
 import { getPool } from "../services/db-client.js";
 import { isMockMode } from "../utils/mock-responses.js";
+import { childLogger } from "../utils/logger.js";
 import type { RetrievalHit } from "./types.js";
+
+const log = childLogger("VectorSearch");
 
 // ============================================================================
 // Embedding
@@ -92,18 +95,18 @@ export async function vectorSearch(
     );
 
     return result.rows.map((row, rank) => ({
-      tradeCode: (row.metadata?.tradeCode as string) ?? "",
+      tradeCode: (typeof row.metadata?.tradeCode === "string" ? row.metadata.tradeCode : "") ?? "",
       jobTitle: row.job_title,
-      baseRate: parseFloat(row.wage_rate),
-      fringeRate: parseFloat(row.fringe_rate),
+      baseRate: Number.isFinite(Number(row.wage_rate)) ? parseFloat(row.wage_rate) : 0,
+      fringeRate: Number.isFinite(Number(row.fringe_rate)) ? parseFloat(row.fringe_rate) : 0,
       effectiveDate: row.effective_date,
       wdId: row.wd_id,
-      score: 1 - parseFloat(row.distance), // cosine similarity = 1 - distance
+      score: Number.isFinite(Number(row.distance)) ? 1 - parseFloat(row.distance) : 0, // cosine similarity = 1 - distance
       rank,
       source: "vector" as const,
     }));
   } catch (err) {
-    console.warn("[VectorSearch] Query failed:", (err as Error).message);
+    log.warn({ err }, "[VectorSearch] Query failed");
     return [];
   }
 }

@@ -10,7 +10,7 @@ How to contribute to the WCP Compliance Agent. This guide covers workflow, conve
 
 ### 1. Before You Start
 
-- Read [current-state.md](../foundation/current-state.md) — know what's implemented
+- Read README.md — know what's implemented
 - Read [decision-architecture.md](../architecture/decision-architecture.md) — understand constraints
 - Check [todo.md](../../todo.md) — see what's prioritized
 
@@ -171,11 +171,11 @@ Update docs when you change:
 
 | Code Change | Docs to Update |
 |-------------|----------------|
-| Add/remove check | `current-state.md`, `traceability-matrix.md` |
+| Add/remove check | `CHANGELOG.md`, `traceability-matrix.md` |
 | Change pipeline structure | `decision-architecture.md` |
 | Add ADR | `adrs/README.md` |
-| Change API | `quick-start.md`, `api-and-integrations.md` |
-| Change trust formula | `trust-scoring.md`, ADR if structural |
+| Change API | `quick-start.md`, README.md |
+| Change trust formula | `src/pipeline/layer3-trust-score.ts`, ADR if structural |
 | Add npm script | `quick-start.md` |
 
 ---
@@ -183,9 +183,9 @@ Update docs when you change:
 ## Getting Help
 
 - **Architecture questions**: Read [decision-architecture.md](../architecture/decision-architecture.md)
-- **Setup issues**: Check [dev-environment.md](./dev-environment.md)
-- **Domain questions**: See [wcp-and-dbwd-reference.md](../foundation/wcp-and-dbwd-reference.md)
-- **General questions**: [FAQ.md](../FAQ.md)
+- **Setup issues**: Check docs/quick-start.md
+- **Domain questions**: See source code and README.md
+- **General questions**: See README.md and docs/quick-start.md
 
 ---
 
@@ -193,7 +193,7 @@ Update docs when you change:
 
 Documentation is code. Treat it with the same rigor:
 
-- Use the [documentation roadmap](../roadmap/documentation-roadmap.md) for structure
+- Follow existing documentation structure
 - Follow the status label taxonomy
 - Keep cross-references working
 - Update the INDEX when adding new docs

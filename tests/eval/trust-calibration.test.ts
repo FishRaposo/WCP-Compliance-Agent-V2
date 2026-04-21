@@ -228,8 +228,7 @@ describe("Trust Calibration - Golden Set Evaluation", () => {
         );
       }
 
-      // This test always passes - it's for logging only
-      expect(true).toBe(true);
+      expect(results.length).toBeGreaterThan(0);
     });
 
     it("correctly handles all clean cases", () => {
@@ -298,8 +297,7 @@ describe("Trust Calibration - Golden Set Evaluation", () => {
         console.log("  ✅ Thresholds appear well-calibrated");
       }
 
-      // This test always passes - it's advisory
-      expect(true).toBe(true);
+      expect(results.length).toBeGreaterThan(0);
     });
   });
 
@@ -330,8 +328,7 @@ describe("Trust Calibration - Golden Set Evaluation", () => {
       console.log(`    llmSelf: ${avgComponents.llmSelf.toFixed(3)}`);
       console.log(`    agreement: ${avgComponents.agreement.toFixed(3)}`);
 
-      // Log for analysis - no assertions
-      expect(true).toBe(true);
+      expect(results.length).toBeGreaterThan(0);
     });
   });
 });

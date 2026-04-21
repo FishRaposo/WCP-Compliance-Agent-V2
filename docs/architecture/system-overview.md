@@ -4,9 +4,9 @@ Status Label: Designed / Target
 
 Truth anchors:
 
-- [`../foundation/current-state.md`](../foundation/current-state.md)
-- [`../foundation/implemented-vs-target.md`](../foundation/implemented-vs-target.md)
-- [`../foundation/tech-stack-map.md`](../foundation/tech-stack-map.md)
+- See `README.md` for current implementation status
+- See `docs/roadmap/RELEASE_PLAN.md` for project phases
+- See `src/` directory for the current codebase
 
 ## Architecture thesis
 

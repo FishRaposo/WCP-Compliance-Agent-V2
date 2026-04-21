@@ -150,7 +150,6 @@ if (!IS_LIVE) {
         "     $env:OPENAI_API_KEY='sk-proj-...'\n" +
         "     npx vitest run tests/live/smoke.test.ts\n"
       );
-      expect(true).toBe(true);
     });
   });
 }

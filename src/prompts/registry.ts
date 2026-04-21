@@ -9,6 +9,9 @@
  */
 
 import { query } from "../services/db-client.js";
+import { childLogger } from "../utils/logger.js";
+
+const log = childLogger("PromptRegistry");
 
 // ============================================================================
 // Types
@@ -104,8 +107,8 @@ export class PromptRegistry {
           updatedAt: row.updated_at,
         };
       }
-    } catch {
-      // DB unavailable — fall through to in-memory
+    } catch (err) {
+      log.warn({ err }, "DB unavailable — falling back to in-memory prompt registry");
     }
 
     return getActiveInMemory(key, orgId);
@@ -138,8 +141,8 @@ export class PromptRegistry {
           prompt.isActive,
         ]
       );
-    } catch {
-      // DB unavailable — in-memory registration already done above
+    } catch (err) {
+      log.warn({ err }, "DB unavailable — prompt registered in-memory only");
     }
   }
 
@@ -162,8 +165,8 @@ export class PromptRegistry {
          WHERE key = $1 AND org_id IS NOT DISTINCT FROM $2`,
         [key, orgId ?? null, version]
       );
-    } catch {
-      // DB unavailable
+    } catch (err) {
+      log.warn({ err }, "DB unavailable — prompt activation in-memory only");
     }
   }
 
@@ -199,8 +202,8 @@ export class PromptRegistry {
           isActive: row.is_active,
         }));
       }
-    } catch {
-      // DB unavailable
+    } catch (err) {
+      log.warn({ err }, "DB unavailable — prompt activation in-memory only");
     }
 
     // Fall back to in-memory

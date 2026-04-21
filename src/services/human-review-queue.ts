@@ -121,8 +121,7 @@ async function saveQueue(queue: Map<string, ReviewQueueItem>): Promise<void> {
 /**
  * Human Review Queue Service
  *
- * Stub implementation for Phase 01.
- * TODO: Replace with PostgreSQL implementation in Phase 02.
+ * In-memory fallback for development and single-process deployments.
  */
 class HumanReviewQueueService {
   private queue: Map<string, ReviewQueueItem> = new Map();

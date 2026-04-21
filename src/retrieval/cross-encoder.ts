@@ -9,7 +9,10 @@
  */
 
 import { generateEmbedding } from "./vector-search.js";
+import { childLogger } from "../utils/logger.js";
 import type { FusedHit, RetrievalHit } from "./types.js";
+
+const log = childLogger("CrossEncoder");
 
 // ============================================================================
 // Utilities
@@ -76,7 +79,7 @@ export async function crossEncoderRerank(
       source: "reranked" as const,
     }));
   } catch (err) {
-    console.warn("[CrossEncoder] Re-ranking failed, returning original order:", (err as Error).message);
+    log.warn({ err }, "[CrossEncoder] Re-ranking failed, returning original order");
     return candidates;
   }
 }

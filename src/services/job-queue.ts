@@ -187,6 +187,11 @@ export async function updateJob(
 /**
  * Claim the next pending job for processing (for worker processes).
  * Returns null if no pending jobs.
+ *
+ * ⚠️ PROCESS-LOCAL FALLBACK: When PostgreSQL is unavailable, this falls back
+ * to an in-memory Map (IN_MEMORY_JOBS). Jobs queued in one process are NOT
+ * visible to other processes. This fallback is suitable for single-process
+ * development only.
  */
 export async function claimNextJob(): Promise<JobRecord | null> {
   await ensureJobSchema();
