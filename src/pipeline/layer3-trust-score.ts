@@ -296,14 +296,22 @@ export function generateAuditTrail(
   const now = new Date().toISOString();
 
   // Layer 1 events
+  const failedChecks = report.checks
+    .filter((c) => !c.passed)
+    .map((c) => ({ id: c.id, type: c.type, severity: c.severity, message: c.message }));
+
   events.push({
     timestamp: report.timestamp,
     stage: "layer1",
     event: "check_completed",
     details: {
       checkCount: report.checks.length,
+      passedCount: report.checks.filter((c) => c.passed).length,
+      failedCount: failedChecks.length,
       deterministicScore: report.deterministicScore,
+      classificationMethod: report.classificationMethod,
       classificationConfidence: report.classificationConfidence,
+      failedChecks,
     },
   });
 
@@ -314,6 +322,8 @@ export function generateAuditTrail(
     event: "llm_reasoning",
     details: {
       status: verdict.status,
+      rationale: verdict.rationale,
+      reasoningTrace: verdict.reasoningTrace,
       referencedCheckIds: verdict.referencedCheckIds,
       selfConfidence: verdict.selfConfidence,
       tokenUsage: verdict.tokenUsage,
@@ -337,6 +347,89 @@ export function generateAuditTrail(
   });
 
   return events;
+}
+
+// ============================================================================
+// Decision Narrative Builder
+// ============================================================================
+
+/**
+ * Build a human-readable explanation of why the decision was made.
+ *
+ * This narrative answers the core auditability question:
+ * "Why did the agent reach this decision, or why couldn't it decide?"
+ *
+ * @param report Layer 1 deterministic report
+ * @param verdict Layer 2 LLM verdict
+ * @param trust Layer 3 trust score
+ * @param finalStatus The final decision status
+ * @returns Human-readable decision explanation
+ */
+export function buildDecisionNarrative(
+  report: DeterministicReport,
+  verdict: LLMVerdict,
+  trust: TrustScore,
+  finalStatus: TrustScoredDecision["finalStatus"]
+): string {
+  const failedCritical = report.checks.filter((c) => !c.passed && c.severity === "critical");
+  const failedErrors = report.checks.filter((c) => !c.passed && c.severity === "error");
+  const failedWarnings = report.checks.filter((c) => !c.passed && c.severity === "warning");
+  const passCount = report.checks.filter((c) => c.passed).length;
+  const totalCount = report.checks.length;
+
+  const parts: string[] = [];
+
+  if (finalStatus === "Pending Human Review") {
+    parts.push(
+      `The agent could not reach a final decision automatically. ` +
+      `The overall trust score of ${(trust.score * 100).toFixed(0)}% fell below the 60% threshold required for automated decisions.`
+    );
+    if (trust.reasons.length > 0) {
+      parts.push(`Contributing factors: ${trust.reasons.join("; ")}.`);
+    }
+    parts.push(`A human reviewer must examine this payroll before a final ruling is issued.`);
+
+  } else if (finalStatus === "Reject") {
+    if (failedCritical.length > 0) {
+      const checkSummaries = failedCritical.map((c) => `${c.id} (${c.message})`).join("; ");
+      parts.push(
+        `Rejected because ${failedCritical.length} critical violation${failedCritical.length > 1 ? "s were" : " was"} found: ${checkSummaries}.`
+      );
+    } else {
+      parts.push(`Rejected based on LLM assessment of the compliance findings.`);
+    }
+    if (verdict.referencedCheckIds.length > 0) {
+      parts.push(`The LLM cited checks: ${verdict.referencedCheckIds.join(", ")}.`);
+    }
+    parts.push(`LLM rationale: ${verdict.rationale}`);
+
+  } else if (finalStatus === "Revise") {
+    if (failedErrors.length > 0) {
+      const checkSummaries = failedErrors.map((c) => `${c.id} (${c.message})`).join("; ");
+      parts.push(
+        `Revision required because ${failedErrors.length} error-level issue${failedErrors.length > 1 ? "s were" : " was"} found: ${checkSummaries}.`
+      );
+    } else {
+      parts.push(`Revision required based on LLM assessment.`);
+    }
+    if (verdict.referencedCheckIds.length > 0) {
+      parts.push(`The LLM cited checks: ${verdict.referencedCheckIds.join(", ")}.`);
+    }
+    parts.push(`LLM rationale: ${verdict.rationale}`);
+
+  } else if (finalStatus === "Approved") {
+    parts.push(`Approved: ${passCount} of ${totalCount} checks passed.`);
+    if (failedWarnings.length > 0) {
+      parts.push(
+        `${failedWarnings.length} minor warning${failedWarnings.length > 1 ? "s were" : " was"} noted but are not sufficient to block approval.`
+      );
+    }
+    parts.push(
+      `The LLM confirmed compliance with ${(verdict.selfConfidence * 100).toFixed(0)}% confidence. Rationale: ${verdict.rationale}`
+    );
+  }
+
+  return parts.join(" ");
 }
 
 // ============================================================================
@@ -394,6 +487,25 @@ export function layer3TrustScore(
     finalStatus = verdict.status;
   }
 
+  const finalizedAt = new Date().toISOString();
+
+  // Step 8: Build decision narrative and finalized audit event
+  const decisionExplanation = buildDecisionNarrative(report, verdict, trust, finalStatus);
+
+  auditTrail.push({
+    timestamp: finalizedAt,
+    stage: "final",
+    event: "finalized",
+    details: {
+      finalStatus,
+      decisionExplanation,
+      trustScore: trust.score,
+      trustBand: trust.band,
+      humanReviewRequired: humanReview.required,
+      trustReasons: trust.reasons,
+    },
+  });
+
   // Build final decision
   const decision: TrustScoredDecision = {
     traceId: report.traceId,
@@ -403,7 +515,7 @@ export function layer3TrustScore(
     humanReview,
     auditTrail,
     finalStatus,
-    finalizedAt: new Date().toISOString(),
+    finalizedAt,
   };
 
   log.info({ traceId: report.traceId, ms: Date.now() - startTime, score, band, finalStatus }, "Trust score computed");
