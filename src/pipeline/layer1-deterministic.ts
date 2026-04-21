@@ -21,7 +21,7 @@ import {
   type ExtractedEmployee,
   type DBWDRateInfo,
 } from "../types/decision-pipeline.js";
-import { lookupDBWDRate as hybridLookup } from "../retrieval/hybrid-retriever.js";
+import { lookupRate, fuzzyMatchTrade } from "../services/dbwd-retrieval.js";
 import { childLogger } from "../utils/logger.js";
 
 const log = childLogger("Layer1");
@@ -142,55 +142,48 @@ interface ClassificationResult {
 }
 
 /**
- * Resolve classification via hybrid retrieval pipeline.
+ * Resolve classification via JSON-based retrieval pipeline.
  *
- * Tier 1: Exact match (in-memory fallback in hybrid-retriever)
- * Tier 2: Alias match (in-memory fallback)
- * Tier 3: Semantic match (BM25 + vector + rerank)
- * Tier 4: Unknown
+ * Tier 1: Exact match via lookupRate
+ * Tier 2: Fuzzy/alias match via fuzzyMatchTrade
+ * Tier 3: Unknown
  *
  * @param role Role string from WCP
  * @returns Classification result with confidence
  */
 async function resolveClassification(role: string): Promise<ClassificationResult> {
-  const result = await hybridLookup(role);
-
-  if (!result.rateInfo) {
-    return { trade: "Unknown", confidence: 0.3, method: "unknown" };
+  // Tier 1: Exact match
+  const exact = lookupRate(role);
+  if (exact) {
+    return { trade: exact.trade, confidence: 1.0, method: "exact" };
   }
 
-  // Treat low-confidence hits as unknown — avoids aliasing unrelated trades
-  if (result.confidence < 0.5) {
-    return { trade: "Unknown", confidence: result.confidence, method: "unknown" };
+  // Tier 2: Fuzzy / alias match
+  const fuzzy = fuzzyMatchTrade(role);
+  if (fuzzy !== role) {
+    const rate = lookupRate(fuzzy);
+    if (rate) {
+      return { trade: rate.trade, confidence: 0.85, method: "alias" };
+    }
   }
 
-  const method = result.method === "in_memory"
-    ? (result.confidence >= 1.0 ? "exact" : "alias")
-    : result.method === "hybrid" || result.method === "vector_only"
-      ? "semantic"
-      : "alias";
-
-  return {
-    trade: result.rateInfo.trade,
-    confidence: result.confidence,
-    method,
-  };
+  // Tier 3: Unknown
+  return { trade: "Unknown", confidence: 0.3, method: "unknown" };
 }
 
 // ============================================================================
-// DBWD Rate Lookup — delegates to hybrid retriever
+// DBWD Rate Lookup — delegates to dbwd-retrieval service
 // ============================================================================
 
 /**
- * Look up DBWD rate information for a trade via hybrid retrieval.
- * Wraps hybridLookup to return just the rate info.
+ * Look up DBWD rate information for a trade.
  *
  * @param trade Trade classification string
  * @returns DBWD rate info or null if not found
  */
 async function lookupDBWDRate(trade: string, locality?: string): Promise<DBWDRateInfo | null> {
-  const result = await hybridLookup(trade, 5, locality);
-  return result.rateInfo;
+  // PoC: locality filtering not yet implemented (see docs/architecture/retrieval-upgrade-path.md)
+  return lookupRate(trade, locality);
 }
 
 // ============================================================================
