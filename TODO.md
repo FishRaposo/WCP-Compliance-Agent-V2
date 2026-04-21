@@ -1,14 +1,17 @@
 # TODO.md
 
-Actionable gaps for the WCP Compliance Agent — scoped to the current three-layer pipeline architecture.
-Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
+Actionable gaps for the WCP Compliance Agent.
 
-**Last updated:** 2026-04-20 — Sprint 2 audit complete. A1–A4 fixed. New backlog items A5–A12 added.  
+**Last updated:** 2026-04-22 — Full codebase inventory + roadmap audit complete.
 **Architecture reference:** `AGENTS.md`
+**Full inventory:** `docs/development/V2_INVENTORY_REPORT.md`
+**Roadmap audit:** `docs/development/V2_ROADMAP_AUDIT.md`
 
 ---
 
-## ✅ Resolved (sprint 2 audit — 2026-04-20)
+## ✅ Resolved (Verified Complete)
+
+### Sprint 2 (2026-04-20)
 
 | Item | What was done | Key files |
 |---|---|---|
@@ -17,9 +20,7 @@ Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
 | **A3** | Fixed React lint error: `setVisiblePanels(0)` was called synchronously inside `useEffect`, triggering cascading renders. Moved reset into the cleanup function instead. | `src/frontend/components/PipelineVisualizer.tsx:95-101` |
 | **A4** | Fixed `persistDecision().catch(() => {})` in orchestrator silently swallowing unexpected errors. Now logs the error before suppressing. | `src/pipeline/orchestrator.ts:156` |
 
----
-
-## ✅ Resolved (sprint 1)
+### Sprint 1
 
 | Item | What was done | Key files |
 |---|---|---|
@@ -42,93 +43,129 @@ Items harvested from a full codebase audit (code, config, docs) on 2026-04-20.
 | **I7** | `.min(0)` Zod constraints on all numeric fields in `ExtractedWCPSchema` | `src/types/decision-pipeline.ts` |
 | **I8** | `superRefine` cross-field `traceId` consistency in `TrustScoredDecisionSchema` | `src/types/decision-pipeline.ts` |
 
----
+### Previously Marked Open — Now Verified Resolved (2026-04-22 Audit)
 
-## 🔧 Backlog (from 2026-04-20 audit)
-
-### A5 — `@vercel/node` devDependency vulnerabilities — no fix available without breaking changes [S]
-
-`npm audit` reports 9 vulnerabilities (3 moderate, 6 high) in `@vercel/node`'s transitive deps:
-- `ajv` ReDoS (moderate) — `@vercel/static-config`
-- `minimatch` ReDoS ×3 (high) — `@vercel/python-analysis`
-- `path-to-regexp` backtracking ReDoS (high) — `@vercel/node`
-- `smol-toml` DoS (moderate) — `@vercel/python-analysis`
-- `undici` ×6 (high) — `@vercel/node`
-
-**All are in devDependencies only** and have zero attack surface: `@vercel/node` is only imported as a TypeScript type source (`VercelRequest`, `VercelResponse`) in `api/analyze.ts` and `api/health.ts`. The production Hono server does not import or run any of these packages. No user data passes through them.
-
-The only npm-provided fix (`npm audit fix --force`) downgrades `@vercel/node` to `3.0.1` or upgrades to `5.7.12` in a way that still leaves 5 vulnerabilities. Transitive dep pinning via `overrides` would risk breaking Vercel's internal build toolchain. Accepted as-is; will revisit if a clean upstream fix becomes available.
-[src: `npm audit`, `package.json`]
-
-### A6 — Add rate limiting to API endpoints [M]
-
-`POST /api/analyze`, `POST /api/analyze-pdf`, and `POST /api/analyze-csv` have no rate limiting. Each request can trigger an OpenAI API call. Consider adding a simple in-memory rate limiter (e.g., `hono/rate-limiter` or a sliding window on traceId/IP) to protect against cost spikes and API quota exhaustion. Layer 2 already throws `RateLimitError` on 429s from OpenAI — this item adds a *server-side* guard upstream of that.
-[src: `src/app.ts:101-148`]
-
-### A7 — Input size limit on `/api/analyze` text endpoint [S]
-
-`POST /api/analyze` accepts arbitrary-length JSON bodies. Only the PDF endpoint (`MAX_PDF_BYTES`, default 10 MB) and the CSV endpoint (no explicit limit) have any size guard. The text endpoint has no `Content-Length` check, enabling trivial DoS via large payloads that are passed to the full pipeline. Add a `MAX_CONTENT_BYTES` limit (suggested: 64 KB) and return 413 if exceeded.
-[src: `src/app.ts:23-63`]
-
-### A8 — In-memory job fallback is process-local (undocumented) [S]
-
-`claimNextJob()` in `job-queue.ts` falls back to `IN_MEMORY_JOBS` when PostgreSQL is unavailable. If a worker process starts after jobs were queued in a different process, in-memory jobs are invisible to it. Document this limitation clearly in the service header and add a comment warning that the in-memory fallback is process-local and suitable for single-process development only.
-[src: `src/services/job-queue.ts:186-228`]
-
-### A9 — `audit_events` table missing `trace_id` index [S]
-
-`persistAuditEvents()` inserts rows per audit event, but `audit_events` has no index on `trace_id`. Any query joining or filtering on `trace_id` will do a full scan as the table grows (7-year retention creates large row counts). The `decisions` table has a PRIMARY KEY on `trace_id`; `audit_events` only has a `BIGSERIAL` primary key.
-
-Add to migration:
-```sql
-CREATE INDEX IF NOT EXISTS audit_events_trace_id_idx ON audit_events (trace_id);
-```
-[src: `src/services/audit-persistence.ts:42-49`, `migrations/001_create_audit_tables.sql`]
-
-### A10 — `Layer2InputSchema` diverges from `DeterministicReport` type [M]
-
-`layer2-llm-verdict.ts` defines its own `Layer2InputSchema` (a Zod object) with only a subset of `DeterministicReport`'s fields. If `DeterministicReport` grows new required fields, `Layer2InputSchema` will be stale and validators may silently strip new fields from the prompt context. Consider deriving it from the canonical `DeterministicReportSchema` in `src/types/decision-pipeline.ts` via `.pick()` / `.omit()`, so type evolution is tracked in one place.
-[src: `src/pipeline/layer2-llm-verdict.ts:56-96`]
-
-### A11 — `validateEnvironmentOrExit` uses `console.*` instead of pino [S]
-
-`src/utils/env-validator.ts` still uses `console.warn` / `console.error` / `console.log` directly (lines 117–135). All other modules use `childLogger()`. Since `validateEnvironmentOrExit()` runs at startup before the full app is initialised, this is partially intentional, but produces inconsistent log format. Consider instantiating a local pino logger inline in `env-validator.ts` so log format matches the rest of the system.
-[src: `src/utils/env-validator.ts:112-136`]
-
-### A12 — `wcp.config.json` has dead CORS entry [XS]
-
-`wcp.config.json:94` contains a CORS `allowedOrigins` list (including `http://localhost:3001`) that is never read — CORS is entirely controlled by `src/app.ts:68-80` via `process.env.ALLOWED_ORIGINS`. The dead config entry could mislead contributors into thinking origins are configurable via `wcp.config.json`. Remove the stale CORS block or add a comment clarifying it is unused.
-[src: `wcp.config.json:90-96`, `src/app.ts:68-83`]
+| Item | What was done | Why it was flagged |
+|---|---|---|
+| **A7** | Input size limit already present in `src/app.ts` | Audit initially missed the `MAX_CONTENT_BYTES` guard (64KB limit) |
+| **A11** | `env-validator.ts` already uses `startupLog` (pino logger) | Audit initially missed the logger — it was there, just named differently |
+| **A12** | CORS entry removed from `wcp.config.json` | Already superseded by dynamic CORS in `src/app.ts:68-83` |
 
 ---
 
-## 🧊 Icebox
+## 🔴 Critical — Fix Before Any Release (20 minutes total)
 
-### I1 — OCR for scanned WH-347s [L]
-Use `tesseract.js` for image preprocessing + text extraction on scanned PDFs. Only worth pursuing after M2 (text-layer PDF parsing) is stable and its limits are understood. [src: roadmap Phase 05-B]
+These block the project from being usable by anyone who clones the repo.
 
-### I2 — Cost tracking per decision [M]
-`health.tokenUsage` already captures token count per decision. Persist it to a `cost_log` table with model pricing metadata. Surface in a dashboard or API endpoint. [src: `src/types/decision-pipeline.ts:376-388`] Depends on M1.
+| Item | Problem | Fix | Effort |
+|---|---|---|---|
+| **CR-1** | Frontend build fails — `Cannot find package '@vitejs/plugin-react'` | `npm install -D @vitejs/plugin-react` | 1 min |
+| **CR-2** | Coverage broken — `Cannot find dependency '@vitest/coverage-v8'` | `npm install -D @vitest/coverage-v8` | 1 min |
+| **CR-3** | `npm run dev` doesn't exist — README quick-start is broken | Add `"dev": "tsx src/server.ts"` to `package.json` scripts | 1 min |
+| **CR-4** | Windows-only dep `@rollup/rollup-win32-x64-msvc` in `dependencies` | Remove from `dependencies` (or move to `optionalDependencies`) | 1 min |
+| **CR-5** | Package name mismatch: `wcp-ai-agent` vs repo `WCP-Compliance-Agent` | Align to `wcp-compliance-agent` everywhere | 2 min |
+| **CR-6** | `.env.example` missing most config vars | Add all vars from README config table with defaults | 10 min |
 
-### I3 — Elasticsearch BM25 for live DBWD corpus [L]
-Build an ETL pipeline: ingest DBWD PDFs → chunk by trade×locality×section → index in Elasticsearch. `ELASTICSEARCH_URL` is already wired in `bm25-search.ts`. Currently the hybrid retriever always falls back to in-memory corpus (both ES and pgvector are unreachable in default setup). [src: `src/retrieval/bm25-search.ts`, `src/retrieval/vector-search.ts`]
-
-### I4 — SAM.gov / DOL API integration for live DBWD rates [L]
-Replace static in-memory corpus with a scheduled pull from SAM.gov or DOL Wage Determinations Online API. Add rate version tracking for audit trail. Requires external DOL credentials. [src: roadmap Phase 05-D]
-
-### I5 — Frontend: multi-employee display [M]
-`PipelineVisualizer` currently shows one worker's data. Once H1 lands and `employees[]` is in the data model, update the UI to show per-employee accordion panels in `Layer1Panel.tsx`. [src: `src/frontend/components/Layer1Panel.tsx`]
+**Total: ~16 minutes**
 
 ---
 
-## Won't Fix (Rationale)
+## 🟡 Medium — Should Fix in v2 (1-2 hours)
 
-The following were present in archived specs or previous `TODO.md` versions but are explicitly excluded:
+| Item | Problem | Fix | Effort |
+|---|---|---|---|
+| **A5** | `@vercel/node` devDependency vulnerabilities (9 total) | Document in README/CONTRIBUTING as accepted risk; zero production impact | 10 min |
+| **A6** | No rate limiting on API endpoints | Add `hono/rate-limiter` or sliding window on traceId/IP | 1-2 hrs |
+| **A8** | In-memory job fallback is process-local (undocumented) | Add comment warning in `job-queue.ts` header | 5 min |
+| **A9** | `audit_events` table missing `trace_id` index | Add `CREATE INDEX` to migration SQL | 5 min |
+| **A10** | `Layer2InputSchema` diverges from `DeterministicReport` type | Derive from `DeterministicReportSchema` via `.pick()` / `.omit()` | 30 min |
+| **MED-1** | 19 Phase 02 retrieval tests fail (missing `pg` + `@elastic/elasticsearch`) | Add mocks OR exclude Phase 02 tests from default `npm test` | 30 min |
+| **MED-2** | `@ai-sdk/openai` pinned to `^2.0.65` with `as any` workaround | Monitor for v4 type stability; remove `as any` when safe | Ongoing |
+| **MED-3** | Extraneous packages bloating `node_modules` (415MB) | `npm prune && npm dedupe` or `rm -rf node_modules && npm ci` | 10 min |
+
+---
+
+## 🟢 Minor — Nice to Have
+
+| Item | Problem | Fix | Effort |
+|---|---|---|---|
+| **MIN-1** | `as any` in `layer2-llm-verdict.ts:240` | Documented in ADR-001; revisit when ai-sdk types stabilize | 0 min (documented) |
+| **MIN-2** | `review-queue.json` empty — should be `.gitignore`d | Add to `.gitignore` | 1 min |
+| **MIN-3** | No `CODE_OF_CONDUCT.md` | Add standard GitHub template | 5 min |
+| **MIN-4** | `console.log` only in `src/utils/logger.ts` (intentional — logger definition) | Acceptable — no action needed | 0 min |
+
+---
+
+## 🔥 Stubbed in v2 — Will Be Rewritten in v3 (Do Not Fix in v2)
+
+These are documented limitations. The code exists but the default path doesn't use it. v3 will implement these properly.
+
+| Item | v2 Status | v3 Plan |
+|---|---|---|
+| **Hybrid retrieval wiring** | Code exists (BM25, vector, RRF, rerank) but defaults to in-memory corpus. ES/pgvector never connected in default setup. | Python backend will own retrieval layer with real PostgreSQL + Elasticsearch |
+| **Prompt registry PostgreSQL backend** | File-backed only (`src/prompts/registry.ts`). No PostgreSQL integration. | v3 will use Langfuse for prompt versioning + PostgreSQL persistence |
+| **Persistent human review queue** | In-memory only (`data/review-queue.json`). PostgreSQL fallback is process-local. | v3 will use Redis + Celery for real queue persistence |
+| **DBWD live rates (SAM.gov/DOL)** | Static 20-trade in-memory corpus only | v3 Python backend will have SAM.gov ETL pipeline |
+| **OCR for scanned PDFs** | Not implemented | v3 can add tesseract.js or cloud OCR |
+| **Multi-employee frontend display** | Shows one worker only | v3 React 19 frontend will handle multi-employee accordion |
+| **Cost tracking dashboard** | Token usage captured but not persisted | v3 will track per-decision cost with model pricing metadata |
+| **Regression detection system** | Calibration CI job catches drift, but no dedicated regression detection | v3 golden set CI will be the canonical regression guard |
+
+---
+
+## 🧊 Icebox — Future Work (Beyond v3)
+
+| Item | Size | What | When |
+|---|---|---|---|
+| **I1** | Large | OCR for scanned WH-347s (tesseract.js or cloud) | After v3 PDF pipeline stable |
+| **I2** | Medium | Cost tracking dashboard with model pricing metadata | v3 cost_log table + API |
+| **I3** | Large | Full Elasticsearch BM25 for live DBWD corpus ETL | v3 Python ETL pipeline |
+| **I4** | Large | SAM.gov / DOL API integration for live DBWD rates | v3 scheduled pull |
+| **I5** | Medium | Frontend multi-employee accordion display | v3 React frontend |
+
+---
+
+## 🚫 Won't Fix (Rationale)
 
 | Item | Reason |
 |---|---|
 | Multi-tenant isolation / RBAC / JWT auth | Out of scope for open-source showcase |
-| Batch processing queue (Redis/BullMQ) | M8 covers async via simpler in-memory queue first |
+| Batch processing queue (Redis/BullMQ) | v3 Celery covers this |
 | Prometheus / Grafana dashboards | M5 OTel covers observability; dashboards are deployment-specific |
 | Old Mastra-era utilities (`PinoLogger`, `LibSQLStore`, `retry.ts`) | Not in current architecture; superseded by `src/utils/errors.ts` retry helpers |
-| `CORS` allowed origins hardcoded to `localhost:3001` in `wcp.config.json:121` | Already superseded by dynamic CORS logic in `src/app.ts:60-73`; config entry is dead |
+
+---
+
+## v3 Planning — Next Phase
+
+**Architecture:** Python backend (FastAPI) + TypeScript agent (Mastra.ai) + React 19 frontend
+**Reference:** `docs/architecture/V3_PLAN.md`
+
+### v3 Backlog (To Be Created)
+
+| # | Item | Phase | Est. Effort |
+|---|---|---|---|
+| 1 | Create `v3` branch from `main` | Phase 0 | 5 min |
+| 2 | Sketch directory layout (`backend/`, `agent/`, `frontend/`, `shared/`) | Phase 0 | 30 min |
+| 3 | Bootstrap Python backend (Poetry, FastAPI, app factory) | Phase 1 | 2 hrs |
+| 4 | Port deterministic Layer 1 logic to Python | Phase 1 | 4 hrs |
+| 5 | Design REST contract (Pydantic ↔ Zod shared schemas) | Phase 1 | 2 hrs |
+| 6 | Bootstrap React 19 frontend (Vite, Tailwind, Shadcn/ui) | Phase 2 | 2 hrs |
+| 7 | Wire TypeScript Mastra agent to Python backend | Phase 3 | 3 hrs |
+| 8 | Implement PostgreSQL + pgvector + Redis in Docker Compose | Phase 3 | 1 hr |
+| 9 | Add Phoenix (LLM tracing) + Langfuse (prompt versioning) | Phase 4 | 2 hrs |
+| 10 | Golden set CI hard-fail + cross-encoder reranking | Phase 4 | 2 hrs |
+| 11 | Full-stack Docker Compose one-command startup | Phase 5 | 1 hr |
+
+**Total v3 estimate:** ~8–10 days focused work
+
+---
+
+## Audit Artifacts
+
+- **Full inventory report:** `docs/development/V2_INVENTORY_REPORT.md` — 78% release readiness, 4 blockers, 6 medium, 4 minor
+- **Roadmap vs reality audit:** `docs/development/V2_ROADMAP_AUDIT.md` — Phase 02 "creative accounting" documented, honest status of all deliverables
+
+---
+
+*Generated: 2026-04-22*
