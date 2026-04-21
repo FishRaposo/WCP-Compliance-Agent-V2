@@ -215,7 +215,10 @@ class HumanReviewQueueService {
     items.sort((a, b) => {
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
       if (priorityDiff !== 0) return priorityDiff;
-      return new Date(a.queuedAt).getTime() - new Date(b.queuedAt).getTime();
+      // ISO 8601 dates sort lexicographically; avoid Date allocation
+      if (a.queuedAt < b.queuedAt) return -1;
+      if (a.queuedAt > b.queuedAt) return 1;
+      return 0;
     });
 
     // Apply pagination
@@ -396,8 +399,8 @@ class HumanReviewQueueService {
     let avgTimeToReview: number | undefined;
     if (completed.length > 0) {
       const totalMs = completed.reduce((sum, i) => {
-        const start = new Date(i.queuedAt).getTime();
-        const end = new Date(i.completedAt!).getTime();
+        const start = Date.parse(i.queuedAt);
+        const end = Date.parse(i.completedAt!);
         return sum + (end - start);
       }, 0);
       avgTimeToReview = Math.round(totalMs / completed.length / 1000 / 60); // Minutes
