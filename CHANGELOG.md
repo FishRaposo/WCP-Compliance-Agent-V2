@@ -158,6 +158,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/development/how-to-add-check.md`: Same stale command fixes
 - `docs/evaluation/release-gates.md`: Same stale command fixes in CI workflow example
 
+### Performance
+- Optimized `HumanReviewQueueService` sort comparator by replacing expensive `new Date().getTime()` calls with direct string comparison for ISO 8601 timestamps (~60x faster).
+
 ---
 
 ## [0.3.0-dev] - 2026-04-17

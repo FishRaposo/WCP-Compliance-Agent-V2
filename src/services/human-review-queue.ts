@@ -218,6 +218,7 @@ class HumanReviewQueueService {
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
       if (priorityDiff !== 0) return priorityDiff;
 <<<<<<< HEAD
+<<<<<<< HEAD
       // ISO 8601 dates sort lexicographically; avoid Date allocation
       if (a.queuedAt < b.queuedAt) return -1;
       if (a.queuedAt > b.queuedAt) return 1;
@@ -227,6 +228,13 @@ class HumanReviewQueueService {
       // String comparison avoids expensive Date object allocation and is ~60x faster.
       return a.queuedAt < b.queuedAt ? -1 : a.queuedAt > b.queuedAt ? 1 : 0;
 >>>>>>> origin/jules-bolt-perf-optimization-5862459989937235893
+=======
+
+      // ISO 8601 strings are lexicographically sortable
+      if (a.queuedAt < b.queuedAt) return -1;
+      if (a.queuedAt > b.queuedAt) return 1;
+      return 0;
+>>>>>>> origin/performance-optimize-queue-sort-1732255753477402566
     });
 
     // Apply pagination

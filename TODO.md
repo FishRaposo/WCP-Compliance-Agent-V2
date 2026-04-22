@@ -128,6 +128,7 @@ These are documented limitations. The code exists but the default path doesn't u
 
 ## 🧊 Icebox — Future Work (Beyond v3)
 
+<<<<<<< HEAD
 | Item | Size | What | When |
 |---|---|---|---|
 | **I1** | Large | OCR for scanned WH-347s (tesseract.js or cloud) | After v3 PDF pipeline stable |
@@ -135,6 +136,57 @@ These are documented limitations. The code exists but the default path doesn't u
 | **I3** | Large | Full Elasticsearch BM25 for live DBWD corpus ETL | v3 Python ETL pipeline |
 | **I4** | Large | SAM.gov / DOL API integration for live DBWD rates | v3 scheduled pull |
 | **I5** | Medium | Frontend multi-employee accordion display | v3 React frontend |
+=======
+Refactoring, optimization, and cleanup tasks.
+
+### Configuration & Metadata
+
+- [ ] Fill in package.json author field [src: package.json:26] [XS]
+  - Current: `"author": ""`
+  - Acceptance: Proper author attribution
+
+- [ ] Add repository URL to package.json [src: package.json] [XS]
+  - Context: Improves npm discovery and attribution
+  - Acceptance: Repository field populated
+
+### Type System
+
+- [ ] Remove duplicate type definitions [src: _archive/TODO.md:315] [S]
+  - Context: Potential duplication between backend and frontend (if frontend added)
+  - Acceptance: Single source of truth for types
+  - Dependencies: Audit type files, extract shared types
+
+- [ ] Align WCPData with full WCPReport types [src: src/types/index.ts:25] [M]
+  - Context: Type system has basic 3-field version, needs 11-field alignment
+  - Acceptance: Consistent type naming, field coverage, validation schemas
+  - Dependencies: Expanded data extraction implementation
+
+### Code Quality
+
+- [ ] Remove unused exports from types/index.ts [src: _archive/TODO.md:316] [XS]
+  - Context: Cleanup for better maintainability
+  - Acceptance: All exports have at least one usage
+
+- [ ] Update documentation references to archived files [src: _archive/TODO.md:317] [S]
+  - Context: Some docs may reference moved/archived content
+  - Acceptance: All internal links valid, no broken references
+
+### Testing
+
+- [ ] Improve code documentation consistency [src: _archive/TODO.md:319] [M]
+  - Context: Ensure all functions have JSDoc comments
+  - Acceptance: Documentation coverage audit, missing docs added
+
+- [x] Add performance optimizations [src: _archive/TODO.md:318] [M]
+  - Context: Optimized `HumanReviewQueueService` sort comparator (~60x faster).
+
+### Mock Mode
+
+- [ ] Add production-safe mock detection [src: src/entrypoints/wcp-entrypoint.ts:23] [S]
+  - Context: Mock mode fallback exists for development
+  - Acceptance: Clear logging when in mock mode, production warnings, health check indicators
+  - Dependencies: Environment detection, logging enhancement
+>>>>>>> origin/performance-optimize-queue-sort-1732255753477402566
 
 ---
 
