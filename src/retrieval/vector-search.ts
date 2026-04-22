@@ -95,7 +95,7 @@ export async function vectorSearch(
     );
 
     return result.rows.map((row, rank) => ({
-      tradeCode: (typeof row.metadata?.tradeCode === "string" ? row.metadata.tradeCode : "") ?? "",
+      tradeCode: typeof row.metadata?.tradeCode === "string" ? row.metadata.tradeCode : "",
       jobTitle: row.job_title,
       baseRate: Number.isFinite(Number(row.wage_rate)) ? parseFloat(row.wage_rate) : 0,
       fringeRate: Number.isFinite(Number(row.fringe_rate)) ? parseFloat(row.fringe_rate) : 0,

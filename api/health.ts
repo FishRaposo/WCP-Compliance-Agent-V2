@@ -7,7 +7,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 function getAllowedOrigin(origin: string | undefined): string | null {
   if (!origin) return null;
   const allowed = ["http://localhost:3000", "http://localhost:5173"];
-  if (allowed.includes(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
+  if (allowed.includes(origin) || /^https:\/\/.+\.vercel\.app$/.test(origin)) {
     return origin;
   }
   return null;

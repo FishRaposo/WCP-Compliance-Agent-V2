@@ -203,7 +203,7 @@ export class PromptRegistry {
         }));
       }
     } catch (err) {
-      log.warn({ err }, "DB unavailable — prompt activation in-memory only");
+      log.warn({ err }, "DB unavailable — prompt version listing in-memory only");
     }
 
     // Fall back to in-memory

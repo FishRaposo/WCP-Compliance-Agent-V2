@@ -8,6 +8,8 @@ import { isMockMode } from "./utils/mock-responses.js";
 import { listDecisions } from "./services/audit-persistence.js";
 import { createJob, getJob, updateJob } from "./services/job-queue.js";
 import { childLogger } from "./utils/logger.js";
+import { extractTextFromPDF, PDFIngestionError } from "./ingestion/pdf-ingestion.js";
+import { parseCSVBuffer, csvToWCPInputs } from "./ingestion/csv-ingestion.js";
 
 const log = childLogger("App");
 
@@ -113,9 +115,56 @@ export function createApp() {
   app.post("/api/analyze", handleAnalyzeRequest);
   app.get("/api/health", (c) => c.redirect("/health"));
 
-  // NOTE: Phase 02 ingestion endpoints (PDF, CSV) are planned but not yet
-  // implemented. See docs/roadmap/RELEASE_PLAN.md for timeline.
-  // When ready, add imports from ./ingestion/ and route handlers below.
+  // M2: PDF ingestion endpoint
+  app.post("/api/analyze-pdf", async (c: Context) => {
+    try {
+      const body = await c.req.parseBody();
+      const file = body["file"];
+      if (!(file instanceof File)) {
+        return c.json(formatApiError(new ValidationError("No file uploaded (field name: file)")), 400);
+      }
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const pdfResult = await extractTextFromPDF(buffer, file.name ?? "upload.pdf");
+      const decision = await generateWcpDecision({ content: pdfResult.text });
+      return c.json({ ...decision, pdfMeta: { pageCount: pdfResult.pageCount, fileName: pdfResult.fileName, sizeBytes: pdfResult.sizeBytes } });
+    } catch (err) {
+      if (err instanceof PDFIngestionError) {
+        return c.json(formatApiError(new ValidationError(err.message)), 422);
+      }
+      log.error({ err }, "PDF analysis error");
+      return c.json(formatApiError(err), formattedStatusCode(err));
+    }
+  });
+
+  // M3: CSV bulk ingestion endpoint
+  const rawMaxCsv = parseInt(process.env.API_MAX_CSV_BYTES ?? "5242880", 10); // 5 MB default
+  const MAX_CSV_BYTES = Number.isNaN(rawMaxCsv) || rawMaxCsv <= 0 ? 5242880 : rawMaxCsv;
+  app.post("/api/analyze-csv", async (c: Context) => {
+    try {
+      const body = await c.req.parseBody();
+      const file = body["file"];
+      if (!(file instanceof File)) {
+        return c.json(formatApiError(new ValidationError("No file uploaded (field name: file)")), 400);
+      }
+      const buffer = Buffer.from(await file.arrayBuffer());
+      if (buffer.byteLength > MAX_CSV_BYTES) {
+        return c.json(
+          formatApiError(new ValidationError(`CSV exceeds maximum allowed size of ${MAX_CSV_BYTES / 1024 / 1024} MB`)),
+          413
+        );
+      }
+      const csvResult = parseCSVBuffer(buffer, file.name ?? "upload.csv");
+      const inputs = csvToWCPInputs(csvResult);
+      if (inputs.length === 0) {
+        return c.json(formatApiError(new ValidationError("CSV file contains no processable rows")), 422);
+      }
+      const decisions = await Promise.all(inputs.map((content) => generateWcpDecision({ content })));
+      return c.json({ decisions, csvMeta: { rowCount: csvResult.rowCount, fileName: csvResult.fileName, parseErrors: csvResult.errors } });
+    } catch (err) {
+      log.error({ err }, "CSV analysis error");
+      return c.json(formatApiError(err), formattedStatusCode(err));
+    }
+  });
 
   // M1: Audit query endpoint
   app.get("/api/decisions", async (c: Context) => {

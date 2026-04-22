@@ -12,7 +12,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 function getAllowedOrigin(origin: string | undefined): string | null {
   if (!origin) return null;
   const allowed = ["http://localhost:3000", "http://localhost:5173"];
-  if (allowed.includes(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
+  if (allowed.includes(origin) || /^https:\/\/.+\.vercel\.app$/.test(origin)) {
     return origin;
   }
   return null;
@@ -65,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Dynamic import keeps cold-start lean and avoids top-level env read
     const { generateWcpDecision } = await import("../dist/entrypoints/wcp-entrypoint.js");
     // Override env for this invocation (Vercel serverless = single-tenant per request)
-    const previousKey = process.env.OPENAI_API_KEY;
+    const previousKey = process.env.OPENAI_API_KEY ?? "";
     process.env.OPENAI_API_KEY = keyToUse;
     try {
       const result = await generateWcpDecision({ content });
