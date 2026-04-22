@@ -312,7 +312,7 @@ wcp-compliance-agent-v3/           # New repo
 
 1. Point recruiters to v2 for "working proof-of-concept"
 2. Point them to v3 docs for "architectural vision and planning"
-3. The V3_PLAN.md alone demonstrates systems thinking at the level they want
+3. The V3_PLAN.md (in docs/v3/) alone demonstrates systems thinking at the level they want
 
 **v2 is not broken — it's just a different scope.** Having both shows range: "I can ship a working monolith in 2 weeks, and I can design a multi-service architecture for scale."
 

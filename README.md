@@ -8,7 +8,7 @@
 > **V2 — TypeScript reference implementation.**  
 > Three-layer AI decision pipeline for regulated-domain compliance. Every finding cites a regulation. Every decision has a replayable audit trail.
 >
-> *V3 is in planning — see [docs/architecture/V3_PLAN.md](./docs/architecture/V3_PLAN.md).*
+> *V3 is in planning — see [docs/v3/V3_PLAN.md](./docs/v3/V3_PLAN.md).*
 
 **[→ Live Demo](https://wcp-compliance-agent.vercel.app)** · **[→ Quick Start](./docs/quick-start.md)** · **[→ Architecture](./docs/architecture/system-overview.md)**
 
@@ -75,7 +75,7 @@ V3 will restructure into a **polyglot architecture** separating deterministic lo
 - **Infrastructure**: Docker Compose with PostgreSQL + pgvector + Redis + Elasticsearch
 - **Observability**: Phoenix LLM tracing + OpenTelemetry
 
-See [docs/architecture/V3_PLAN.md](./docs/architecture/V3_PLAN.md) for the full technical plan.
+See [docs/v3/V3_PLAN.md](./docs/v3/V3_PLAN.md) for the full technical plan.
 
 ---
 
@@ -275,7 +275,7 @@ tests/e2e/             # Playwright end-to-end tests
 api/                   # Vercel serverless functions
 docs/                  # Architecture, compliance, ADRs, v3 plan
 data/                  # In-memory DBWD corpus, review queue
-docs/architecture/V3_PLAN.md  # V3 architecture roadmap
+docs/v3/                   # V3 architecture roadmap & transition guide
 ```
 
 ---

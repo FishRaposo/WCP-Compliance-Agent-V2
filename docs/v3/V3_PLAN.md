@@ -297,7 +297,7 @@ WCP-Compliance-Agent/
     │   ├── TECH_STACK_ALIGNMENT.md    # Maps to both job descriptions
     │   └── INTERVIEW_TALKING_POINTS.md
     ├── architecture/
-    │   ├── V3_PLAN.md                 # This document
+    │   ├── V3_PLAN.md                 # This document (docs/v3/)
     │   ├── system-diagram.png
     │   ├── data-flow.md
     │   └── graph-model.md             # Future Neo4j entity design

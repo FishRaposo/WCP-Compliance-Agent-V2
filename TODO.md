@@ -146,7 +146,7 @@ These are documented limitations. The code exists but the default path doesn't u
 ## v3 Planning — Next Phase
 
 **Architecture:** Python backend (FastAPI) + TypeScript agent (Mastra.ai) + React 19 frontend
-**Reference:** `docs/architecture/V3_PLAN.md`
+**Reference:** `docs/v3/V3_PLAN.md`
 
 ### v3 Backlog (To Be Created)
 
