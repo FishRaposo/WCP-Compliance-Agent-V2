@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Build**: `package.json` `clean` script now uses ESM-compatible `import('fs')`
 - **Docs**: Removed broken internal links in `docs/development/`, `docs/adrs/`, `docs/architecture/`
 
+### Security
+- Added input length validation to `/analyze` endpoint to prevent potential DoS attacks.
+- Added configurable `maxContentLength` (default 10,000 chars) to `ApiConfig`.
+
 ### Changed
 - Removed personal IDE configs (`.claude/`, `.agents/skills/`) from repository
 - Updated `.gitignore` to exclude `.claude/`, `.agents/`, `test-results/`, `playwright-report/`

@@ -40,6 +40,8 @@ export interface ApiConfig {
   cors: boolean;
   /** Request timeout (ms) */
   timeout: number;
+  /** Maximum content length (chars) */
+  maxContentLength: number;
 }
 
 /**
@@ -88,6 +90,7 @@ export function getAppConfig(): AppConfig {
       host: process.env.HOST || 'localhost',
       cors: process.env.ENABLE_CORS !== 'false',
       timeout: parseInt(process.env.API_TIMEOUT || '30000', 10),
+      maxContentLength: parseInt(process.env.MAX_CONTENT_LENGTH || '10000', 10),
     },
     observability: {
       enabled: process.env.OBSERVABILITY_ENABLED === 'true' || environment === 'production',
@@ -113,6 +116,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
     host: 'localhost',
     cors: true,
     timeout: 30000,
+    maxContentLength: 10000,
   },
   observability: {
     enabled: false,

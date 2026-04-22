@@ -10,6 +10,7 @@ import { createJob, getJob, updateJob } from "./services/job-queue.js";
 import { childLogger } from "./utils/logger.js";
 import { extractTextFromPDF, PDFIngestionError } from "./ingestion/pdf-ingestion.js";
 import { parseCSVBuffer, csvToWCPInputs } from "./ingestion/csv-ingestion.js";
+import { getAppConfig } from "./config/app-config.js";
 
 const log = childLogger("App");
 
@@ -72,6 +73,7 @@ async function rateLimitMiddleware(c: Context, next: () => Promise<void>): Promi
 }
 
 async function handleAnalyzeRequest(c: Context) {
+  const config = getAppConfig();
   try {
     const body = await c.req.json();
     const { content } = body ?? {};
@@ -86,6 +88,14 @@ async function handleAnalyzeRequest(c: Context) {
       return c.json(formatApiError(error), 400);
     }
 
+    // Check character length first (configurable)
+    if (content.length > config.api.maxContentLength) {
+      const error = new ValidationError(
+        `Content is too long. Maximum allowed length is ${config.api.maxContentLength} characters.`
+      );
+      return c.json(formatApiError(error), 400);
+    }
+    // Check byte length (413 status for entity too large)
     if (Buffer.byteLength(content, "utf8") > MAX_CONTENT_BYTES) {
       const error = new ValidationError(`Content exceeds maximum allowed size of ${MAX_CONTENT_BYTES / 1024} KB`);
       return c.json(formatApiError(error), 413);

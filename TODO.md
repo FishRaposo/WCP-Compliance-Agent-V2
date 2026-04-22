@@ -101,6 +101,12 @@ These block the project from being usable by anyone who clones the repo.
 | **MIN-3** | No `CODE_OF_CONDUCT.md` | ✅ Added standard GitHub template | Done |
 | **MIN-4** | `console.log` only in `src/utils/logger.ts` (intentional — logger definition) | Acceptable — no action needed | 0 min |
 
+### Security
+
+- [x] Implement input length validation for `/analyze` endpoint [S]
+  - Context: Prevent potential DoS attacks from oversized payloads.
+  - Done: Added `maxContentLength` (10,000 chars) to `ApiConfig`.
+
 ---
 
 ## 🔥 Stubbed in v2 — Will Be Rewritten in v3 (Do Not Fix in v2)
