@@ -40,7 +40,11 @@ export interface ApiConfig {
   cors: boolean;
   /** Request timeout (ms) */
   timeout: number;
+<<<<<<< HEAD
   /** Maximum content length (chars) */
+=======
+  /** Max content length */
+>>>>>>> origin/sentinel-dos-protection-max-content-length-1508551795843916724
   maxContentLength: number;
 }
 
