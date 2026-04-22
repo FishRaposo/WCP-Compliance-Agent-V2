@@ -173,7 +173,6 @@ These are documented limitations. The code exists but the default path doesn't u
   - Context: Mock mode fallback exists for development
   - Acceptance: Clear logging when in mock mode, production warnings, health check indicators
   - Dependencies: Environment detection, logging enhancement
->>>>>>> origin/performance-optimize-queue-sort-1732255753477402566
 
 ---
 
