@@ -2,7 +2,7 @@
 
 Actionable gaps for the WCP Compliance Agent.
 
-**Last updated:** 2026-04-22 — Full codebase inventory + roadmap audit complete.
+**Last updated:** 2026-04-21 — Post-merge audit: CR-1/CR-2 resolved, CR-7/CR-8 added.
 **Architecture reference:** `AGENTS.md`
 **Full inventory:** `docs/development/V2_INVENTORY_REPORT.md`
 **Roadmap audit:** `docs/development/V2_ROADMAP_AUDIT.md`
@@ -53,20 +53,27 @@ Actionable gaps for the WCP Compliance Agent.
 
 ---
 
-## 🔴 Critical — Fix Before Any Release (20 minutes total)
+## 🔴 Critical — Fix Before Any Release
 
 These block the project from being usable by anyone who clones the repo.
 
 | Item | Problem | Fix | Effort |
 |---|---|---|---|
-| **CR-1** | Frontend build fails — `Cannot find package '@vitejs/plugin-react'` | `npm install -D @vitejs/plugin-react` | 1 min |
-| **CR-2** | Coverage broken — `Cannot find dependency '@vitest/coverage-v8'` | `npm install -D @vitest/coverage-v8` | 1 min |
 | **CR-3** | `npm run dev` doesn't exist — README quick-start is broken | Add `"dev": "tsx src/server.ts"` to `package.json` scripts | 1 min |
 | **CR-4** | Windows-only dep `@rollup/rollup-win32-x64-msvc` in `dependencies` | Remove from `dependencies` (or move to `optionalDependencies`) | 1 min |
 | **CR-5** | Package name mismatch: `wcp-ai-agent` vs repo `WCP-Compliance-Agent` | Align to `wcp-compliance-agent` everywhere | 2 min |
-| **CR-6** | `.env.example` missing most config vars | Add all vars from README config table with defaults | 10 min |
+| **CR-6** | `.env.example` missing most config vars | Add all vars from env-validator.ts and app-config.ts with defaults | 10 min |
+| **CR-7** | `AGENT_MAX_STEPS` env var not used in orchestrator | Wire `AGENT_MAX_STEPS` into orchestrator config | 5 min |
+| **CR-8** | `DATABASE_URL` uses SQLite but Phase 02 expects PostgreSQL | Document SQLite for dev, add `POSTGRES_URL` for Phase 02 | 5 min |
 
-**Total: ~16 minutes**
+**Total: ~24 minutes**
+
+### ✅ Resolved (2026-04-21)
+
+| Item | Resolution |
+|---|---|
+| **CR-1** | `@vitejs/plugin-react@^6.0.1` already in `devDependencies` — no action needed |
+| **CR-2** | `@vitest/coverage-v8@^3.0.0` already in `devDependencies` — no action needed |
 
 ---
 
