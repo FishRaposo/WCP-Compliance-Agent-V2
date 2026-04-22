@@ -2,10 +2,8 @@
 
 Actionable gaps for the WCP Compliance Agent.
 
-**Last updated:** 2026-04-21 — Pre-v3 final pass: all critical/medium TODOs resolved, coverage 83.23%, 310/310 tests pass, pipeline lint clean, build green.
+**Last updated:** 2026-04-21 — Documentation cleanup: stale audit reports removed, all critical/medium TODOs resolved.
 **Architecture reference:** `AGENTS.md`
-**Full inventory:** `docs/development/V2_INVENTORY_REPORT.md`
-**Roadmap audit:** `docs/development/V2_ROADMAP_AUDIT.md`
 
 ---
 
@@ -211,11 +209,6 @@ These are documented limitations. The code exists but the default path doesn't u
 **Total v3 estimate:** ~8–10 days focused work
 
 ---
-
-## Audit Artifacts
-
-- **Full inventory report:** `docs/development/V2_INVENTORY_REPORT.md` — 78% release readiness, 4 blockers, 6 medium, 4 minor
-- **Roadmap vs reality audit:** `docs/development/V2_ROADMAP_AUDIT.md` — Phase 02 "creative accounting" documented, honest status of all deliverables
 
 ---
 
