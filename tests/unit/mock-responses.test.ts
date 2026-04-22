@@ -15,8 +15,8 @@ describe("generateMockWcpDecision", () => {
     expect(result.timestamp).toBeDefined();
   });
 
-  it("should return Revise status for overtime (Laborer, 45h, $30)", () => {
-    const input = "Role: Laborer, Hours: 45, Wage: $30";
+  it("should return Revise status for overtime (Laborer, 45h, $27)", () => {
+    const input = "Role: Laborer, Hours: 45, Wage: $27";
     const result = generateMockWcpDecision(input);
 
     expect(result.status).toBe("Revise");

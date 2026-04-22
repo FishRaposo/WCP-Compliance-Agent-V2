@@ -128,7 +128,6 @@ These are documented limitations. The code exists but the default path doesn't u
 
 ## 🧊 Icebox — Future Work (Beyond v3)
 
-<<<<<<< HEAD
 | Item | Size | What | When |
 |---|---|---|---|
 | **I1** | Large | OCR for scanned WH-347s (tesseract.js or cloud) | After v3 PDF pipeline stable |
@@ -136,19 +135,6 @@ These are documented limitations. The code exists but the default path doesn't u
 | **I3** | Large | Full Elasticsearch BM25 for live DBWD corpus ETL | v3 Python ETL pipeline |
 | **I4** | Large | SAM.gov / DOL API integration for live DBWD rates | v3 scheduled pull |
 | **I5** | Medium | Frontend multi-employee accordion display | v3 React frontend |
-=======
-Refactoring, optimization, and cleanup tasks.
-
-### Configuration & Metadata
-
-- [ ] Fill in package.json author field [src: package.json:26] [XS]
-  - Current: `"author": ""`
-  - Acceptance: Proper author attribution
-
-- [ ] Add repository URL to package.json [src: package.json] [XS]
-  - Context: Improves npm discovery and attribution
-  - Acceptance: Repository field populated
-
 ### Type System
 
 - [ ] Remove duplicate type definitions [src: _archive/TODO.md:315] [S]
@@ -179,12 +165,7 @@ Refactoring, optimization, and cleanup tasks.
   - Acceptance: Documentation coverage audit, missing docs added
 
 - [x] Add performance optimizations [src: _archive/TODO.md:318] [M]
-<<<<<<< HEAD
-  - Context: Optimized `HumanReviewQueueService` sort comparator (~60x faster).
-=======
-  - Context: No performance benchmarks exist
-  - Acceptance: Benchmark suite, bottleneck identification, optimization plan
->>>>>>> origin/bolt-performance-optimizations-13650152548077798304
+  - Context: Optimized `HumanReviewQueueService` sort comparator (ISO 8601 string comparison, Date.parse for diffs).
 
 ### Mock Mode
 

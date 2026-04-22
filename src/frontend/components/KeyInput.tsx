@@ -29,12 +29,7 @@ export function KeyInput({ apiKey, onChange, isMockMode }: KeyInputProps) {
           type="button"
           aria-label={visible ? 'Hide API key' : 'Show API key'}
           onClick={() => setVisible(v => !v)}
-<<<<<<< HEAD
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded p-0.5 transition-colors"
-=======
-          aria-label={visible ? 'Hide API key' : 'Show API key'}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
->>>>>>> origin/palette-key-input-a11y-7724762815763013795
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded p-0.5"
         >
           {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>

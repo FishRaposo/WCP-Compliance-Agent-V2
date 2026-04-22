@@ -53,8 +53,7 @@ describe("App Input Validation", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    // This is expected to FAIL currently as the fix is not yet implemented
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(413);
     const body = await res.json();
     expect(body.error.message).toMatch(/too long|maximum length/i);
   });

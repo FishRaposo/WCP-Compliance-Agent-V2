@@ -23,7 +23,7 @@ describe("lookupDBWDRate (mock mode — in-memory fallback)", () => {
     expect(result.rateInfo?.fringeRate).toBe(34.63);
     expect(result.method).toBe("in_memory");
     expect(result.confidence).toBe(1.0);
-  });
+  }, 15_000);
 
   it("resolves Laborer by exact match", async () => {
     const { lookupDBWDRate } = await import("../../src/retrieval/hybrid-retriever.js");

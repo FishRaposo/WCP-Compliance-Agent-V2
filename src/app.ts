@@ -1,22 +1,16 @@
 import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
-<<<<<<< HEAD
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-=======
 import { secureHeaders } from "hono/secure-headers";
->>>>>>> origin/sentinel-fix-security-headers-and-stack-trace-10819969944320193566
 
 import { generateWcpDecision } from "./entrypoints/wcp-entrypoint.js";
 import { formatApiError, ValidationError } from "./utils/errors.js";
-<<<<<<< HEAD
 import { isMockMode } from "./utils/mock-responses.js";
 import { listDecisions } from "./services/audit-persistence.js";
 import { createJob, getJob, updateJob } from "./services/job-queue.js";
 import { childLogger } from "./utils/logger.js";
 import { extractTextFromPDF, PDFIngestionError } from "./ingestion/pdf-ingestion.js";
 import { parseCSVBuffer, csvToWCPInputs } from "./ingestion/csv-ingestion.js";
-=======
->>>>>>> origin/sentinel-dos-protection-max-content-length-1508551795843916724
 import { getAppConfig } from "./config/app-config.js";
 
 const log = childLogger("App");
@@ -95,22 +89,16 @@ async function handleAnalyzeRequest(c: Context) {
       return c.json(formatApiError(error), 400);
     }
 
-<<<<<<< HEAD
-    // Check character length first (configurable)
+    // Check character length (configurable)
     if (content.length > config.api.maxContentLength) {
       const error = new ValidationError(
         `Content is too long. Maximum allowed length is ${config.api.maxContentLength} characters.`
       );
-      return c.json(formatApiError(error), 400);
+      return c.json(formatApiError(error), 413);
     }
-    // Check byte length (413 status for entity too large)
+    // Check byte length (defense in depth)
     if (Buffer.byteLength(content, "utf8") > MAX_CONTENT_BYTES) {
       const error = new ValidationError(`Content exceeds maximum allowed size of ${MAX_CONTENT_BYTES / 1024} KB`);
-=======
-    const config = getAppConfig();
-    if (content.length > config.api.maxContentLength) {
-      const error = new ValidationError("Content exceeds maximum allowed length");
->>>>>>> origin/sentinel-dos-protection-max-content-length-1508551795843916724
       return c.json(formatApiError(error), 413);
     }
 
@@ -293,4 +281,3 @@ export function createApp() {
 
   return app;
 }
-
