@@ -163,6 +163,7 @@ Refactoring, optimization, and cleanup tasks.
 
 ### Code Quality
 
+- [x] Implement unit tests for `generateMockWcpDecision` [src: src/utils/mock-responses.ts:17] [XS]
 - [ ] Remove unused exports from types/index.ts [src: _archive/TODO.md:316] [XS]
   - Context: Cleanup for better maintainability
   - Acceptance: All exports have at least one usage

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 ### Fixed
 - **Logging consistency**: Replaced all `console.log` / `console.warn` calls with structured pino logger (`src/server.ts`, `src/retrieval/*`, `src/prompts/resolver.ts`, `src/prompts/registry.ts`)
 - **Type safety**: Removed unsafe `as` assertions in `src/app.ts` and `src/retrieval/vector-search.ts`
@@ -32,6 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Added input length validation to `/analyze` endpoint to prevent potential DoS attacks.
 - Added configurable `maxContentLength` (default 10,000 chars) to `ApiConfig`.
+=======
+### Added
+- Unit tests for `generateMockWcpDecision` and `isMockMode` in `src/utils/mock-responses.ts`
+- Product roadmap with 5 phases (scaffolding → MVP → showcase → post-launch)
+- CHANGELOG.md for tracking changes
+>>>>>>> origin/test-mock-responses-16182663778333512201
 
 ### Changed
 - Removed personal IDE configs (`.claude/`, `.agents/skills/`) from repository
