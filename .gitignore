@@ -16,6 +16,13 @@ coverage/
 test-results/
 playwright-report/
 
+# Ad-hoc test output captures (root only)
+/build*.txt
+/coverage*.txt
+/*test*.txt
+/tests-pass*.txt
+/test_output*.txt
+
 # Local runtime data
 data/
 *.db
