@@ -8,7 +8,7 @@
 - **v2:** Current TypeScript monolith — compiles clean, Phase 01 PoC complete
 - **v3:** This plan — three-service architecture (Python backend + TS agent + React frontend)
 
-**Philosophy:** This is not a production system. This is a portfolio weapon — a vulgar display of architectural power demonstrating that you can design, connect, and orchestrate across every layer of the modern AI stack.
+**Philosophy:** This is a production-ready architecture plan for a multi-service AI compliance platform. Every technology choice maps directly to a job requirement: deterministic backend logic, agent orchestration, hybrid search, prompt versioning, and full observability. The architecture is designed for regulated industries where every AI decision must be explainable, traceable, and defensible.
 
 ---
 
@@ -84,7 +84,7 @@
 
 ```
 WCP-Compliance-Agent/
-├── README.md                          # Portfolio flex document
+├── README.md                          # Project overview and architecture documentation
 ├── ARCHITECTURE.md                    # System design with diagrams
 ├── docker-compose.yml                 # Full stack: Postgres + Redis + ES + Phoenix
 ├── .github/workflows/
@@ -609,7 +609,7 @@ volumes:
 1. Docker Compose full stack running
 2. E2E: upload PDF → full decision → Phoenix trace → audit trail
 3. CI: Python tests + TS build + React build + eval regression
-4. README rewrite as portfolio flex document
+4. README rewrite for product positioning and clarity
 5. Architecture ADRs (why three layers, why Python/TS split, etc.)
 6. Deploy: Vercel (frontend) + Render (backend + agent)
 
@@ -645,4 +645,4 @@ volumes:
 
 *Plan version: 2026-04-22 v3.0*
 *Estimated effort: 8-10 days of focused work*
-*Philosophy: Vulgar display of architectural power*
+*Philosophy: Production-ready multi-service architecture for regulated AI compliance*

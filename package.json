@@ -1,7 +1,7 @@
 {
   "name": "wcp-compliance-agent",
   "version": "0.6.0",
-  "description": "Regulated-domain AI infrastructure case study for trustworthy LLM decision systems",
+  "description": "AI-powered Davis-Bacon Act payroll validation. Checks prevailing wage, overtime, fringe benefits. Three-layer decision pipeline with full audit trail. Open source.",
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
@@ -27,12 +27,18 @@
     "test:live:calibration": "vitest run --config vitest.config.live.ts tests/live/live-calibration.test.ts --reporter=verbose"
   },
   "keywords": [
+    "davis-bacon-act",
+    "prevailing-wage",
+    "federal-compliance",
+    "payroll-validation",
+    "construction-compliance",
+    "wh-347",
+    "wage-determination",
+    "ai-compliance",
+    "automated-audit",
+    "trust-scoring",
     "ai-infrastructure",
-    "ai-agent",
-    "wcp",
-    "compliance",
-    "evals",
-    "guardrails"
+    "compliance-agent"
   ],
   "author": "FishRaposo",
   "repository": {
