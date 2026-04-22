@@ -96,9 +96,12 @@
  */
 
 import { readFileSync, existsSync } from "fs";
-import { resolve } from "path";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 import type { DBWDRateInfo } from "../types/decision-pipeline.js";
 import { childLogger } from "../utils/logger.js";
+
+const _dirname = typeof __dirname !== "undefined" ? __dirname : dirname(fileURLToPath(import.meta.url));
 
 const log = childLogger("DBWDRetrieval");
 
@@ -176,13 +179,31 @@ const RATES_BY_TRADE = new Map<string, DBWDRateInfo>();
 const ALIAS_TO_TRADE = new Map<string, string>();
 const ALL_ALIASES: string[] = [];
 
+/** Schema for dbwd-corpus.json (array of entries) */
+interface CorpusEntry {
+  wdId: string;
+  tradeCode: string;
+  jobTitle: string;
+  aliases: string[];
+  locality: string;
+  state: string;
+  baseRate: number;
+  fringeRate: number;
+  effectiveDate: string;
+  description: string;
+}
+
 function loadRates(): void {
   // Try multiple resolution paths so this works both in dev (tsx/vitest)
   // and after build (node dist/server.js).
+  // Prefer dbwd-corpus.json (authoritative source); fall back to dbwd-rates.json.
   const candidates = [
+    resolve(process.cwd(), "data/dbwd-corpus.json"),
+    resolve(_dirname, "../../data/dbwd-corpus.json"),   // from dist/services/
+    resolve(_dirname, "../../../data/dbwd-corpus.json"), // from dist/
     resolve(process.cwd(), "data/dbwd-rates.json"),
-    resolve(__dirname, "../../data/dbwd-rates.json"),   // from dist/services/
-    resolve(__dirname, "../../../data/dbwd-rates.json"), // from dist/
+    resolve(_dirname, "../../data/dbwd-rates.json"),   // from dist/services/
+    resolve(_dirname, "../../../data/dbwd-rates.json"), // from dist/
   ];
 
   let raw: string | null = null;
@@ -201,32 +222,58 @@ function loadRates(): void {
   }
 
   if (!raw || !loadedPath) {
-    log.error({ candidates }, "Could not find data/dbwd-rates.json — DBWD lookups will fail");
+    log.error({ candidates }, "Could not find DBWD corpus — DBWD lookups will fail");
     return;
   }
 
   try {
-    const corpus = JSON.parse(raw) as JsonCorpus;
+    if (loadedPath.endsWith("dbwd-corpus.json")) {
+      // Array format: dbwd-corpus.json
+      const entries = JSON.parse(raw) as CorpusEntry[];
+      for (const entry of entries) {
+        const rateInfo: DBWDRateInfo = {
+          dbwdId: entry.wdId,
+          baseRate: entry.baseRate,
+          fringeRate: entry.fringeRate,
+          totalRate: entry.baseRate + entry.fringeRate,
+          version: entry.effectiveDate,
+          effectiveDate: entry.effectiveDate,
+          trade: entry.jobTitle,
+          tradeCode: entry.tradeCode,
+          locality: entry.locality,
+        };
 
-    for (const entry of corpus.trades) {
-      const rateInfo: DBWDRateInfo = {
-        dbwdId: entry.dbwdId,
-        baseRate: entry.baseRate,
-        fringeRate: entry.fringeRate,
-        totalRate: entry.totalRate,
-        version: corpus.metadata.version,
-        effectiveDate: entry.effectiveDate,
-        trade: entry.trade,
-        tradeCode: entry.tradeCode,
-        locality: entry.locality,
-      };
+        RATES_BY_TRADE.set(entry.jobTitle, rateInfo);
+        ALL_ALIASES.push(entry.jobTitle);
 
-      RATES_BY_TRADE.set(entry.trade, rateInfo);
-      ALL_ALIASES.push(entry.trade);
+        for (const alias of entry.aliases) {
+          ALIAS_TO_TRADE.set(alias, entry.jobTitle);
+          ALL_ALIASES.push(alias);
+        }
+      }
+    } else {
+      // Object format: dbwd-rates.json { metadata, trades }
+      const corpus = JSON.parse(raw) as JsonCorpus;
+      for (const entry of corpus.trades) {
+        const rateInfo: DBWDRateInfo = {
+          dbwdId: entry.dbwdId,
+          baseRate: entry.baseRate,
+          fringeRate: entry.fringeRate,
+          totalRate: entry.totalRate,
+          version: corpus.metadata.version,
+          effectiveDate: entry.effectiveDate,
+          trade: entry.trade,
+          tradeCode: entry.tradeCode,
+          locality: entry.locality,
+        };
 
-      for (const alias of entry.aliases) {
-        ALIAS_TO_TRADE.set(alias, entry.trade);
-        ALL_ALIASES.push(alias);
+        RATES_BY_TRADE.set(entry.trade, rateInfo);
+        ALL_ALIASES.push(entry.trade);
+
+        for (const alias of entry.aliases) {
+          ALIAS_TO_TRADE.set(alias, entry.trade);
+          ALL_ALIASES.push(alias);
+        }
       }
     }
 
@@ -239,7 +286,7 @@ function loadRates(): void {
       "Loaded DBWD rates from JSON corpus"
     );
   } catch (err) {
-    log.error({ err, path: loadedPath }, "Failed to parse data/dbwd-rates.json");
+    log.error({ err, path: loadedPath }, "Failed to parse DBWD corpus");
   }
 }
 

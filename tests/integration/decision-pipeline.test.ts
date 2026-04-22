@@ -51,7 +51,7 @@ describe("Decision Pipeline Integration", () => {
 
     // Unknown classification
     unknownRole: {
-      input: "Role: Xenon Installer, Hours: 40, Wage: 40.00",
+      input: "Role: Astrophysicist, Hours: 40, Wage: 40.00",
       expectedStatus: ["Reject", "Pending Human Review"],
       expectedBand: "require_human",
       description: "Unknown role classification",

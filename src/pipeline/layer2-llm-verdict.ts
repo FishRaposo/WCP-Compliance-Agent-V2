@@ -21,6 +21,7 @@ import {
   type DeterministicReport,
   type LLMVerdict,
   LLMVerdictSchema,
+  DeterministicReportSchema,
   validateReferencedCheckIds,
 } from "../types/decision-pipeline.js";
 import { generateMockWcpDecision, isMockMode } from "../utils/mock-responses.js";
@@ -53,46 +54,12 @@ const STATIC_FALLBACK_INSTRUCTIONS = [
 /**
  * Input schema for Layer 2
  */
+/**
+ * Input schema for Layer 2 — derived from DeterministicReportSchema
+ * to guarantee it never diverges from the Layer 1 output contract.
+ */
 const Layer2InputSchema = z.object({
-  report: z.object({
-    traceId: z.string(),
-    dbwdVersion: z.string(),
-    timestamp: z.string(),
-    extracted: z.object({
-      rawInput: z.string(),
-      role: z.string(),
-      hours: z.number(),
-      regularHours: z.number().optional(),
-      overtimeHours: z.number().optional(),
-      wage: z.number(),
-      fringe: z.number().optional(),
-    }),
-    dbwdRate: z.object({
-      dbwdId: z.string(),
-      baseRate: z.number(),
-      fringeRate: z.number(),
-      totalRate: z.number(),
-      version: z.string(),
-      effectiveDate: z.string(),
-      trade: z.string(),
-    }),
-    checks: z.array(
-      z.object({
-        id: z.string(),
-        type: z.enum(["wage", "overtime", "fringe", "classification", "deduction", "minimum_wage", "hours", "data_integrity", "total_hours", "signature", "overtime_weekly", "overtime_daily"]),
-        passed: z.boolean(),
-        regulation: z.string(),
-        expected: z.number().optional(),
-        actual: z.number().optional(),
-        difference: z.number().optional(),
-        severity: z.enum(["info", "warning", "error", "critical", "high"]),
-        message: z.string(),
-      })
-    ),
-    classificationMethod: z.enum(["exact", "alias", "semantic", "manual", "unknown"]),
-    classificationConfidence: z.number(),
-    deterministicScore: z.number(),
-  }),
+  report: DeterministicReportSchema,
 });
 
 /**
@@ -236,6 +203,8 @@ export async function layer2LLMVerdict(report: DeterministicReport): Promise<LLM
     // Call LLM via generateText
     // NOTE: Type assertion needed due to ai v4 / @ai-sdk/openai v2 model interface mismatch.
     // In production, pin compatible versions of both packages.
+    const maxSteps = parseInt(process.env.AGENT_MAX_STEPS ?? "3", 10);
+    log.info({ maxSteps }, "LLM configuration");
     const response = await generateText({
       model: openai(model) as any,
       system: systemInstructions,

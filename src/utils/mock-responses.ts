@@ -5,15 +5,65 @@
  * Uses deterministic logic based on the extracted WCP data.
  */
 
-// Inline corpus for mock mode — matches data/dbwd-rates.json
+// Inline corpus for mock mode — loads from dbwd-corpus.json when available
 // In production, this would load from the database via retrieval service
-const IN_MEMORY_CORPUS: Record<string, { base: number; fringe: number }> = {
-  Electrician: { base: 51.69, fringe: 34.63 },
-  Laborer: { base: 26.45, fringe: 12.5 },
-  Plumber: { base: 48.2, fringe: 28.1 },
-  Carpenter: { base: 45.0, fringe: 25.0 },
-  Mason: { base: 42.5, fringe: 22.5 },
-};
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+
+interface CorpusEntry {
+  jobTitle: string;
+  baseRate: number;
+  fringeRate: number;
+  aliases: string[];
+}
+
+function loadMockCorpus(): Record<string, { base: number; fringe: number }> {
+  const candidates = [
+    resolve(process.cwd(), "data/dbwd-corpus.json"),
+    resolve(process.cwd(), "data/dbwd-rates.json"),
+  ];
+
+  for (const path of candidates) {
+    if (existsSync(path)) {
+      try {
+        const raw = readFileSync(path, "utf-8");
+        const parsed = JSON.parse(raw) as CorpusEntry[] | { trades?: Array<{ trade: string; baseRate: number; fringeRate: number; aliases?: string[] }> };
+        const result: Record<string, { base: number; fringe: number }> = {};
+
+        if (Array.isArray(parsed)) {
+          for (const entry of parsed) {
+            result[entry.jobTitle] = { base: entry.baseRate, fringe: entry.fringeRate };
+            for (const alias of entry.aliases) {
+              result[alias] = { base: entry.baseRate, fringe: entry.fringeRate };
+            }
+          }
+        } else if (parsed.trades) {
+          for (const entry of parsed.trades) {
+            result[entry.trade] = { base: entry.baseRate, fringe: entry.fringeRate };
+            for (const alias of entry.aliases ?? []) {
+              result[alias] = { base: entry.baseRate, fringe: entry.fringeRate };
+            }
+          }
+        }
+
+        return result;
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  // Fallback to hardcoded 5-trade corpus if no file found
+  return {
+    Electrician: { base: 51.69, fringe: 34.63 },
+    Laborer: { base: 26.45, fringe: 12.5 },
+    Plumber: { base: 48.2, fringe: 28.1 },
+    Carpenter: { base: 45.0, fringe: 25.0 },
+    Mason: { base: 42.5, fringe: 22.5 },
+  };
+}
+
+const IN_MEMORY_CORPUS = loadMockCorpus();
 
 /**
  * Generate a mock WCP decision based on the extracted data

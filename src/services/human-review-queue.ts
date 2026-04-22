@@ -26,7 +26,9 @@ const log = childLogger("HumanReviewQueue");
 // ============================================================================
 
 /** Queue storage file (Phase 01 stub - JSON file persistence) */
-const QUEUE_FILE = join(process.cwd(), "data", "review-queue.json");
+const QUEUE_FILE = process.env.REVIEW_QUEUE_PATH
+  ? process.env.REVIEW_QUEUE_PATH
+  : join(process.cwd(), "data", "review-queue.json");
 
 /** In-memory storage */
 let inMemoryQueue: Map<string, ReviewQueueItem> = new Map();

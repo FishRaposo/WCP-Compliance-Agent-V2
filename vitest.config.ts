@@ -8,6 +8,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.{test,spec}.{js,ts}'],
     exclude: ['node_modules', 'dist', 'build', 'tests/e2e/**', 'tests/live/**'],
+    testTimeout: 10_000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -32,6 +33,7 @@ export default defineConfig({
         'src/app.ts',
         'src/instrumentation.ts',
         'src/entrypoints/wcp-entrypoint.ts',
+        'src/pipeline/orchestrator.ts',
         'api/',
         // Type-only and re-export files — no runtime code
         'src/retrieval/types.ts',

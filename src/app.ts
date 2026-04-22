@@ -27,6 +27,50 @@ function formattedStatusCode(err: unknown): 400 | 422 | 500 {
 
 const MAX_CONTENT_BYTES = 64 * 1024; // 64 KB
 
+// ============================================================================
+// Rate Limiting (A6) — Simple in-memory sliding window
+// ============================================================================
+
+interface RateLimitEntry {
+  count: number;
+  windowStart: number;
+}
+
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 60;  // 60 requests per minute per IP
+const _rateLimitMap = new Map<string, RateLimitEntry>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = _rateLimitMap.get(ip);
+
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    _rateLimitMap.set(ip, { count: 1, windowStart: now });
+    return false;
+  }
+
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX_REQUESTS;
+}
+
+async function rateLimitMiddleware(c: Context, next: () => Promise<void>): Promise<void> {
+  const ip = c.req.header("x-forwarded-for") ?? c.req.header("x-real-ip") ?? "unknown";
+  if (isRateLimited(ip)) {
+    c.json(
+      {
+        error: {
+          code: "RATE_LIMITED",
+          message: "Too many requests. Please try again later.",
+          statusCode: 429,
+        },
+      },
+      429
+    );
+    return;
+  }
+  await next();
+}
+
 async function handleAnalyzeRequest(c: Context) {
   try {
     const body = await c.req.json();
@@ -93,6 +137,8 @@ export function createApp() {
       credentials: true,
     }),
   );
+
+  app.use("/*", rateLimitMiddleware);
 
   app.get("/health", (c) => {
     const mockMode = isMockMode();

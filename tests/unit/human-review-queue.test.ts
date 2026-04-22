@@ -1,9 +1,26 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import {
   HumanReviewQueueService,
   determinePriority,
 } from '../../src/services/human-review-queue.js';
 import type { TrustScoredDecision, CheckResult, DeterministicReport, LLMVerdict } from '../../src/types/decision-pipeline.js';
+
+let tempDir: string;
+let originalQueuePath: string | undefined;
+
+beforeAll(() => {
+  tempDir = mkdtempSync(join(tmpdir(), 'hrq-test-'));
+  originalQueuePath = process.env.REVIEW_QUEUE_PATH;
+  process.env.REVIEW_QUEUE_PATH = join(tempDir, 'review-queue.json');
+});
+
+afterAll(() => {
+  process.env.REVIEW_QUEUE_PATH = originalQueuePath;
+  rmSync(tempDir, { recursive: true, force: true });
+});
 
 // ============================================================================
 // Test helpers
