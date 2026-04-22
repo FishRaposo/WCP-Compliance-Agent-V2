@@ -1,6 +1,10 @@
 import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
+<<<<<<< HEAD
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+=======
+import { secureHeaders } from "hono/secure-headers";
+>>>>>>> origin/sentinel-fix-security-headers-and-stack-trace-10819969944320193566
 
 import { generateWcpDecision } from "./entrypoints/wcp-entrypoint.js";
 import { formatApiError, ValidationError } from "./utils/errors.js";
@@ -139,6 +143,9 @@ async function handleAnalyzeRequest(c: Context) {
 
 export function createApp() {
   const app = new Hono();
+
+  // Add security headers (X-XSS-Protection, X-Frame-Options, X-Content-Type-Options, etc.)
+  app.use("*", secureHeaders());
 
   app.use(
     "/*",

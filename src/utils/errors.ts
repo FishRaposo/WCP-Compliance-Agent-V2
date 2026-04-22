@@ -204,7 +204,8 @@ export function extractErrorDetails(error: unknown): {
       message: error.message,
       code: 'UNKNOWN_ERROR',
       statusCode: 500,
-      details: { stack: error.stack },
+      // 🛡️ Sentinel: Removed stack trace from error details to prevent information leakage
+      details: {},
     };
   }
 
