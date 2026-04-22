@@ -219,6 +219,7 @@ class HumanReviewQueueService {
       if (priorityDiff !== 0) return priorityDiff;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       // ISO 8601 dates sort lexicographically; avoid Date allocation
       if (a.queuedAt < b.queuedAt) return -1;
       if (a.queuedAt > b.queuedAt) return 1;
@@ -235,6 +236,10 @@ class HumanReviewQueueService {
       if (a.queuedAt > b.queuedAt) return 1;
       return 0;
 >>>>>>> origin/performance-optimize-queue-sort-1732255753477402566
+=======
+      // Optimize: ISO 8601 date strings are lexicographically sortable, avoids Date object allocation
+      return a.queuedAt < b.queuedAt ? -1 : a.queuedAt > b.queuedAt ? 1 : 0;
+>>>>>>> origin/bolt-performance-optimizations-13650152548077798304
     });
 
     // Apply pagination
@@ -416,10 +421,14 @@ class HumanReviewQueueService {
     if (completed.length > 0) {
       const totalMs = completed.reduce((sum, i) => {
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         // ⚡ Bolt: Use Date.parse() instead of new Date().getTime()
         // when only the numeric timestamp is needed to avoid object allocation.
 >>>>>>> origin/jules-bolt-perf-optimization-5862459989937235893
+=======
+        // Optimize: Use Date.parse() to avoid allocating Date objects
+>>>>>>> origin/bolt-performance-optimizations-13650152548077798304
         const start = Date.parse(i.queuedAt);
         const end = Date.parse(i.completedAt!);
         return sum + (end - start);

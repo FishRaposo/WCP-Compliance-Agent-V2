@@ -179,7 +179,12 @@ Refactoring, optimization, and cleanup tasks.
   - Acceptance: Documentation coverage audit, missing docs added
 
 - [x] Add performance optimizations [src: _archive/TODO.md:318] [M]
+<<<<<<< HEAD
   - Context: Optimized `HumanReviewQueueService` sort comparator (~60x faster).
+=======
+  - Context: No performance benchmarks exist
+  - Acceptance: Benchmark suite, bottleneck identification, optimization plan
+>>>>>>> origin/bolt-performance-optimizations-13650152548077798304
 
 ### Mock Mode
 
