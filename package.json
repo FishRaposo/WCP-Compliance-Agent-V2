@@ -50,7 +50,7 @@
     "@opentelemetry/sdk-node": "^0.215.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/papaparse": "^5.5.2",
-    "ai": "^4.0.0",
+    "ai": "^6.0.168",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
