@@ -16,6 +16,7 @@ export function KeyInput({ apiKey, onChange, isMockMode }: KeyInputProps) {
         <Key className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           type={visible ? 'text' : 'password'}
+          aria-label="OpenAI API key"
           placeholder="OpenAI API key (optional — never stored, used only for this request)"
           value={apiKey}
           onChange={e => onChange(e.target.value)}
@@ -25,8 +26,9 @@ export function KeyInput({ apiKey, onChange, isMockMode }: KeyInputProps) {
         />
         <button
           type="button"
+          aria-label={visible ? 'Hide API key' : 'Show API key'}
           onClick={() => setVisible(v => !v)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded p-0.5 transition-colors"
         >
           {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
