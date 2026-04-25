@@ -700,11 +700,19 @@ export async function layer1Deterministic(
   timings.push({ stage: "compliance_checks", ms: Date.now() - checkStart });
 
   // Step 5: Compute deterministic score
-  // Critical failures tank the score (deterministic layer must be clean)
-  const hasCriticalFailure = checks.some((c) => c.severity === "critical" && !c.passed);
-  const passedChecks = checks.filter((c) => c.passed).length;
-  const totalChecks = checks.length;
-  const deterministicScore = hasCriticalFailure ? 0 : passedChecks / totalChecks;
+  // Score = proportion of passed checks, but critical failures have heavier weight
+  const criticalChecks = checks.filter((c) => c.severity === "critical");
+  const criticalPassed = criticalChecks.filter((c) => c.passed).length;
+  const criticalTotal = criticalChecks.length;
+  
+  const nonCriticalChecks = checks.filter((c) => c.severity !== "critical");
+  const nonCriticalPassed = nonCriticalChecks.filter((c) => c.passed).length;
+  const nonCriticalTotal = nonCriticalChecks.length;
+  
+  // Critical checks are 70% of score, non-critical are 30%
+  const criticalScore = criticalTotal === 0 ? 1.0 : criticalPassed / criticalTotal;
+  const nonCriticalScore = nonCriticalTotal === 0 ? 1.0 : nonCriticalPassed / nonCriticalTotal;
+  const deterministicScore = 0.7 * criticalScore + 0.3 * nonCriticalScore;
 
   // Build the report
   const report: DeterministicReport = {

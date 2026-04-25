@@ -9,64 +9,11 @@
 // In production, this would load from the database via retrieval service
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
-
-interface CorpusEntry {
-  jobTitle: string;
-  baseRate: number;
-  fringeRate: number;
-  aliases: string[];
-}
-
-function loadMockCorpus(): Record<string, { base: number; fringe: number }> {
-  const candidates = [
-    resolve(process.cwd(), "data/dbwd-corpus.json"),
-    resolve(process.cwd(), "data/dbwd-rates.json"),
-  ];
-
-  for (const path of candidates) {
-    if (existsSync(path)) {
-      try {
-        const raw = readFileSync(path, "utf-8");
-        const parsed = JSON.parse(raw) as CorpusEntry[] | { trades?: Array<{ trade: string; baseRate: number; fringeRate: number; aliases?: string[] }> };
-        const result: Record<string, { base: number; fringe: number }> = {};
-
-        if (Array.isArray(parsed)) {
-          for (const entry of parsed) {
-            result[entry.jobTitle] = { base: entry.baseRate, fringe: entry.fringeRate };
-            for (const alias of entry.aliases) {
-              result[alias] = { base: entry.baseRate, fringe: entry.fringeRate };
-            }
-          }
-        } else if (parsed.trades) {
-          for (const entry of parsed.trades) {
-            result[entry.trade] = { base: entry.baseRate, fringe: entry.fringeRate };
-            for (const alias of entry.aliases ?? []) {
-              result[alias] = { base: entry.baseRate, fringe: entry.fringeRate };
-            }
-          }
-        }
-
-        return result;
-      } catch {
-        continue;
-      }
-    }
-  }
-
-  // Fallback to hardcoded 5-trade corpus if no file found
-  return {
-    Electrician: { base: 51.69, fringe: 34.63 },
-    Laborer: { base: 26.45, fringe: 12.5 },
-    Plumber: { base: 48.2, fringe: 28.1 },
-    Carpenter: { base: 45.0, fringe: 25.0 },
-    Mason: { base: 42.5, fringe: 22.5 },
-  };
-}
-
-const IN_MEMORY_CORPUS = loadMockCorpus();
+import { lookupRate } from "../services/dbwd-retrieval.js";
 
 /**
- * Generate a mock WCP decision based on the extracted data
+ * Generate a mock WCP decision based on the extracted data.
+ * Uses the same DBWD retrieval service as Layer 1 for consistency.
  */
 export function generateMockWcpDecision(input: string) {
   const roleMatch = input.match(/role[:\s]+(\w[\w\s]*)/i);
@@ -81,35 +28,32 @@ export function generateMockWcpDecision(input: string) {
   const fringe = fringeMatch ? parseFloat(fringeMatch[1]) : null;
   const grossPay = grossPayMatch ? parseFloat(grossPayMatch[1]) : null;
 
-  // Case-insensitive corpus lookup (also check aliases)
-  const corpusEntry = Object.entries(IN_MEMORY_CORPUS).find(
-    ([key]) => key.toLowerCase() === role.toLowerCase()
-  );
+  // Use the same retrieval service as Layer 1 for consistency
+  const dbwdRate = lookupRate(role);
 
   const violations = [];
   let status: 'Approved' | 'Revise' | 'Reject' = 'Approved';
 
-  if (!corpusEntry) {
+  if (!dbwdRate) {
     status = 'Reject';
-    const knownTrades = Object.keys(IN_MEMORY_CORPUS).join(', ');
-    violations.push({ type: 'Invalid Role', detail: `Unknown role: ${role}. Known trades: ${knownTrades}.` });
+    violations.push({ type: 'Invalid Role', detail: `Unknown role: ${role}. Not found in DBWD database.` });
   } else {
-    const [tradeName, dbwdRate] = corpusEntry;
+    const tradeName = dbwdRate.trade;
 
-    if (wage < dbwdRate.base) {
+    if (wage < dbwdRate.baseRate) {
       status = 'Reject';
-      violations.push({ type: 'Underpay', detail: `Wage $${wage}/hr is below DBWD base rate of $${dbwdRate.base}/hr for ${tradeName}.` });
+      violations.push({ type: 'Underpay', detail: `Wage $${wage}/hr is below DBWD base rate of $${dbwdRate.baseRate}/hr for ${tradeName}.` });
     }
 
-    if (fringe !== null && fringe < dbwdRate.fringe) {
+    if (fringe !== null && fringe < dbwdRate.fringeRate) {
       if (status === 'Approved') status = 'Revise';
-      violations.push({ type: 'Fringe Shortfall', detail: `Fringe $${fringe}/hr is below DBWD required fringe $${dbwdRate.fringe}/hr for ${tradeName}.` });
+      violations.push({ type: 'Fringe Shortfall', detail: `Fringe $${fringe}/hr is below DBWD required fringe $${dbwdRate.fringeRate}/hr for ${tradeName}.` });
     }
 
     if (hours > 40) {
       const regularHrs = Math.min(hours, 40);
       const overtimeHrs = hours - 40;
-      const correctGross = regularHrs * dbwdRate.base + overtimeHrs * dbwdRate.base * 1.5;
+      const correctGross = regularHrs * dbwdRate.baseRate + overtimeHrs * dbwdRate.baseRate * 1.5;
       const reportedGross = grossPay ?? (wage * hours);
       const otCorrect = reportedGross >= correctGross - 0.01;
       if (!otCorrect) {
@@ -125,7 +69,7 @@ export function generateMockWcpDecision(input: string) {
       explanation = `This WCP is approved. The ${role} role is valid, hours (${hours}) are within limits, and wage ($${wage}/hr) meets or exceeds the DBWD base rate.`;
       break;
     case 'Revise':
-      explanation = `This WCP requires revision. The ${role} role and wage are valid, but there are overtime violations that need to be addressed.`;
+      explanation = `This WCP requires revision. The ${role} role and wage are valid, but there are compliance violations that need to be addressed.`;
       break;
     case 'Reject':
       explanation = `This WCP is rejected due to compliance violations that must be corrected.`;

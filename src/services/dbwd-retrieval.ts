@@ -309,18 +309,35 @@ loadRates();
 export function lookupRate(trade: string, locality?: string): DBWDRateInfo | null {
   const normalized = trade.trim();
 
-  // Exact match on canonical trade name
+  // Exact match on canonical trade name (case-sensitive first)
   const direct = RATES_BY_TRADE.get(normalized);
   if (direct) {
     return locality ? { ...direct, locality } : direct;
   }
 
-  // Alias match
+  // Case-insensitive match on canonical trade names
+  for (const [key, rate] of RATES_BY_TRADE.entries()) {
+    if (key.toLowerCase() === normalized.toLowerCase()) {
+      return locality ? { ...rate, locality } : rate;
+    }
+  }
+
+  // Alias match (case-sensitive first)
   const aliasedTrade = ALIAS_TO_TRADE.get(normalized);
   if (aliasedTrade) {
     const rate = RATES_BY_TRADE.get(aliasedTrade);
     if (rate) {
       return locality ? { ...rate, locality } : rate;
+    }
+  }
+
+  // Case-insensitive alias match
+  for (const [alias, canonicalTrade] of ALIAS_TO_TRADE.entries()) {
+    if (alias.toLowerCase() === normalized.toLowerCase()) {
+      const rate = RATES_BY_TRADE.get(canonicalTrade);
+      if (rate) {
+        return locality ? { ...rate, locality } : rate;
+      }
     }
   }
 
