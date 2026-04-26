@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-green)](https://nodejs.org/)
 
-> **Payroll decisions you can defend in court.**  
+> **Payroll decisions you can defend in court.**
 > Three rounds of proof. Every finding cites the law. Every decision has a paper trail.
 
 **[→ Live Demo](https://wcp-compliance-agent.vercel.app)** · **[→ Quick Start](./docs/quick-start.md)** · **[→ FAQ](./docs/faq.md)**
@@ -101,14 +101,14 @@ See [API Reference](docs/api-reference.md) for PDF/CSV upload, async jobs, and a
 ## Running Tests
 
 ```bash
-npm test                  # Full suite: build + 310 tests
-npm run test:unit         # 297 unit + integration tests
-npm run test:pipeline     # Pipeline-specific tests
-npm run test:coverage     # Coverage report (≥80% gate)
-npm run test:calibration  # 102-example golden set
-npm run test:retrieval    # Hybrid retriever tests
-npm run lint:pipeline     # AST architectural lint
-npm run build             # TypeScript + Vite compilation
+npm test                    # Full suite: build + 310 tests
+npm run test:unit           # 297 unit + integration tests
+npm run test:pipeline       # Pipeline-specific tests
+npm run test:coverage       # Coverage report (≥80% gate)
+npm run test:calibration    # 102-example golden set
+npm run test:retrieval      # Hybrid retriever tests
+npm run lint:pipeline       # AST architectural lint
+npm run build               # TypeScript + Vite compilation
 ```
 
 **Mock mode** (no API key required): set `OPENAI_API_KEY=mock` — all tests pass without calling OpenAI.
@@ -131,7 +131,7 @@ npm run build             # TypeScript + Vite compilation
 ### For evaluators and hiring managers
 - [V2 Inventory Report](docs/development/V2_INVENTORY_REPORT.md) — Full code audit and readiness assessment
 - [V2 Roadmap Audit](docs/development/V2_ROADMAP_AUDIT.md) — What was built vs. what was planned
-- [V3 Plan](docs/v3/V3_PLAN.md) — Production architecture (Python + TypeScript + React)
+- **V3** — Being developed as a private upgrade
 
 ### Project history
 - [CHANGELOG](CHANGELOG.md) — Release history and version notes
@@ -154,5 +154,5 @@ Built by **[Vinícius Raposo](https://github.com/FishRaposo)** — systems engin
 
 [MIT](./LICENSE) © 2026 Vinícius Raposo
 
-*Last updated: 2026-04-22*  
+*Last updated: 2026-04-27*
 *GitHub Topics: `davis-bacon-act`, `prevailing-wage`, `federal-compliance`, `payroll-validation`, `construction-compliance`, `wh-347`, `wage-determination`, `ai-compliance`, `automated-audit`, `trust-scoring`*
