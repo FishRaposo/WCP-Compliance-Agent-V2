@@ -8,7 +8,7 @@
 > **Payroll decisions you can defend in court.**
 > Three rounds of proof. Every finding cites the law. Every decision has a paper trail.
 
-**[→ Live Demo](https://wcp-compliance-agent.vercel.app)** · **[→ Quick Start](./docs/quick-start.md)** · **[→ FAQ](./docs/faq.md)**
+**[→ Quick Start](./docs/quick-start.md)** · **[→ FAQ](./docs/faq.md)**
 
 ---
 
@@ -131,7 +131,7 @@ npm run build               # TypeScript + Vite compilation
 ### For evaluators and hiring managers
 - [V2 Inventory Report](docs/development/V2_INVENTORY_REPORT.md) — Full code audit and readiness assessment
 - [V2 Roadmap Audit](docs/development/V2_ROADMAP_AUDIT.md) — What was built vs. what was planned
-- **V3** — Being developed as a private upgrade
+- **[V3 Repo](https://github.com/FishRaposo/WCP-Compliance-Agent-V3)** — The open-source continuation. Full re-architecture with React 19, TypeScript/Hono/Mastra agent layer, Python/FastAPI/Celery backend, hybrid RAG, and Docker Compose deployment.
 
 ### Project history
 - [CHANGELOG](CHANGELOG.md) — Release history and version notes
