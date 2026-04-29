@@ -1,4 +1,8 @@
-# WCP Compliance Agent — Davis-Bacon Act Payroll Validation
+# WCP Compliance Agent — Davis-Bacon Act Payroll Validation (v0.6 — Legacy)
+
+> ⚠️ **This is WCP v2 (v0.6). For the current version, see [WCP-Compliance-Agent-V3](https://github.com/FishRaposo/WCP-Compliance-Agent-V3).**
+>
+> **V3 has the full architecture:** React 19 + Hono + Mastra agent layer + Python/FastAPI/Celery backend + hybrid RAG + Docker Compose.
 
 [![CI](https://github.com/FishRaposo/WCP-Compliance-Agent/actions/workflows/pipeline-discipline.yml/badge.svg)](https://github.com/FishRaposo/WCP-Compliance-Agent/actions/workflows/pipeline-discipline.yml)
 [![Coverage](https://img.shields.io/badge/coverage-83%2B-brightgreen)](#running-tests)
@@ -8,7 +12,7 @@
 > **Payroll decisions you can defend in court.**
 > Three rounds of proof. Every finding cites the law. Every decision has a paper trail.
 
-**[→ Quick Start](./docs/quick-start.md)** · **[→ FAQ](./docs/faq.md)**
+**[→ Quick Start](./docs/quick-start.md)** · **[→ FAQ](./docs/faq.md)** · **[→ See V3 instead](https://github.com/FishRaposo/WCP-Compliance-Agent-V3)**
 
 ---
 
